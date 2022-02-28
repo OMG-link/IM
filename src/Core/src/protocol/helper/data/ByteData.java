@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-public class Data {
+public class ByteData {
     private byte[] data;
 
     private void checkLength(int expectLength) throws InvalidPackageException {
@@ -27,17 +27,17 @@ public class Data {
         return ((int)b)&0xff;
     }
 
-    public Data() {
+    public ByteData() {
         this.data = new byte[0];
     }
 
-    public Data(byte[] bytes){
+    public ByteData(byte[] bytes){
         this.data = new byte[bytes.length+4];
-        memcpy(this.data,0,(new Data(bytes.length)).data);
+        memcpy(this.data,0,(new ByteData(bytes.length)).data);
         memcpy(this.data,4,bytes);
     }
 
-    public Data(InputStream inputStream,int length) throws IOException {
+    public ByteData(InputStream inputStream, int length) throws IOException {
         this.data = new byte[length];
         int pos = 0;
         while(pos<length){
@@ -50,12 +50,12 @@ public class Data {
         }
     }
 
-    public Data(boolean b){
+    public ByteData(boolean b){
         this.data = new byte[1];
         this.data[0] = (byte)(b?1:0);
     }
 
-    public Data(int x) {
+    public ByteData(int x) {
         this.data = new byte[4];
         for (int i = 3; i >= 0; i--) {
             this.data[i] = (byte) (x & 0xff);
@@ -63,7 +63,7 @@ public class Data {
         }
     }
 
-    public Data(long x) {
+    public ByteData(long x) {
         this.data = new byte[8];
         for (int i = 7; i >= 0; i--) {
             this.data[i] = (byte) (x & 0xff);
@@ -71,18 +71,18 @@ public class Data {
         }
     }
 
-    public Data(UUID x){
+    public ByteData(UUID x){
         this(x.getMostSignificantBits());
-        Data dLow = Data.encodeLong(x.getLeastSignificantBits());
+        ByteData dLow = ByteData.encode(x.getLeastSignificantBits());
         this.append(dLow);
     }
 
-    public Data(String s) {
+    public ByteData(String s) {
         byte[] string = s.getBytes(StandardCharsets.UTF_8);
-        this.data = (new Data(string)).data;
+        this.data = (new ByteData(string)).data;
     }
 
-    public Data append(Data rData) {
+    public ByteData append(ByteData rData) {
         byte[] lhs = this.data;
         byte[] rhs = rData.data;
         this.data = new byte[lhs.length + rhs.length];
@@ -91,7 +91,7 @@ public class Data {
         return this;
     }
 
-    public Data remove(int length) throws InvalidPackageException {
+    public ByteData remove(int length) throws InvalidPackageException {
         checkLength(length);
         int nLength = this.data.length - length;
         byte[] lhs = this.data;
@@ -114,49 +114,68 @@ public class Data {
         this.data = nw;
     }
 
-    public static Data encodeBoolean(boolean b){
-        return new Data(b);
+    public boolean decodeBoolean() throws InvalidPackageException {
+        return ByteData.decodeBoolean(this);
     }
 
-    public static Data encodeInt(int x) {
-        return new Data(x);
+    public int decodeInt() throws InvalidPackageException {
+        return ByteData.decodeInt(this);
     }
 
-    public static Data encodeLong(long x) {
-        return new Data(x);
+    public long decodeLong() throws InvalidPackageException {
+        return ByteData.decodeLong(this);
     }
 
-    public static Data encodeUUID(UUID x){
-        return new Data(x);
+    public UUID decodeUuid() throws InvalidPackageException {
+        return ByteData.decodeUuid(this);
     }
 
-    public static Data encodeString(String s) {
-        return new Data(s);
+    public String decodeString() throws InvalidPackageException {
+        return ByteData.decodeString(this);
     }
 
-    public static Data encodeByteArray(byte[] bytes){
-        return new Data(bytes);
+    public static ByteData encode(boolean b){
+        return new ByteData(b);
     }
 
-    public static boolean decodeBoolean(Data data) throws InvalidPackageException {
+    public static ByteData encode(int x) {
+        return new ByteData(x);
+    }
+
+    public static ByteData encode(long x) {
+        return new ByteData(x);
+    }
+
+    public static ByteData encode(UUID x){
+        return new ByteData(x);
+    }
+
+    public static ByteData encode(String s) {
+        return new ByteData(s);
+    }
+
+    public static ByteData encode(byte[] bytes){
+        return new ByteData(bytes);
+    }
+
+    public static boolean decodeBoolean(ByteData data) throws InvalidPackageException {
         boolean result = peekBoolean(data);
         data.remove(1);
         return result;
     }
 
-    public static boolean peekBoolean(Data data) throws InvalidPackageException {
+    public static boolean peekBoolean(ByteData data) throws InvalidPackageException {
         data.checkLength(1);
-        boolean b = (data.data[0]!=0);
-        return b;
+        return (data.data[0]!=0);
     }
 
-    public static int decodeInt(Data data) throws InvalidPackageException {
+    public static int decodeInt(ByteData data) throws InvalidPackageException {
         int result = peekInt(data);
         data.remove(4);
         return result;
     }
 
-    public static int peekInt(Data data) throws InvalidPackageException {
+    public static int peekInt(ByteData data) throws InvalidPackageException {
         data.checkLength(4);
         int ans = 0;
         for (int i = 0; i < 4; i++) {
@@ -165,7 +184,7 @@ public class Data {
         return ans;
     }
 
-    public static long decodeLong(Data data) throws InvalidPackageException {
+    public static long decodeLong(ByteData data) throws InvalidPackageException {
         data.checkLength(8);
         long ans = 0;
         for (int i = 0; i < 8; i++) {
@@ -175,19 +194,19 @@ public class Data {
         return ans;
     }
 
-    public static UUID decodeUuid(Data data) throws InvalidPackageException {
+    public static UUID decodeUuid(ByteData data) throws InvalidPackageException {
         data.checkLength(16);
-        long highLong = Data.decodeLong(data);
-        long lowLong = Data.decodeLong(data);
+        long highLong = ByteData.decodeLong(data);
+        long lowLong = ByteData.decodeLong(data);
         return new UUID(highLong,lowLong);
     }
 
-    public static String decodeString(Data data) throws InvalidPackageException {
+    public static String decodeString(ByteData data) throws InvalidPackageException {
         byte[] buffer = decodeByteArray(data);
         return new String(buffer,StandardCharsets.UTF_8);
     }
 
-    public static byte[] decodeByteArray(Data data) throws InvalidPackageException {
+    public static byte[] decodeByteArray(ByteData data) throws InvalidPackageException {
         int length = decodeInt(data);
         data.checkLength(length);
         byte[] buffer = new byte[length];

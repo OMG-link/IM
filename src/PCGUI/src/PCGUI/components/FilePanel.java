@@ -1,12 +1,14 @@
 package PCGUI.components;
 
-import PCGUI.helper.PanelUtil;
 import IM.Client;
-import protocol.dataPack.DownloadRequestPack;
-import protocol.helper.data.PackageTooLargeException;
+import PCGUI.helper.PanelUtil;
+import protocol.dataPack.FileTransferType;
 
 import javax.swing.*;
-import javax.swing.text.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.util.UUID;
 
@@ -55,14 +57,7 @@ public class FilePanel extends JPanel {
         JPanel panel = new JPanel();
 
         JButton downloadButton = new JButton("Download");
-        downloadButton.addActionListener(event -> {
-            try{
-                handler.getNetworkHandler().send(new DownloadRequestPack(uuid));
-            }catch (PackageTooLargeException e){
-                //This should never happen!
-                handler.showInfo("Unable to send download request.");
-            }
-        });
+        downloadButton.addActionListener(event -> handler.downloadFile(uuid,FileTransferType.ChatFile));
         panel.add(downloadButton);
 
         return panel;

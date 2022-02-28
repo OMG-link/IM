@@ -1,34 +1,38 @@
 package protocol.dataPack;
 
 import IM.Config;
-import protocol.helper.data.Data;
+import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
 
 public class CheckVersionPack extends DataPack {
     private String version;
+    private String compatibleVersion;
 
     public CheckVersionPack(){
         super(DataPackType.CheckVersion);
         this.version = Config.version;
+        this.compatibleVersion = Config.compatibleVersion;
     }
 
-    public CheckVersionPack(Data data) throws InvalidPackageException {
+    public CheckVersionPack(ByteData data) throws InvalidPackageException {
         super(DataPackType.CheckVersion);
         this.decode(data);
     }
 
     @Override
-    public Data encode(){
-        Data data = new Data();
+    public ByteData encode(){
+        ByteData data = new ByteData();
         data.append(super.encode());
-        data.append(Data.encodeString(version));
+        data.append(ByteData.encode(version));
+        data.append(ByteData.encode(compatibleVersion));
         return data;
     }
 
     @Override
-    public void decode(Data data) throws InvalidPackageException {
+    public void decode(ByteData data) throws InvalidPackageException {
         super.decode(data);
-        this.version = Data.decodeString(data);
+        this.version = data.decodeString();
+        this.compatibleVersion = data.decodeString();
     }
 
     public String getVersion() {

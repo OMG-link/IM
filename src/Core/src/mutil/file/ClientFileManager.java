@@ -1,12 +1,10 @@
 package mutil.file;
 
 import IM.Config;
-import mutil.uuidLocator.UuidConflictException;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
-import java.util.UUID;
 
 public class ClientFileManager extends FileManager{
 
@@ -17,32 +15,31 @@ public class ClientFileManager extends FileManager{
     }
 
     private void makeDownloadFolder() throws IOException {
-        File folder = new File(getFolderName());
-        if(!folder.exists()){
-            if(!folder.mkdir()){
-                throw new IOException("Unable to create file upload folder.");
-            }
-        }
+        makeFolder(new File(getFolderName()).getAbsoluteFile(),false);
+        makeFolder(new File(getCacheFolderName()).getAbsoluteFile(),true);
     }
 
-    @Override
-    protected String getFolderName(){
+    public String getFolderName(){
+        return Config.getRuntimeDir()+folderName;
+    }
+
+    public String getCacheFolderName(){
         return Config.getCacheDir()+folderName;
     }
 
-    public FileObject createFile(UUID uuid,String fileName,long fileSize) throws UuidConflictException, IOException {
-        File file = new File(getFolderName()+'/'+fileName);
-        return super.createFile(uuid,file,fileSize);
+    private FileObject createFile(String folder,String fileName) throws IOException {
+        File file = new File(folder+'/'+fileName);
+        return super.createFile(file);
     }
 
-    public FileObject createFileRenameable(UUID uuid,String fileName,long fileSize) throws UuidConflictException, IOException {
+    private FileObject createFileRenameable(String folder,String fileName) throws IOException {
         try{
-            return createFile(uuid,fileName,fileSize);
+            return createFile(folder,fileName);
         }catch (FileAlreadyExistsException e){
-            for(int i=1;;i++){
+            for(int i=1;;++i){
                 String replacedFileName = String.format("%d-%s",i,fileName);
                 try{
-                    return createFile(uuid,replacedFileName,fileSize);
+                    return createFile(folder,replacedFileName);
                 }catch (FileAlreadyExistsException ignored){
                 }
                 if(i>10000){
@@ -50,6 +47,14 @@ public class ClientFileManager extends FileManager{
                 }
             }
         }
+    }
+
+    public FileObject createFileRenameable(String fileName) throws IOException {
+        return createFileRenameable(getFolderName(),fileName);
+    }
+
+    public FileObject createCacheFileRenameable(String fileName) throws IOException {
+        return createFileRenameable(getCacheFolderName(),fileName);
     }
 
 }

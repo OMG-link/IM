@@ -5,21 +5,28 @@ import IM.Config;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.UUID;
 
 public class FileObject {
     private final File file;
+    private final UUID fileId;
 
     private int readInstanceCount;
     private int writeInstanceCount;
 
-    public FileObject(File file) {
+    public FileObject(File file,UUID fileId) {
         this.file = file;
+        this.fileId = fileId;
         this.readInstanceCount = 0;
         this.writeInstanceCount = 0;
     }
 
     public File getFile() {
         return file;
+    }
+
+    public UUID getFileId() {
+        return fileId;
     }
 
     public void onReadInstanceCreate(){

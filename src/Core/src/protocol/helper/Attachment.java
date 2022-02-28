@@ -1,14 +1,14 @@
 package protocol.helper;
 
-import protocol.helper.data.Data;
+import protocol.helper.data.ByteData;
 
 public class Attachment {
-    public Data data;
+    public ByteData data;
     public String userName;
     public long lastPackageTime;
 
     public Attachment(){
-        data = new Data();
+        data = new ByteData();
         userName = "anonymous";
         lastPackageTime = System.currentTimeMillis();
     }

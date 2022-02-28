@@ -1,6 +1,6 @@
 package protocol.dataPack;
 
-import protocol.helper.data.Data;
+import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
 
 import java.util.UUID;
@@ -8,44 +8,44 @@ import java.util.UUID;
 public class FileUploadedPack extends DataPack{
     private String sender;
     private long stamp;
-    private UUID uuid;
+    private UUID fileId;
     private String fileName;
     private long fileSize;
 
-    public FileUploadedPack(String sender, UUID uuid, String fileName, long fileSize){
+    public FileUploadedPack(String sender, UUID fileId, String fileName, long fileSize){
         super(DataPackType.FileUploaded);
         this.sender = sender;
         this.stamp = System.currentTimeMillis();
-        this.uuid = uuid;
+        this.fileId = fileId;
         this.fileName = fileName;
         this.fileSize = fileSize;
     }
 
-    public FileUploadedPack(Data data) throws InvalidPackageException {
+    public FileUploadedPack(ByteData data) throws InvalidPackageException {
         super(DataPackType.FileUploaded);
         this.decode(data);
     }
 
     @Override
-    public Data encode(){
-        Data data = new Data();
+    public ByteData encode(){
+        ByteData data = new ByteData();
         data.append(super.encode());
-        data.append(new Data(sender));
-        data.append(new Data(stamp));
-        data.append(new Data(uuid));
-        data.append(new Data(fileName));
-        data.append(new Data(fileSize));
+        data.append(new ByteData(sender));
+        data.append(new ByteData(stamp));
+        data.append(new ByteData(fileId));
+        data.append(new ByteData(fileName));
+        data.append(new ByteData(fileSize));
         return data;
     }
 
     @Override
-    public void decode(Data data) throws InvalidPackageException {
+    public void decode(ByteData data) throws InvalidPackageException {
         super.decode(data);
-        sender = Data.decodeString(data);
-        stamp = Data.decodeLong(data);
-        uuid = Data.decodeUuid(data);
-        fileName = Data.decodeString(data);
-        fileSize = Data.decodeLong(data);
+        sender = ByteData.decodeString(data);
+        stamp = ByteData.decodeLong(data);
+        fileId = ByteData.decodeUuid(data);
+        fileName = ByteData.decodeString(data);
+        fileSize = ByteData.decodeLong(data);
     }
 
     public String getSender() {
@@ -56,8 +56,8 @@ public class FileUploadedPack extends DataPack{
         return stamp;
     }
 
-    public UUID getUuid() {
-        return uuid;
+    public UUID getFileId() {
+        return fileId;
     }
 
     public String getFileName() {

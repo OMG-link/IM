@@ -1,36 +1,32 @@
 package protocol.dataPack;
 
-import protocol.helper.data.Data;
+import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
 
 public abstract class DataPack {
     private int type;
 
-    public DataPack(){
-        this(DataPackType.Undefined);
-    }
-
     public DataPack(DataPackType type){
         this.setType(type);
     }
 
-    public static boolean canDecode(Data data){
+    public static boolean canDecode(ByteData data){
         try{
-            int length = Data.peekInt(data);
+            int length = ByteData.peekInt(data);
             return data.length()>=length+4;
         }catch(InvalidPackageException e){
             return false;
         }
     }
 
-    public Data encode(){
-        Data data = new Data();
-        data.append(new Data(type));
+    public ByteData encode(){
+        ByteData data = new ByteData();
+        data.append(new ByteData(type));
         return data;
     }
 
-    public void decode(Data data) throws InvalidPackageException {
-        this.type = Data.decodeInt(data);
+    public void decode(ByteData data) throws InvalidPackageException {
+        this.type = ByteData.decodeInt(data);
     }
 
     public DataPackType getType() {

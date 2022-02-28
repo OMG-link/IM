@@ -7,7 +7,10 @@ import java.util.UUID;
 public class UUIDManager {
     public Map<UUID, IUuidLocatable> map = new HashMap<>();
 
-    public void insert(IUuidLocatable uuidLocatable){
+    public void insert(IUuidLocatable uuidLocatable) throws UuidConflictException {
+        if(map.containsKey(uuidLocatable.getUuid())){
+            throw new UuidConflictException();
+        }
         map.put(uuidLocatable.getUuid(),uuidLocatable);
     }
 
@@ -16,9 +19,7 @@ public class UUIDManager {
     }
 
     public void remove(UUID uuid){
-        if(map.containsKey(uuid)){
-            map.remove(uuid);
-        }
+        map.remove(uuid);
     }
 
     public void remove(IUuidLocatable uuidLocatable){

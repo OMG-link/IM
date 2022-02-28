@@ -1,6 +1,6 @@
 package protocol.dataPack;
 
-import protocol.helper.data.Data;
+import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
 
 public class NameUpdatePack extends DataPack {
@@ -11,23 +11,23 @@ public class NameUpdatePack extends DataPack {
         this.userName = userName;
     }
 
-    public NameUpdatePack(Data data) throws InvalidPackageException {
+    public NameUpdatePack(ByteData data) throws InvalidPackageException {
         super(DataPackType.NameUpdate);
         this.decode(data);
     }
 
     @Override
-    public Data encode(){
-        Data data = new Data();
+    public ByteData encode(){
+        ByteData data = new ByteData();
         data.append(super.encode());
-        data.append(new Data(userName));
+        data.append(new ByteData(userName));
         return data;
     }
 
     @Override
-    public void decode(Data data) throws InvalidPackageException {
+    public void decode(ByteData data) throws InvalidPackageException {
         super.decode(data);
-        userName = Data.decodeString(data);
+        userName = ByteData.decodeString(data);
     }
 
     public String getUserName() {

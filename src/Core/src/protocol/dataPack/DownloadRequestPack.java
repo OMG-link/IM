@@ -1,38 +1,53 @@
 package protocol.dataPack;
 
-import protocol.helper.data.Data;
+import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
 
 import java.util.UUID;
 
 public class DownloadRequestPack extends DataPack{
-    private UUID uuid;
+    private UUID receiverTaskId,fileId;
+    private FileTransferType fileTransferType;
 
-    public DownloadRequestPack(UUID uuid){
+    public DownloadRequestPack(UUID receiverTaskId,UUID fileId, FileTransferType fileTransferType){
         super(DataPackType.FileDownloadRequest);
-        this.uuid = uuid;
+        this.receiverTaskId = receiverTaskId;
+        this.fileId = fileId;
+        this.fileTransferType = fileTransferType;
     }
 
-    public DownloadRequestPack(Data data) throws InvalidPackageException {
+    public DownloadRequestPack(ByteData data) throws InvalidPackageException {
         super(DataPackType.FileDownloadRequest);
         this.decode(data);
     }
 
     @Override
-    public Data encode(){
-        Data data = new Data();
-        data.append(super.encode());
-        data.append(new Data(uuid));
-        return data;
+    public ByteData encode(){
+        return new ByteData()
+                .append(super.encode())
+                .append(ByteData.encode(receiverTaskId))
+                .append(ByteData.encode(fileId))
+                .append(ByteData.encode(fileTransferType.toId()));
     }
 
     @Override
-    public void decode(Data data) throws InvalidPackageException {
+    public void decode(ByteData data) throws InvalidPackageException {
         super.decode(data);
-        uuid = Data.decodeUuid(data);
+        receiverTaskId = data.decodeUuid();
+        fileId = data.decodeUuid();
+        fileTransferType = FileTransferType.toType(data.decodeInt());
     }
 
-    public UUID getUuid() {
-        return uuid;
+    public UUID getReceiverTaskId() {
+        return receiverTaskId;
     }
+
+    public UUID getFileId() {
+        return fileId;
+    }
+
+    public FileTransferType getFileTransferType() {
+        return fileTransferType;
+    }
+
 }

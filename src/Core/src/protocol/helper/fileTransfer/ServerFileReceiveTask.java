@@ -3,20 +3,32 @@ package protocol.helper.fileTransfer;
 import IM.Server;
 import mutil.file.WriteOnlyFile;
 import mutil.uuidLocator.UUIDManager;
+import mutil.uuidLocator.UuidConflictException;
+import protocol.dataPack.DataPack;
+import protocol.dataPack.FileTransferType;
 import protocol.dataPack.FileUploadedPack;
+import protocol.helper.data.PackageTooLargeException;
 
-import java.util.UUID;
+import java.io.IOException;
+import java.nio.channels.SocketChannel;
 
-public class ServerFileReceiveTask extends FileReceiveTask{
+public class ServerFileReceiveTask extends FileReceiveTask {
     private final Server handler;
+    private final SocketChannel socketChannel;
     private final String fileName;
     private final String sender;
+    private final FileTransferType fileTransferType;
 
-    public ServerFileReceiveTask(Server handler,WriteOnlyFile file,UUID uuid, String sender,String fileName,long fileSize){
-        super(uuid, file, fileSize);
+    public ServerFileReceiveTask(Server handler, SocketChannel socketChannel, WriteOnlyFile file, String sender, String fileName, long fileSize, FileTransferType fileTransferType) throws UuidConflictException {
         this.handler = handler;
+        this.socketChannel = socketChannel;
+        super.init();
+
+        super.setFileSize(fileSize);
+        super.setWriteOnlyFile(file);
         this.fileName = fileName;
         this.sender = sender;
+        this.fileTransferType = fileTransferType;
     }
 
     @Override
@@ -25,15 +37,22 @@ public class ServerFileReceiveTask extends FileReceiveTask{
     }
 
     @Override
-    protected void onEndSuccess(){
-        FileUploadedPack pack = new FileUploadedPack(sender,uuid,fileName, fileSize);
-        handler.getNetworkHandler().broadcast(pack);
-        handler.getNetworkHandler().addRecord(pack.encode());
+    protected FileTransferType getFileTransferType() {
+        return fileTransferType;
     }
 
     @Override
-    protected void onEndFail(){
-        //do nothing
+    protected void send(DataPack dataPack) throws IOException, PackageTooLargeException {
+        handler.getNetworkHandler().send(socketChannel, dataPack);
+    }
+
+    @Override
+    protected void onEndSucceed() {
+        super.onEndSucceed();
+        if (fileTransferType == FileTransferType.ChatFile) {
+            FileUploadedPack pack = new FileUploadedPack(sender, file.getFileObject().getFileId(), fileName, fileSize);
+            handler.getNetworkHandler().broadcast(pack);
+        }
     }
 
 }

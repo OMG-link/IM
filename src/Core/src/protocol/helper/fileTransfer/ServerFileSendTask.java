@@ -3,11 +3,10 @@ package protocol.helper.fileTransfer;
 import IM.Server;
 import mutil.file.FileObject;
 import mutil.uuidLocator.UUIDManager;
-import mutil.uuidLocator.UuidConflictException;
 import protocol.dataPack.DataPack;
-import protocol.dataPack.UploadRequestPack;
+import protocol.dataPack.FileTransferType;
+import protocol.helper.data.PackageTooLargeException;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
@@ -18,22 +17,34 @@ public class ServerFileSendTask extends FileSendTask{
     private final SocketChannel socketChannel;
     private final FileObject fileObject;
     private final String fileName;
+    private final FileTransferType fileTransferType;
+    private final UUID fileId;
 
-    public ServerFileSendTask(Server handler,SocketChannel socketChannel,UUID uuid) throws FileNotFoundException {
+    public ServerFileSendTask(Server handler,SocketChannel socketChannel,UUID fileId,FileTransferType fileTransferType) throws FileNotFoundException {
         this.handler = handler;
+        super.init();
+
         this.socketChannel = socketChannel;
-        this.fileObject = handler.getFileManager().openFile(uuid);
-        this.fileName = handler.getFileManager().getFileName(uuid);
+        this.fileObject = handler.getFileManager().getFile(fileId);
+        this.fileName = handler.getFileManager().getFileName(fileId);
+        this.fileTransferType = fileTransferType;
+        this.fileId = fileId;
+
     }
 
     @Override
-    protected void sendUploadRequestPack() throws IOException {
-        UploadRequestPack pack = new UploadRequestPack(
-                fileName,
-                getFileObject().getFile().length(),
-                uuid
-        );
-        this.send(pack);
+    protected UUID getFileId() {
+        return fileId;
+    }
+
+    @Override
+    protected String getFileName() {
+        return fileName;
+    }
+
+    @Override
+    protected FileTransferType getFileTransferType() {
+        return fileTransferType;
     }
 
     @Override
@@ -42,7 +53,7 @@ public class ServerFileSendTask extends FileSendTask{
     }
 
     @Override
-    protected void send(DataPack dataPack) throws IOException {
+    protected void send(DataPack dataPack) throws IOException, PackageTooLargeException {
         handler.getNetworkHandler().send(socketChannel,dataPack);
     }
 

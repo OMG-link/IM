@@ -6,8 +6,9 @@ import mutil.file.WriteOnlyFile;
 import mutil.uuidLocator.UuidConflictException;
 import protocol.dataPack.*;
 import protocol.helper.Attachment;
-import protocol.helper.data.Data;
+import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
+import protocol.helper.data.PackageTooLargeException;
 import protocol.helper.fileTransfer.FileReceiveTask;
 import protocol.helper.fileTransfer.FileSendTask;
 import protocol.helper.fileTransfer.ServerFileReceiveTask;
@@ -33,7 +34,7 @@ public class ServerNetworkHandler implements Runnable {
     private ServerSocketChannel socketChannel;
     private Selector selector;
 
-    private final Queue<Data> records = new LinkedList<>();
+    private final Queue<ByteData> records = new LinkedList<>();
     private final Set<SelectionKey> selectionKeyList = new HashSet<>();
 
     public ServerNetworkHandler(Server handler) {
@@ -105,7 +106,8 @@ public class ServerNetworkHandler implements Runnable {
             try {
                 SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
                 socketChannel.close();
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
             selectionKeyList.remove(selectionKey);
             this.broadcastUserList();
         }
@@ -123,7 +125,7 @@ public class ServerNetworkHandler implements Runnable {
 
     }
 
-    private void handleRead(SelectionKey selectionKey) throws IOException,InvalidPackageException {
+    private void handleRead(SelectionKey selectionKey) throws IOException, InvalidPackageException {
         SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
         Attachment attachment = (Attachment) selectionKey.attachment();
 
@@ -131,8 +133,8 @@ public class ServerNetworkHandler implements Runnable {
         attachment.lastPackageTime = System.currentTimeMillis();
 
         //Receive data
-        Data data = attachment.data;
-        Data tData = new Data();
+        ByteData data = attachment.data;
+        ByteData tData = new ByteData();
         ByteBuffer byteBuffer = ByteBuffer.allocate(10 * 1024); //10KB
 
         int length = socketChannel.read(byteBuffer);
@@ -143,29 +145,31 @@ public class ServerNetworkHandler implements Runnable {
         data.append(tData);
 
         //Avoid large package buffer
-        if(data.length()>=4){
-            int packageLength = Data.peekInt(data);
-            if(packageLength > Config.packageMaxLength)
+        if (data.length() >= 4) {
+            int packageLength = ByteData.peekInt(data);
+            if (packageLength > Config.packageMaxLength) {
                 throw new InvalidPackageException();
+            }
         }
 
         //Process data
         while (DataPack.canDecode(data)) {
-            int packageLength = Data.decodeInt(data);
-            if(packageLength>Config.packageMaxLength)
+            int packageLength = ByteData.decodeInt(data);
+            if (packageLength > Config.packageMaxLength) {
                 throw new InvalidPackageException();
+            }
             handlePacket(selectionKey, data);
         }
 
     }
 
-    private void handlePacket(SelectionKey selectionKey, Data data) throws IOException,InvalidPackageException {
+    private void handlePacket(SelectionKey selectionKey, ByteData data) throws IOException, InvalidPackageException {
         SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
         Attachment attachment = (Attachment) selectionKey.attachment();
 
         DataPackType type;
         try {
-            type = DataPackType.toType(Data.peekInt(data));
+            type = DataPackType.toType(ByteData.peekInt(data));
         } catch (InvalidParameterException e) {
             throw new InvalidPackageException();
         }
@@ -175,34 +179,28 @@ public class ServerNetworkHandler implements Runnable {
                 TextPack textPack = new TextPack(data);
                 textPack.setStamp();
 
-                Data newData = textPack.encode();
-                addRecord(newData);
+                ByteData newData = textPack.encode();
                 broadcast(newData);
                 break;
             }
             case NameUpdate: {
                 NameUpdatePack nameUpdatePack = new NameUpdatePack(data);
-                if(nameUpdatePack.getUserName().length()>=Config.nickMaxLength) return;
+                if (nameUpdatePack.getUserName().length() >= Config.nickMaxLength) return;
                 attachment.userName = nameUpdatePack.getUserName();
                 this.broadcastUserList();
                 break;
             }
             case FileUploadRequest: {
                 UploadRequestPack requestPack = new UploadRequestPack(data);
-                UploadReplyPack replyPack;
+                boolean ok;
+                String desc;
+                UUID receiverTaskId = new UUID(0,0);
                 if (requestPack.getFileSize() > Config.fileMaxSize) {
-                    replyPack = new UploadReplyPack(
-                            requestPack.getUuid(),
-                            false,
-                            "File too large!"
-                    );
+                    ok = false;
+                    desc = "File too large!";
                 } else {
                     try {
-                        WriteOnlyFile file = handler.getFileManager().createFile(
-                                requestPack.getUuid(),
-                                requestPack.getFileName(),
-                                requestPack.getFileSize()
-                        ).getWriteOnlyInstance();
+                        WriteOnlyFile file = handler.getFileManager().createFile(requestPack.getFileName()).getWriteOnlyInstance();
                         /*
                          * Here is a hidden danger that the client may create lots of upload requests without finishing
                          * it, which may causes memory limit exceed and crashes the program.
@@ -210,32 +208,38 @@ public class ServerNetworkHandler implements Runnable {
                          */
                         ServerFileReceiveTask task = new ServerFileReceiveTask(
                                 handler,
+                                socketChannel,
                                 file,
-                                requestPack.getUuid(),
                                 attachment.userName,
                                 requestPack.getFileName(),
-                                requestPack.getFileSize()
+                                requestPack.getFileSize(),
+                                requestPack.getFileTransferType()
                         );
-                        task.start();
-                        replyPack = new UploadReplyPack(
-                                requestPack.getUuid(),
-                                true,
-                                ""
-                        );
+                        task.setSenderTaskId(requestPack.getSenderTaskId());
+                        receiverTaskId = task.getUuid();
+                        ok = true;
+                        desc = "";
                     } catch (UuidConflictException e) {
-                        replyPack = new UploadReplyPack(
-                                requestPack.getUuid(),
-                                false,
-                                "Unexpected UUID conflict."
-                        );
+                        ok = false;
+                        desc = "Unexpected UUID conflict.";
                     }
                 }
-                this.send(socketChannel, replyPack);
+                try{
+                    this.send(socketChannel, new UploadReplyPack(
+                            requestPack.getSenderTaskId(),
+                            receiverTaskId,
+                            ok,
+                            desc,
+                            requestPack.getFileTransferType()
+                    ));
+                }catch (PackageTooLargeException e){
+                    throw new RuntimeException(e);
+                }
                 break;
             }
             case FileContent: {
                 FileContentPack fileContentPack = new FileContentPack(data);
-                Object o = handler.getUuidManager().get(fileContentPack.getUuid());
+                Object o = handler.getUuidManager().get(fileContentPack.getReceiverTaskId());
                 if (o instanceof FileReceiveTask) {
                     FileReceiveTask task = (FileReceiveTask) o;
                     try {
@@ -252,21 +256,58 @@ public class ServerNetworkHandler implements Runnable {
             }
             case FileDownloadRequest: {
                 DownloadRequestPack pack = new DownloadRequestPack(data);
+                boolean ok;
+                String reason;
                 try {
-                    ServerFileSendTask task = new ServerFileSendTask(handler, socketChannel, pack.getUuid());
+                    ServerFileSendTask task = new ServerFileSendTask(handler, socketChannel, pack.getFileId(), pack.getFileTransferType());
+                    task.setReceiverTaskId(pack.getReceiverTaskId());
                     task.start();
+                    ok = true;
+                    reason = "";
                 } catch (FileNotFoundException e) {
-                    //do nothing
+                    ok = false;
+                    reason = String.format("No such file.{UUID=%s}.",pack.getFileId());
+                }
+                try{
+                    this.send(socketChannel,new DownloadReplyPack(
+                            pack.getReceiverTaskId(),
+                            ok,
+                            reason,
+                            pack.getFileTransferType()
+                    ));
+                }catch (PackageTooLargeException e){
+                    throw new RuntimeException(e);
                 }
                 break;
             }
             case FileUploadReply: {
                 UploadReplyPack pack = new UploadReplyPack(data);
-                FileSendTask task = (FileSendTask) this.handler.getUuidManager().get(pack.getUuid());
-                task.onReceiveUploadReply(pack.isOk(), pack.getDesc());
+                Object o = this.handler.getUuidManager().get(pack.getSenderTaskId());
+                if(o instanceof FileSendTask){
+                    FileSendTask task = (FileSendTask) o;
+                    task.onReceiveUploadReply(pack.isOk(), pack.getDesc());
+                }
                 break;
             }
-            case Ping:{
+            case FileUploadResult: {
+                UploadResultPack pack = new UploadResultPack(data);
+                Object o = this.handler.getUuidManager().get(pack.getSenderTaskId());
+                if(o instanceof FileSendTask){
+                    FileSendTask task = (FileSendTask) o;
+                    if(pack.isOk()){
+                        task.onEndSucceed();
+                    }else{
+                        task.onEndFailed(pack.getReason());
+                    }
+                }
+                break;
+            }
+            case ChatImage:{
+                ChatImagePack pack = new ChatImagePack(data);
+                broadcast(pack);
+                break;
+            }
+            case Ping: {
                 PingPack pack = new PingPack(data);
                 break;
             }
@@ -278,27 +319,31 @@ public class ServerNetworkHandler implements Runnable {
 
     }
 
-    public void send(SocketChannel socketChannel, DataPack dataPack) throws IOException {
+    public void send(SocketChannel socketChannel, DataPack dataPack) throws IOException, PackageTooLargeException {
         send(socketChannel, dataPack.encode());
     }
 
-    private void send(SocketChannel socketChannel, Data data) throws IOException {
-        Data rawData = new Data();
-        rawData.append(new Data(data.length()));
+    private void send(SocketChannel socketChannel, ByteData data) throws IOException, PackageTooLargeException {
+        if(data.getData().length>Config.packageMaxLength){
+            throw new PackageTooLargeException();
+        }
+
+        ByteData rawData = new ByteData();
+        rawData.append(new ByteData(data.length()));
         rawData.append(data);
 
         ByteBuffer buffer = ByteBuffer.wrap(rawData.getData());
         buffer.position(rawData.length());
         buffer.flip();
 
-        synchronized (socketChannel){
+        synchronized (socketChannel) {
             while (buffer.hasRemaining()) {
                 socketChannel.write(buffer);
             }
         }
     }
 
-    public void addRecord(Data data) {
+    public void addRecord(ByteData data) {
         records.offer(data);
         if (records.size() > Config.recordsMaxLength) {
             records.poll();
@@ -306,12 +351,21 @@ public class ServerNetworkHandler implements Runnable {
     }
 
     private void sendHistory(SocketChannel channel) throws IOException {
-        for (Data data : records) {
-            send(channel, data);
+        for (ByteData data : records) {
+            try{
+                send(channel, data);
+            }catch (PackageTooLargeException e){
+                throw new RuntimeException(e);
+            }
         }
     }
 
-    private void broadcast(Data data) {
+    private void broadcast(ByteData data) {
+        if(data.getData().length>Config.packageMaxLength){
+            Logger.getLogger("Server").log(Level.WARNING,"Package too large! It will not be broadcast.");
+            return;
+        }
+        addRecord(data);
         Iterator<SelectionKey> iterator = selectionKeyList.iterator();
         while (iterator.hasNext()) {
             SelectionKey selectionKey = iterator.next();
@@ -319,6 +373,9 @@ public class ServerNetworkHandler implements Runnable {
                 send((SocketChannel) selectionKey.channel(), data);
             } catch (IOException e) {
                 iterator.remove();
+            } catch (PackageTooLargeException e){
+                //This should have been checked before.
+                throw new RuntimeException(e);
             }
         }
     }
@@ -329,7 +386,11 @@ public class ServerNetworkHandler implements Runnable {
 
     private void checkVersion(SocketChannel channel) throws IOException {
         CheckVersionPack pack = new CheckVersionPack();
-        send(channel, pack);
+        try{
+            send(channel, pack);
+        }catch (PackageTooLargeException e){
+            throw new RuntimeException(e);
+        }
     }
 
     private void broadcastUserList() {

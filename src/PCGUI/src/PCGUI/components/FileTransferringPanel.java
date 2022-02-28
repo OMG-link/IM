@@ -2,17 +2,18 @@ package PCGUI.components;
 
 import GUI.IFileTransferringPanel;
 import PCGUI.helper.PanelUtil;
+import mutil.IStringGetter;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class FileTransferringPanel extends JPanel implements IFileTransferringPanel {
     private final JTextArea infoArea;
-    private final String fileName;
+    private final IStringGetter fileNameGetter;
 
-    public FileTransferringPanel(String fileName){
+    public FileTransferringPanel(IStringGetter fileNameGetter){
         super();
-        this.fileName = fileName;
+        this.fileNameGetter = fileNameGetter;
         this.infoArea = PanelUtil.makeTextArea(
                 Color.BLACK,
                 12,
@@ -27,7 +28,7 @@ public class FileTransferringPanel extends JPanel implements IFileTransferringPa
     }
 
     public void setProgress(double progress){
-        setInfo(String.format("Transferring: %s (%.2f%%)",fileName,progress*100));
+        setInfo(String.format("Transferring: %s (%.2f%%)",fileNameGetter.getString(),progress*100));
     }
 
     public void setInfo(String info){

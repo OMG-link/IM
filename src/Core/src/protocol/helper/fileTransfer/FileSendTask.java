@@ -2,19 +2,36 @@ package protocol.helper.fileTransfer;
 
 import mutil.file.FileObject;
 import mutil.file.ReadOnlyFile;
-import protocol.dataPack.FileContentPack;
-import protocol.dataPack.UploadRequestPack;
-import protocol.dataPack.DataPack;
 import mutil.uuidLocator.IUuidLocatable;
+import mutil.uuidLocator.UuidConflictException;
+import protocol.dataPack.DataPack;
+import protocol.dataPack.FileContentPack;
+import protocol.dataPack.FileTransferType;
+import protocol.dataPack.UploadRequestPack;
+import protocol.helper.data.PackageTooLargeException;
 
 import java.io.IOException;
 import java.util.UUID;
 
 public abstract class FileSendTask implements IUuidLocatable, Runnable {
-    protected final UUID uuid = UUID.randomUUID();
+    /**
+     * This uuid is generated randomly.
+     */
+    protected UUID senderTaskId;
+    protected UUID receiverTaskId = null;
+
+    void init(){
+        while(true){
+            try{
+                senderTaskId = UUID.randomUUID();
+                onCreate();
+                break;
+            }catch (UuidConflictException ignored){ //try again
+            }
+        }
+    }
 
     public void start(){
-        this.onCreate();
         try{
             this.sendUploadRequestPack();
         }catch (IOException e){
@@ -22,18 +39,13 @@ public abstract class FileSendTask implements IUuidLocatable, Runnable {
         }
     }
 
-    private void end(){
-        if(this instanceof ClientFileSendTask){
-            ClientFileSendTask task = (ClientFileSendTask) this;
-            task.getPanel().setVisible(false);
-        }
+    protected void end(){
         this.end("Ended.");
     }
 
     private void end(String reason){
         this.showInfo("Upload task ended: "+reason);
         this.onEnd();
-        this.onDelete();
     }
 
     protected void onEnd(){
@@ -44,29 +56,49 @@ public abstract class FileSendTask implements IUuidLocatable, Runnable {
         }
     }
 
+    public void onEndSucceed(){
+        this.onDelete();
+    }
+    public void onEndFailed(String reason){
+        this.onDelete();
+    }
+
+    abstract protected UUID getFileId();
+    abstract protected String getFileName();
+    abstract protected FileTransferType getFileTransferType();
     abstract protected FileObject getFileObject();
-    abstract void send(DataPack dataPack) throws IOException ;
+    abstract void send(DataPack dataPack) throws IOException, PackageTooLargeException;
 
     protected void showInfo(String info){}
     protected void setUploadProgress(double progress){}
 
     protected void sendUploadRequestPack() throws IOException {
         UploadRequestPack pack = new UploadRequestPack(
-                getFileObject().getFile().getName(),
+                getFileName(),
                 getFileObject().getFile().length(),
-                uuid
+                getSenderTaskId(),
+                getReceiverTaskId(),
+                getFileTransferType()
         );
-        this.send(pack);
+        try{
+            this.send(pack);
+        }catch (PackageTooLargeException e){
+            throw new RuntimeException(e);
+        }
     }
 
     private void sendUploadFinishPack() throws IOException {
-        FileContentPack pack = new FileContentPack(uuid,-1,new byte[0],0);
-        this.send(pack);
+        FileContentPack pack = new FileContentPack(getReceiverTaskId(),-1,new byte[0],0);
+        try{
+            this.send(pack);
+        }catch (PackageTooLargeException e){
+            throw new RuntimeException(e);
+        }
     }
 
     public void onReceiveUploadReply(boolean result, String desc){
         if(result){
-            Thread thread = new Thread(this,String.format("File Upload Task(%s)", uuid));
+            Thread thread = new Thread(this,String.format("File Upload Task(%s)", getSenderTaskId()));
             thread.start();
         }else{
             this.end("Upload request was rejected: "+desc);
@@ -80,8 +112,12 @@ public abstract class FileSendTask implements IUuidLocatable, Runnable {
             while(true){
                 int length = file.read(buffer);
                 if(length==-1) break;
-                FileContentPack pack = new FileContentPack(uuid,offset,buffer,length);
-                this.send(pack);
+                FileContentPack pack = new FileContentPack(getReceiverTaskId(),offset,buffer,length);
+                try{
+                    this.send(pack);
+                }catch (PackageTooLargeException e){
+                    throw new RuntimeException(e);
+                }
                 offset += length;
                 this.setUploadProgress((double)offset/file.length());
             }
@@ -90,7 +126,7 @@ public abstract class FileSendTask implements IUuidLocatable, Runnable {
 
     @Override
     public UUID getUuid(){
-        return uuid;
+        return getSenderTaskId();
     }
 
     @Override
@@ -103,4 +139,20 @@ public abstract class FileSendTask implements IUuidLocatable, Runnable {
             this.end();
         }
     }
+
+    public UUID getSenderTaskId() {
+        return senderTaskId;
+    }
+
+    public void setReceiverTaskId(UUID receiverTaskId) {
+        this.receiverTaskId = receiverTaskId;
+    }
+
+    public UUID getReceiverTaskId() {
+        if(receiverTaskId==null){
+            throw new RuntimeException("Receiver task id is not set yet!");
+        }
+        return receiverTaskId;
+    }
+
 }

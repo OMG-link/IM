@@ -1,7 +1,7 @@
 package protocol.dataPack;
 
 import IM.Config;
-import protocol.helper.data.Data;
+import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
 
 public class TextPack extends DataPack {
@@ -16,27 +16,27 @@ public class TextPack extends DataPack {
         this.text = text;
     }
 
-    public TextPack(Data data) throws InvalidPackageException {
+    public TextPack(ByteData data) throws InvalidPackageException {
         super(DataPackType.Text);
         this.decode(data);
     }
 
     @Override
-    public Data encode(){
-        Data data = new Data();
+    public ByteData encode(){
+        ByteData data = new ByteData();
         data.append(super.encode());
-        data.append(new Data(sender));
-        data.append(new Data(stamp));
-        data.append(Data.encodeString(text));
+        data.append(new ByteData(sender));
+        data.append(new ByteData(stamp));
+        data.append(ByteData.encode(text));
         return data;
     }
 
     @Override
-    public void decode(Data data) throws InvalidPackageException {
+    public void decode(ByteData data) throws InvalidPackageException {
         super.decode(data);
-        sender = Data.decodeString(data);
-        stamp = Data.decodeLong(data);
-        text = Data.decodeString(data);
+        sender = ByteData.decodeString(data);
+        stamp = ByteData.decodeLong(data);
+        text = ByteData.decodeString(data);
     }
 
     public String getText() {

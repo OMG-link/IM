@@ -1,47 +1,57 @@
 package protocol.dataPack;
 
-import protocol.helper.data.Data;
+import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
 
 import java.util.UUID;
 
 public class UploadReplyPack extends DataPack {
-    private UUID uuid;
+    private UUID senderTaskId, receiverTaskId;
     private boolean ok;
     private String desc;
+    private FileTransferType fileTransferType;
 
-    public UploadReplyPack(Data data) throws InvalidPackageException {
+    public UploadReplyPack(ByteData data) throws InvalidPackageException {
         super(DataPackType.FileUploadReply);
         this.decode(data);
     }
 
-    public UploadReplyPack(UUID uuid, boolean ok, String desc){
+    public UploadReplyPack(UUID senderTaskId, UUID receiverTaskId, boolean ok, String desc, FileTransferType fileTransferType) {
         super(DataPackType.FileUploadReply);
-        this.uuid = uuid;
+        this.senderTaskId = senderTaskId;
+        this.receiverTaskId = receiverTaskId;
         this.ok = ok;
         this.desc = desc;
+        this.fileTransferType = fileTransferType;
     }
 
     @Override
-    public Data encode() {
-        Data data = new Data();
-        data.append(super.encode());
-        data.append(new Data(uuid));
-        data.append(new Data(ok));
-        data.append(new Data(desc));
-        return data;
+    public ByteData encode() {
+        return new ByteData()
+                .append(super.encode())
+                .append(ByteData.encode(senderTaskId))
+                .append(ByteData.encode(receiverTaskId))
+                .append(ByteData.encode(ok))
+                .append(ByteData.encode(desc))
+                .append(ByteData.encode(fileTransferType.toId()));
     }
 
     @Override
-    public void decode(Data data) throws InvalidPackageException {
+    public void decode(ByteData data) throws InvalidPackageException {
         super.decode(data);
-        this.uuid = Data.decodeUuid(data);
-        this.ok = Data.decodeBoolean(data);
-        this.desc = Data.decodeString(data);
+        this.senderTaskId = data.decodeUuid();
+        this.receiverTaskId = data.decodeUuid();
+        this.ok = data.decodeBoolean();
+        this.desc = data.decodeString();
+        this.fileTransferType = FileTransferType.toType(data.decodeInt());
     }
 
-    public UUID getUuid() {
-        return uuid;
+    public UUID getSenderTaskId() {
+        return senderTaskId;
+    }
+
+    public UUID getReceiverTaskId() {
+        return receiverTaskId;
     }
 
     public boolean isOk() {

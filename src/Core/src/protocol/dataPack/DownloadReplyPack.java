@@ -1,37 +1,51 @@
 package protocol.dataPack;
 
-import protocol.helper.data.Data;
+import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
 
+import java.util.UUID;
+
 public class DownloadReplyPack extends DataPack{
+    private UUID receiverTaskId;
     private boolean ok;
     private String reason;
+    private FileTransferType fileTransferType;
 
-    public DownloadReplyPack(boolean ok,String reason){
+    public DownloadReplyPack(UUID receiverTaskId,boolean ok,String reason,FileTransferType fileTransferType){
         super(DataPackType.FileDownloadReply);
+        this.receiverTaskId = receiverTaskId;
         this.ok = ok;
         this.reason = reason;
+        this.fileTransferType = fileTransferType;
     }
 
-    public DownloadReplyPack(Data data) throws InvalidPackageException {
+    public DownloadReplyPack(ByteData data) throws InvalidPackageException {
         super(DataPackType.FileDownloadReply);
         this.decode(data);
     }
 
     @Override
-    public Data encode(){
-        Data data = new Data();
+    public ByteData encode(){
+        ByteData data = new ByteData();
         data.append(super.encode());
-        data.append(new Data(ok));
-        data.append(new Data(reason));
+        data.append(ByteData.encode(receiverTaskId));
+        data.append(new ByteData(ok));
+        data.append(new ByteData(reason));
+        data.append(new ByteData(fileTransferType.toId()));
         return data;
     }
 
     @Override
-    public void decode(Data data) throws InvalidPackageException {
+    public void decode(ByteData data) throws InvalidPackageException {
         super.decode(data);
-        this.ok = Data.decodeBoolean(data);
-        this.reason = Data.decodeString(data);
+        this.receiverTaskId = data.decodeUuid();
+        this.ok = data.decodeBoolean();
+        this.reason = data.decodeString();
+        this.fileTransferType = FileTransferType.toType(data.decodeInt());
+    }
+
+    public UUID getReceiverTaskId() {
+        return receiverTaskId;
     }
 
     public boolean isOk() {
@@ -42,4 +56,7 @@ public class DownloadReplyPack extends DataPack{
         return reason;
     }
 
+    public FileTransferType getFileTransferType() {
+        return fileTransferType;
+    }
 }

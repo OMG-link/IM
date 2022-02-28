@@ -54,7 +54,7 @@ public class WriteOnlyFile implements AutoCloseable {
 
     public void close(){
         if(!isActive){
-            Logger.getGlobal().log(Level.WARNING,"Write only file closed twice.");
+            Logger.getLogger("IMCore").log(Level.WARNING,"Write only file closed twice.");
             return;
         }
         try{this.file.close();}catch (IOException ignored){}

@@ -20,7 +20,8 @@ public class Server {
             this.uuidManager = new UUIDManager();
             this.fileManager = new ServerFileManager();
         }catch (Exception e){
-            Logger.getGlobal().log(Level.SEVERE,"Unable to create server instance: "+e);
+            Logger.getGlobal().log(Level.SEVERE,"Unable to create server instance.");
+            e.printStackTrace();
             System.exit(0);
         }
     }

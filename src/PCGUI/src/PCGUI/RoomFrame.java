@@ -5,6 +5,10 @@ import GUI.IRoomFrame;
 import IM.Client;
 import IM.Config;
 import PCGUI.components.*;
+import mutil.IStringGetter;
+import protocol.dataPack.FileTransferType;
+import protocol.dataPack.ImageType;
+import protocol.helper.fileTransfer.IDownloadCallback;
 
 import javax.swing.*;
 import java.awt.*;
@@ -115,7 +119,7 @@ public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
                 File[] files = fileChooser.getSelectedFiles();
                 for(File file:files){
                     try{
-                        handler.uploadFile(file);
+                        handler.uploadFile(file, FileTransferType.ChatFile);
                     }catch (FileNotFoundException ignored){}
                 }
             }
@@ -124,9 +128,7 @@ public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
 
         //Send Button
         JButton sendButton = new JButton("Send Chat");
-        sendButton.addActionListener((event)->{
-            this.onInputFinish();
-        });
+        sendButton.addActionListener((event)-> this.onInputFinish());
         component.add(sendButton);
 
 //        //Debug Button
@@ -140,14 +142,24 @@ public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
 
     }
 
+    @Override
     public void clearMessageArea(){
         this.messageArea.clearMessageArea();
     }
 
+    @Override
     public void onMessageReceive(String sender, long stamp, String text) {
         this.messageArea.add(new TextPanel(stamp, sender, text));
     }
 
+    @Override
+    public IDownloadCallback onChatImageReceive(String sender, long stamp, UUID imageUUID, ImageType imageType) {
+        var panel = new ChatImagePanel(handler,sender,stamp,imageUUID,imageType);
+        this.messageArea.add(panel);
+        return panel.getDownloadCallback();
+    }
+
+    @Override
     public void onUserListUpdate(String[] userList) {
         StringBuilder text = new StringBuilder();
         for (String s : userList) {
@@ -156,12 +168,14 @@ public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
         this.userListArea.setText(text.toString());
     }
 
+    @Override
     public void onFileUploadedReceive(String sender, long stamp, UUID uuid, String fileName, long fileSize) {
         this.messageArea.add(new FilePanel(handler, sender, stamp, uuid, fileName, fileSize));
     }
 
-    public IFileTransferringPanel addFileTransferringPanel(String fileName) {
-        FileTransferringPanel panel = new FileTransferringPanel(fileName);
+    @Override
+    public IFileTransferringPanel addFileTransferringPanel(IStringGetter fileNameGetter) {
+        FileTransferringPanel panel = new FileTransferringPanel(fileNameGetter);
         this.messageArea.add(panel);
         return panel;
     }

@@ -1,7 +1,11 @@
 package PCGUI.components;
 
+import GUI.IConfirmDialogCallback;
 import IM.Client;
 import PCGUI.RoomFrame;
+import mutil.ImageUtil;
+import protocol.dataPack.FileTransferType;
+import protocol.dataPack.ImageType;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -33,7 +37,32 @@ public class ChatInputArea extends InputArea implements DropTargetListener {
                 java.util.List<File> fileList = (java.util.List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                 for (File file : fileList) {
                     try {
-                        handler.uploadFile(file);
+                        if(ImageUtil.isImageFile(file)){
+                            isPasteSuppressed = false; //The checkbox will block the key up message.
+                            handler.showCheckBox(
+                                    "Would you like to send this file as an image?",
+                                    new IConfirmDialogCallback() {
+                                        @Override
+                                        public void onPositiveInput() {
+                                            try{
+                                                handler.sendChatImage(file, ImageType.PNG);
+                                            }catch (FileNotFoundException e){
+                                                handler.showInfo("File not found.");
+                                            }
+                                        }
+                                        @Override
+                                        public void onNegativeInput() {
+                                            try{
+                                                handler.uploadFile(file, FileTransferType.ChatFile);
+                                            }catch (FileNotFoundException e){
+                                                handler.showInfo("File not found.");
+                                            }
+                                        }
+                                    }
+                            );
+                        }else{
+                            handler.uploadFile(file, FileTransferType.ChatFile);
+                        }
                     } catch (FileNotFoundException ignored) {
                     }
                 }

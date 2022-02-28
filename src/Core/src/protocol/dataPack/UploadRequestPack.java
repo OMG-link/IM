@@ -1,43 +1,50 @@
 package protocol.dataPack;
 
-import protocol.helper.data.Data;
+import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
 
 import java.util.UUID;
 
 public class UploadRequestPack extends DataPack {
-    private UUID uuid;
+    private UUID senderTaskId,receiverTaskId;
     private String fileName;
     private long fileSize;
+    private FileTransferType fileTransferType;
 
-    public UploadRequestPack(Data data) throws InvalidPackageException {
+    public UploadRequestPack(ByteData data) throws InvalidPackageException {
         super(DataPackType.FileUploadRequest);
         this.decode(data);
     }
 
-    public UploadRequestPack(String fileName,long fileSize, UUID uuid){
+    public UploadRequestPack(String fileName, long fileSize, UUID senderTaskId, UUID receiverTaskId,FileTransferType fileTransferType){
         super(DataPackType.FileUploadRequest);
-        this.uuid = uuid;
+        this.senderTaskId = senderTaskId;
+        this.receiverTaskId = receiverTaskId;
         this.fileName = fileName;
         this.fileSize = fileSize;
+        this.fileTransferType = fileTransferType;
     }
 
     @Override
-    public Data encode(){
-        Data data = new Data();
+    public ByteData encode(){
+        ByteData data = new ByteData();
         data.append(super.encode());
-        data.append(new Data(this.uuid));
-        data.append(new Data(this.fileName));
-        data.append(new Data(this.fileSize));
+        data.append(ByteData.encode(senderTaskId));
+        data.append(ByteData.encode(receiverTaskId));
+        data.append(new ByteData(this.fileName));
+        data.append(new ByteData(this.fileSize));
+        data.append(new ByteData(this.fileTransferType.toId()));
         return data;
     }
 
     @Override
-    public void decode(Data data) throws InvalidPackageException {
+    public void decode(ByteData data) throws InvalidPackageException {
         super.decode(data);
-        this.uuid = Data.decodeUuid(data);
-        this.fileName = Data.decodeString(data);
-        this.fileSize = Data.decodeLong(data);
+        this.senderTaskId = data.decodeUuid();
+        this.receiverTaskId = data.decodeUuid();
+        this.fileName = data.decodeString();
+        this.fileSize = data.decodeLong();
+        this.fileTransferType = FileTransferType.toType(data.decodeInt());
     }
 
     public long getFileSize() {
@@ -48,8 +55,16 @@ public class UploadRequestPack extends DataPack {
         return fileName;
     }
 
-    public UUID getUuid() {
-        return uuid;
+    public UUID getSenderTaskId() {
+        return senderTaskId;
+    }
+
+    public UUID getReceiverTaskId() {
+        return receiverTaskId;
+    }
+
+    public FileTransferType getFileTransferType() {
+        return fileTransferType;
     }
 
 }

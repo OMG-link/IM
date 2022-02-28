@@ -8,7 +8,8 @@ import java.security.InvalidParameterException;
 import java.util.Scanner;
 
 public class Config {
-    public static final String version = "1.2.6 beta";
+    public static final String version = "1.3.0 beta";
+    public static final String compatibleVersion = "1.3";
 
     private static String serverIP = "127.0.0.1";
     private static int serverPort = 8814;
@@ -23,7 +24,7 @@ public class Config {
 
     private static String runtimeDir = "";
 
-    private static String cacheDir = "";
+    private static String cacheDir = toDirName("IMCache");
 
     private static String getConfigFileName(){
         return Config.getRuntimeDir()+"config.txt";
@@ -39,7 +40,7 @@ public class Config {
                 int pos = s.indexOf('=');
                 if(pos==-1) continue;
                 String name = s.substring(0,pos);
-                String value = s.substring(pos+1,s.length());
+                String value = s.substring(pos+1);
                 try{
                     switch (name){
                         case "username":{
@@ -128,21 +129,21 @@ public class Config {
         Config.username = username;
     }
 
-    private static String toDirName(String runtimeDir){
-        if(runtimeDir.length()!=0){
+    private static String toDirName(String dirName){
+        if(dirName.length()!=0){
             if(System.getProperty("os.name").toUpperCase().contains("WINDOWS")){
-                runtimeDir = runtimeDir.replace('/','\\');
-                if(runtimeDir.charAt(runtimeDir.length()-1)!='\\'){
-                    runtimeDir += '\\';
+                dirName = dirName.replace('/','\\');
+                if(dirName.charAt(dirName.length()-1)!='\\'){
+                    dirName += '\\';
                 }
             }else{
-                runtimeDir = runtimeDir.replace('\\','/');
-                if(runtimeDir.charAt(runtimeDir.length()-1)!='/'){
-                    runtimeDir += '/';
+                dirName = dirName.replace('\\','/');
+                if(dirName.charAt(dirName.length()-1)!='/'){
+                    dirName += '/';
                 }
             }
         }
-        return runtimeDir;
+        return dirName;
     }
 
     public static String getRuntimeDir() {
