@@ -6,17 +6,20 @@ import protocol.helper.data.InvalidPackageException;
 import java.util.UUID;
 
 public class DownloadReplyPack extends DataPack{
-    private UUID receiverTaskId;
+    private UUID senderTaskId,receiverTaskId,senderFileId,receiverFileId;
     private boolean ok;
     private String reason;
     private FileTransferType fileTransferType;
 
-    public DownloadReplyPack(UUID receiverTaskId,boolean ok,String reason,FileTransferType fileTransferType){
+    public DownloadReplyPack(DownloadRequestPack requestPack,UUID senderTaskId,boolean ok,String reason){
         super(DataPackType.FileDownloadReply);
-        this.receiverTaskId = receiverTaskId;
+        this.senderTaskId = senderTaskId;
+        this.receiverTaskId = requestPack.getReceiverTaskId();
+        this.senderFileId = requestPack.getSenderFileId();
+        this.receiverFileId = requestPack.getReceiverFileId();
         this.ok = ok;
         this.reason = reason;
-        this.fileTransferType = fileTransferType;
+        this.fileTransferType = requestPack.getFileTransferType();
     }
 
     public DownloadReplyPack(ByteData data) throws InvalidPackageException {
@@ -26,26 +29,43 @@ public class DownloadReplyPack extends DataPack{
 
     @Override
     public ByteData encode(){
-        ByteData data = new ByteData();
-        data.append(super.encode());
-        data.append(ByteData.encode(receiverTaskId));
-        data.append(new ByteData(ok));
-        data.append(new ByteData(reason));
-        data.append(new ByteData(fileTransferType.toId()));
-        return data;
+        return new ByteData()
+                .append(super.encode())
+                .append(ByteData.encode(senderTaskId))
+                .append(ByteData.encode(receiverTaskId))
+                .append(ByteData.encode(senderFileId))
+                .append(ByteData.encode(receiverFileId))
+                .append(ByteData.encode(ok))
+                .append(ByteData.encode(reason))
+                .append(ByteData.encode(fileTransferType.toId()));
     }
 
     @Override
     public void decode(ByteData data) throws InvalidPackageException {
         super.decode(data);
-        this.receiverTaskId = data.decodeUuid();
-        this.ok = data.decodeBoolean();
-        this.reason = data.decodeString();
-        this.fileTransferType = FileTransferType.toType(data.decodeInt());
+        senderTaskId = data.decodeUuid();
+        receiverTaskId = data.decodeUuid();
+        senderFileId = data.decodeUuid();
+        receiverFileId = data.decodeUuid();
+        ok = data.decodeBoolean();
+        reason = data.decodeString();
+        fileTransferType = FileTransferType.toType(data.decodeInt());
+    }
+
+    public UUID getSenderTaskId() {
+        return senderTaskId;
     }
 
     public UUID getReceiverTaskId() {
         return receiverTaskId;
+    }
+
+    public UUID getSenderFileId() {
+        return senderFileId;
+    }
+
+    public UUID getReceiverFileId() {
+        return receiverFileId;
     }
 
     public boolean isOk() {

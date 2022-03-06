@@ -98,6 +98,14 @@ public abstract class FileManager {
         }
     }
 
+    public FileObject openFile(UUID fileId) throws FileNotFoundException {
+        if(uuidToFileObjectMap.containsKey(fileId)){
+            return uuidToFileObjectMap.get(fileId);
+        }else{
+            throw new FileNotFoundException(String.format("No file with UUID=%s",fileId));
+        }
+    }
+
     private UUID getNewFileId() {
         UUID fileId;
         do{

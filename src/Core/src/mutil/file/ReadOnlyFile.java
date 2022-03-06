@@ -1,6 +1,5 @@
 package mutil.file;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -13,8 +12,8 @@ public class ReadOnlyFile implements AutoCloseable {
     private long ptr;
     private boolean isActive;
 
-    public ReadOnlyFile(FileObject fileObject, File file) throws FileNotFoundException {
-        this.file = new RandomAccessFile(file,"r");
+    public ReadOnlyFile(FileObject fileObject) throws FileNotFoundException {
+        this.file = new RandomAccessFile(fileObject.getFile(),"r");
         this.ptr = 0L;
         this.fileObject = fileObject;
         this.fileObject.onReadInstanceCreate();

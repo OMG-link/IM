@@ -1,6 +1,7 @@
 package IM;
 
 import GUI.IConfirmDialogCallback;
+import GUI.IFileTransferringPanel;
 import GUI.IGUI;
 import GUI.IRoomFrame;
 import mutil.file.ClientFileManager;
@@ -12,6 +13,7 @@ import protocol.helper.fileTransfer.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -100,10 +102,10 @@ public class Client{
     }
 
     public void sendChatImage(File image,ImageType imageType) throws FileNotFoundException {
-        uploadFile(image, FileTransferType.ChatImage, new IUploadCallback() {
+        uploadFile(image, FileTransferType.ChatImage, null, new IUploadCallback() {
             @Override
             public void onSucceed(ClientFileSendTask task) {
-                ChatImagePack pack = new ChatImagePack(task.getUploadedFileId(),imageType);
+                ChatImagePack pack = new ChatImagePack(task.getReceiverFileId(),imageType);
                 try{
                     getNetworkHandler().send(pack);
                 }catch (PackageTooLargeException e){
@@ -119,29 +121,35 @@ public class Client{
         });
     }
 
-    public FileSendTask uploadFile(File file, FileTransferType fileTransferType, IUploadCallback callback) throws FileNotFoundException {
-        FileSendTask task = new ClientFileSendTask(this,file,fileTransferType,callback);
-        task.setReceiverTaskId(new UUID(0,0)); //Temporarily use 0
+    public FileSendTask uploadFile(File file, FileTransferType fileTransferType, IFileTransferringPanel panel, IUploadCallback callback) throws FileNotFoundException {
+        FileSendTask task = new ClientFileSendTask(this,file,fileTransferType,panel,callback);
         task.start();
         return task;
     }
 
-    public FileSendTask uploadFile(File file, FileTransferType fileTransferType) throws FileNotFoundException {
-        return uploadFile(file,fileTransferType,null);
+    public FileSendTask uploadFile(File file, FileTransferType fileTransferType, IFileTransferringPanel panel) throws FileNotFoundException {
+        return uploadFile(file,fileTransferType,panel,null);
     }
 
-    public void downloadFile(UUID fileId,FileTransferType fileTransferType,IDownloadCallback callback){
+    public void downloadFile(String fileName, UUID fileId, FileTransferType fileTransferType, IFileTransferringPanel panel, IDownloadCallback callback){
         try{
-            FileReceiveTask task = new ClientFileReceiveTask(this,fileTransferType,callback);
-            getNetworkHandler().send(new DownloadRequestPack(task.getReceiverTaskId(), fileId, fileTransferType));
+            FileReceiveTask task = new ClientFileReceiveTask(this,fileName,fileId,fileTransferType,panel,callback);
+            getNetworkHandler().send(new DownloadRequestPack(
+                    task.getReceiverTaskId(),
+                    task.getSenderFileId(),
+                    task.getReceiverFileId(),
+                    fileTransferType
+            ));
+        }catch (IOException e){
+            showInfo("Cannot create file on disk.");
         }catch (PackageTooLargeException e){
             //This should never happen!
             showInfo("Unable to send download request.");
         }
     }
 
-    public void downloadFile(UUID fileId,FileTransferType fileTransferType){
-        downloadFile(fileId,fileTransferType,ClientFileReceiveTask.getDefaultCallback(fileTransferType));
+    public void downloadFile(String fileName, UUID fileId,FileTransferType fileTransferType, IFileTransferringPanel panel){
+        downloadFile(fileName, fileId,fileTransferType,panel,ClientFileReceiveTask.getDefaultCallback(fileTransferType));
     }
 
     //show messages

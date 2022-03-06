@@ -2,7 +2,6 @@ package mutil.file;
 
 import IM.Config;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -14,17 +13,19 @@ public class WriteOnlyFile implements AutoCloseable {
     private final RandomAccessFile file;
     private long ptr;
     private boolean isActive;
+    private long length;
 
-    public WriteOnlyFile(FileObject fileObject, File file) throws FileNotFoundException {
-        this.file = new RandomAccessFile(file,"rw");
+    public WriteOnlyFile(FileObject fileObject) throws FileNotFoundException {
+        this.file = new RandomAccessFile(fileObject.getFile(),"rw");
         this.ptr = 0L;
         this.fileObject = fileObject;
         this.fileObject.onWriteInstanceCreate();
+        this.length = fileObject.getFile().length();
         this.isActive = true;
     }
 
-    public long length(){
-        return fileObject.getFile().length();
+    public long fileLength(){
+        return length;
     }
 
     public void write(long fileOffset,byte[] data,int dataOffset,int dataLength) throws IOException {
@@ -46,9 +47,13 @@ public class WriteOnlyFile implements AutoCloseable {
         ptr += data.length;
     }
 
+    /**
+     * @throws IOException When the file was created failed.
+     */
     public void setLength(long value) throws IOException {
-        if(value> Config.fileMaxSize)
+        if(value > Config.fileMaxSize)
             throw new IOException("File too large!");
+        length = value;
         file.setLength(value);
     }
 

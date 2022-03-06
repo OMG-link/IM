@@ -2,7 +2,7 @@ package PCGUI.components;
 
 import IM.Client;
 import PCGUI.helper.PanelUtil;
-import protocol.dataPack.ImageType;
+import protocol.dataPack.FileTransferType;
 import protocol.helper.fileTransfer.ClientFileReceiveTask;
 import protocol.helper.fileTransfer.IDownloadCallback;
 
@@ -12,18 +12,15 @@ import java.util.UUID;
 
 public class ChatImagePanel extends JPanel {
     private final Client handler;
+    private final UUID serverFileId;
 
-    private final UUID imageUuid;
-    private final ImageType imageType;
-
-    public ChatImagePanel(Client handler, String sender, long stamp, UUID imageUuid, ImageType imageType){
+    public ChatImagePanel(Client handler, String sender, long stamp, UUID serverFIleId){
         super();
 
         this.handler = handler;
+        this.serverFileId = serverFIleId;
         this.setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
         this.add(PanelUtil.makeMessageInfo(sender,stamp));
-        this.imageUuid = imageUuid;
-        this.imageType = imageType;
 
     }
 
@@ -31,17 +28,33 @@ public class ChatImagePanel extends JPanel {
         return new IDownloadCallback() {
             @Override
             public void onSucceed(ClientFileReceiveTask task) {
-                var imagePath = handler.getFileManager().getFile(task.getLocalFileId()).getFile().getAbsolutePath();
-                add(new ImagePanel(new ImageIcon(imagePath)));
+                var imagePath = handler.getFileManager().getFile(task.getReceiverFileId()).getFile().getAbsolutePath();
+                var icon = new ImageIcon(imagePath);
+                if(icon.getIconHeight()<=0){
+                    add(PanelUtil.makeTextArea(Color.RED,22,"[Image] Unable to resolve image."));
+                }else{
+                    add(new ImagePanel(icon));
+                }
                 revalidate();
                 repaint();
             }
 
             @Override
-            public void onFailed(ClientFileReceiveTask task) {
-                add(PanelUtil.makeTextArea(Color.BLACK,22,"Image download failed."));
-                //todo: click to retry
+            public void onFailed(ClientFileReceiveTask task,String reason) {
+                add(PanelUtil.makeTextArea(Color.RED,22,"[Image] Image download failed: "+reason));
+                add(getRetryButton());
             }
+
+            private JButton getRetryButton(){
+                JButton button = new JButton("RETRY");
+                button.addActionListener(e -> {
+                    handler.downloadFile(serverFileId.toString(), serverFileId, FileTransferType.ChatImage,null,getDownloadCallback());
+                    remove(2);
+                    remove(1);
+                });
+                return button;
+            }
+
         };
     }
 

@@ -1,6 +1,7 @@
 package PCGUI.components;
 
 import GUI.IConfirmDialogCallback;
+import GUI.IFileTransferringPanel;
 import IM.Client;
 import PCGUI.RoomFrame;
 import mutil.ImageUtil;
@@ -27,7 +28,19 @@ public class ChatInputArea extends InputArea implements DropTargetListener {
     public ChatInputArea(RoomFrame roomFrame) {
         super(roomFrame);
         handler = roomFrame.getHandler();
-        new DropTarget(this,DnDConstants.ACTION_COPY_OR_MOVE,this);
+        new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
+    }
+
+    public void uploadFile(File file) {
+        IFileTransferringPanel panel = handler.getRoomFrame().addFileTransferringPanel(
+                file::getName,
+                file.length()
+        );
+        try{
+            handler.uploadFile(file, FileTransferType.ChatFile,panel);
+        }catch (FileNotFoundException e){
+            handler.showInfo(String.format("File %s not found.",file.getAbsolutePath()));
+        }
     }
 
     private boolean uploadTransferable(Transferable transferable) {
@@ -36,34 +49,28 @@ public class ChatInputArea extends InputArea implements DropTargetListener {
                 @SuppressWarnings("unchecked")
                 java.util.List<File> fileList = (java.util.List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                 for (File file : fileList) {
-                    try {
-                        if(ImageUtil.isImageFile(file)){
-                            isPasteSuppressed = false; //The checkbox will block the key up message.
-                            handler.showCheckBox(
-                                    "Would you like to send this file as an image?",
-                                    new IConfirmDialogCallback() {
-                                        @Override
-                                        public void onPositiveInput() {
-                                            try{
-                                                handler.sendChatImage(file, ImageType.PNG);
-                                            }catch (FileNotFoundException e){
-                                                handler.showInfo("File not found.");
-                                            }
-                                        }
-                                        @Override
-                                        public void onNegativeInput() {
-                                            try{
-                                                handler.uploadFile(file, FileTransferType.ChatFile);
-                                            }catch (FileNotFoundException e){
-                                                handler.showInfo("File not found.");
-                                            }
+                    if (ImageUtil.isImageFile(file)) {
+                        isPasteSuppressed = false; //The checkbox will block the key up message.
+                        handler.showCheckBox(
+                                "Would you like to send this file as an image?",
+                                new IConfirmDialogCallback() {
+                                    @Override
+                                    public void onPositiveInput() {
+                                        try {
+                                            handler.sendChatImage(file, ImageType.PNG);
+                                        } catch (FileNotFoundException e) {
+                                            handler.showInfo("File not found.");
                                         }
                                     }
-                            );
-                        }else{
-                            handler.uploadFile(file, FileTransferType.ChatFile);
-                        }
-                    } catch (FileNotFoundException ignored) {
+
+                                    @Override
+                                    public void onNegativeInput() {
+                                        uploadFile(file);
+                                    }
+                                }
+                        );
+                    } else {
+                        uploadFile(file);
                     }
                 }
             } catch (UnsupportedFlavorException | IOException e) {
@@ -120,7 +127,7 @@ public class ChatInputArea extends InputArea implements DropTargetListener {
         if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
             dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
             uploadTransferable(dtde.getTransferable());
-        }else{
+        } else {
             dtde.rejectDrop();
         }
     }

@@ -3,8 +3,10 @@ package mutil.file;
 import IM.Config;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
+import java.util.UUID;
 
 public class ClientFileManager extends FileManager{
 
@@ -55,6 +57,10 @@ public class ClientFileManager extends FileManager{
 
     public FileObject createCacheFileRenameable(String fileName) throws IOException {
         return createFileRenameable(getCacheFolderName(),fileName);
+    }
+
+    public String getFileName(UUID fileId) throws FileNotFoundException {
+        return openFile(fileId).getFile().getName();
     }
 
 }

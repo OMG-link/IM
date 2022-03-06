@@ -2,7 +2,6 @@ package protocol;
 
 import IM.Client;
 import IM.Config;
-import mutil.file.WriteOnlyFile;
 import protocol.dataPack.*;
 import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
@@ -152,6 +151,14 @@ public class ClientNetworkHandler implements Runnable {
     private void onRecv(ByteData data) throws InvalidPackageException {
         DataPackType type = DataPackType.toType(ByteData.peekInt(data));
         switch (type) {
+            case CheckVersion: {
+                CheckVersionPack pack = new CheckVersionPack(data);
+
+                if (!Objects.equals(pack.getVersion(), Config.version)) {
+                    this.handler.getGUI().alertVersionMismatch(pack.getVersion(), Config.version);
+                }
+                break;
+            }
             case Text: {
                 TextPack pack = new TextPack(data);
                 this.handler.getRoomFrame().onMessageReceive(
@@ -159,6 +166,12 @@ public class ClientNetworkHandler implements Runnable {
                         pack.getStamp(),
                         pack.getText()
                 );
+                break;
+            }
+            case ChatImage: {
+                ChatImagePack pack = new ChatImagePack(data);
+                var callback = handler.getRoomFrame().onChatImageReceive(pack.getSender(), pack.getStamp(), pack.getServerImageId());
+                handler.downloadFile(pack.getServerImageId().toString(), pack.getServerImageId(), FileTransferType.ChatImage, null, callback);
                 break;
             }
             case FileUploaded: {
@@ -177,11 +190,42 @@ public class ClientNetworkHandler implements Runnable {
                 this.handler.getRoomFrame().onUserListUpdate(userListPack.getUserList());
                 break;
             }
-            case CheckVersion: {
-                CheckVersionPack pack = new CheckVersionPack(data);
-
-                if (!Objects.equals(pack.getVersion(), Config.version)) {
-                    this.handler.getGUI().alertVersionMismatch(pack.getVersion(), Config.version);
+            case FileUploadRequest: {
+                UploadRequestPack pack = new UploadRequestPack(data);
+                boolean ok;
+                String reason;
+                if (pack.getFileSize() > Config.fileMaxSize) {
+                    ok = false;
+                    reason = "File too large!";
+                } else {
+                    Object o = handler.getUuidManager().get(pack.getReceiverTaskId());
+                    if (o instanceof ClientFileReceiveTask) {
+                        ok = true;
+                        reason = "";
+                        ClientFileReceiveTask task = (ClientFileReceiveTask) o;
+                        try{
+                            task.setFileSize(pack.getFileSize());
+                        }catch (IOException e){
+                            ok = false;
+                            reason = "Cannot create file on disk.";
+                        }
+                    } else {
+                        Logger.getLogger("IMCore").log(
+                                Level.WARNING,
+                                String.format("Client received a FileUploadRequest for {receiverTaskId=%s}, but it is not found in client.", pack.getReceiverTaskId())
+                        );
+                        ok = false;
+                        reason = "No such task.";
+                    }
+                }
+                try {
+                    this.send(new UploadReplyPack(
+                            pack,
+                            ok,
+                            reason
+                    ));
+                } catch (PackageTooLargeException e) {
+                    throw new RuntimeException(e);
                 }
                 break;
             }
@@ -190,12 +234,48 @@ public class ClientNetworkHandler implements Runnable {
                 Object o = this.handler.getUuidManager().get(pack.getSenderTaskId());
                 if (o instanceof FileSendTask) {
                     FileSendTask task = (FileSendTask) o;
-                    task.onReceiveUploadReply(pack.isOk(), pack.getDesc());
-                    task.setReceiverTaskId(pack.getReceiverTaskId());
+                    task.onReceiveUploadReply(pack);
                 } else {
                     Logger.getLogger("IMCore").log(
                             Level.WARNING,
-                            String.format("Client received a FileUploadReplyPack for {senderTaskId=%s}, but it is not found in client.", pack.getSenderTaskId())
+                            String.format("Client received a FileUploadReplyPack for {senderTaskId=%s}, but it is not found on client.", pack.getSenderTaskId())
+                    );
+                }
+                break;
+            }
+            case FileUploadFinish: {
+                UploadFinishPack pack = new UploadFinishPack(data);
+                Object o = this.handler.getUuidManager().get(pack.getReceiverTaskId());
+                if (o instanceof ClientFileReceiveTask) {
+                    ClientFileReceiveTask task = (ClientFileReceiveTask) o;
+                    task.end();
+                } else {
+                    Logger.getLogger("IMCore").log(
+                            Level.WARNING,
+                            String.format("Client received a FileUploadFinish for {receiverTaskId=%s}, but it is not found in client.", pack.getReceiverTaskId())
+                    );
+                    try {
+                        send(new UploadResultPack(pack.getSenderTaskId()));
+                    } catch (PackageTooLargeException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                break;
+            }
+            case FileUploadResult: {
+                UploadResultPack pack = new UploadResultPack(data);
+                Object o = handler.getUuidManager().get(pack.getSenderTaskId());
+                if (o instanceof ClientFileSendTask) {
+                    ClientFileSendTask task = (ClientFileSendTask) o;
+                    if (pack.isOk()) {
+                        task.onEndSucceed();
+                    } else {
+                        task.onEndFailed(pack.getReason());
+                    }
+                } else {
+                    Logger.getLogger("IMCore").log(
+                            Level.WARNING,
+                            String.format("Client received a FileUploadResult for {senderTaskId=%s}, but it is not found in client.", pack.getSenderTaskId())
                     );
                 }
                 break;
@@ -205,8 +285,10 @@ public class ClientNetworkHandler implements Runnable {
                 Object o = this.handler.getUuidManager().get(pack.getReceiverTaskId());
                 if (o instanceof FileReceiveTask) {
                     FileReceiveTask task = (FileReceiveTask) o;
-                    if (!pack.isOk()) {
-                        task.end(pack.getReason());
+                    if (pack.isOk()) {
+                        task.setSenderTaskId(pack.getSenderTaskId());
+                    } else {
+                        task.onEndFailed(pack.getReason());
                         this.handler.showInfo(String.format("Download failed: %s", pack.getReason()));
                     }
                 } else {
@@ -217,62 +299,13 @@ public class ClientNetworkHandler implements Runnable {
                 }
                 break;
             }
-            case FileUploadRequest: {
-                UploadRequestPack pack = new UploadRequestPack(data);
-                boolean ok;
-                String desc;
-                if (pack.getFileSize() > Config.fileMaxSize) {
-                    ok = false;
-                    desc = "File too large!";
-                } else {
-                    try {
-                        Object o = handler.getUuidManager().get(pack.getReceiverTaskId());
-                        if (o instanceof ClientFileReceiveTask) {
-                            ClientFileReceiveTask task = (ClientFileReceiveTask) o;
-                            WriteOnlyFile file;
-                            if (pack.getFileTransferType() == FileTransferType.ChatFile) {
-                                file = handler.getFileManager().createFileRenameable(pack.getFileName()).getWriteOnlyInstance();
-                            } else {
-                                file = handler.getFileManager().createCacheFileRenameable(task.getReceiverTaskId().toString()).getWriteOnlyInstance();
-                            }
-                            task.setWriteOnlyFile(file);
-                            task.setFileSize(pack.getFileSize());
-                            task.setSenderTaskId(pack.getSenderTaskId());
-                            ok = true;
-                            desc = "";
-                        } else {
-                            ok = false;
-                            desc = "No such task.";
-                        }
-                    } catch (IOException e) {
-                        ok = false;
-                        desc = "Unable to create target file.";
-                    }
-                }
-                try {
-                    this.send(new UploadReplyPack(
-                            pack.getSenderTaskId(),
-                            pack.getReceiverTaskId(),
-                            ok,
-                            desc,
-                            pack.getFileTransferType()
-                    ));
-                } catch (PackageTooLargeException e) {
-                    throw new RuntimeException(e);
-                }
-                break;
-            }
             case FileContent: {
                 FileContentPack pack = new FileContentPack(data);
                 Object o = handler.getUuidManager().get(pack.getReceiverTaskId());
                 if (o instanceof FileReceiveTask) {
                     FileReceiveTask task = (FileReceiveTask) o;
                     try {
-                        if (pack.getOffset() < 0) {
-                            task.end();
-                        } else {
-                            task.onDataReceived(pack.getData());
-                        }
+                        task.onDataReceived(pack.getData());
                     } catch (IOException e) {
                         task.end();
                     }
@@ -280,31 +313,6 @@ public class ClientNetworkHandler implements Runnable {
                     Logger.getLogger("IMCore").log(
                             Level.WARNING,
                             String.format("Client received a FileContent for {receiverTaskId=%s}, but it is not found in client.", pack.getReceiverTaskId())
-                    );
-                }
-                break;
-            }
-            case ChatImage: {
-                ChatImagePack pack = new ChatImagePack(data);
-                var callback = handler.getRoomFrame().onChatImageReceive(pack.getSender(), pack.getStamp(), pack.getImageUUID(), pack.getImageType());
-                handler.downloadFile(pack.getImageUUID(), FileTransferType.ChatImage, callback);
-                break;
-            }
-            case FileUploadResult:{
-                UploadResultPack pack = new UploadResultPack(data);
-                Object o = handler.getUuidManager().get(pack.getSenderTaskId());
-                if(o instanceof ClientFileSendTask){
-                    ClientFileSendTask task = (ClientFileSendTask) o;
-                    if(pack.isOk()){
-                        task.setUploadedFileId(pack.getUploadedFileId());
-                        task.onEndSucceed();
-                    }else{
-                        task.onEndFailed(pack.getReason());
-                    }
-                }else{
-                    Logger.getLogger("IMCore").log(
-                            Level.WARNING,
-                            String.format("Client received a FileUploadResult for {senderTaskId=%s}, but it is not found in client.", pack.getSenderTaskId())
                     );
                 }
                 break;

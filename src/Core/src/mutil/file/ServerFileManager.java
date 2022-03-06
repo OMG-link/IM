@@ -40,6 +40,10 @@ public class ServerFileManager extends FileManager{
         }
     }
 
+    public FileObject openFile(UUID fileId) throws FileNotFoundException {
+        return openFile(new File(getFolderName()+'/'+fileId.toString()));
+    }
+
     public String getFileName(UUID uuid) throws FileNotFoundException {
         if(!uuidToNameMap.containsKey(uuid)) {
             throw new FileNotFoundException();

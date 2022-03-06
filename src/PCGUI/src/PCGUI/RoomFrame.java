@@ -6,23 +6,21 @@ import IM.Client;
 import IM.Config;
 import PCGUI.components.*;
 import mutil.IStringGetter;
-import protocol.dataPack.FileTransferType;
-import protocol.dataPack.ImageType;
 import protocol.helper.fileTransfer.IDownloadCallback;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.UUID;
 
-public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
+public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     private final Client handler;
 
     private final GridBagLayout gridBagLayout = new GridBagLayout();
     private final GridBagConstraints gridBagConstraints = new GridBagConstraints();
     private MessageArea messageArea;
-    private JTextArea userListArea, inputArea;
+    private JTextArea userListArea;
+    private ChatInputArea inputArea;
     private JPanel buttonPanel;
 
     public RoomFrame(Client handler) {
@@ -48,12 +46,12 @@ public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
     }
 
     public void onInputFinish() {
-        if(handler.sendChat(this.inputArea.getText())){
+        if (handler.sendChat(this.inputArea.getText())) {
             this.inputArea.setText("");
         }
     }
 
-    private void appendComponent(Component component,int gridX,int gridY,int gridWidth,int gridHeight) {
+    private void appendComponent(Component component, int gridX, int gridY, int gridWidth, int gridHeight) {
         this.gridBagConstraints.gridx = gridX;
         this.gridBagConstraints.gridy = gridY;
         this.gridBagConstraints.gridwidth = gridWidth;
@@ -68,7 +66,7 @@ public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
         this.messageArea = new MessageArea(new Dimension(600, 450));
         var component = this.messageArea.getPanel();
 
-        appendComponent(component,0,0,3,4);
+        appendComponent(component, 0, 0, 3, 4);
 
     }
 
@@ -84,7 +82,7 @@ public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
         component.setWrapStyleWord(true);
 
         JScrollPane pane = new JScrollPane(component, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        appendComponent(pane,3,0,1,4);
+        appendComponent(pane, 3, 0, 1, 4);
 
     }
 
@@ -99,28 +97,26 @@ public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
         component.setWrapStyleWord(true);
 
         JScrollPane pane = new JScrollPane(component, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        appendComponent(pane,0,4,4,1);
+        appendComponent(pane, 0, 4, 4, 1);
 
     }
 
-    private void makeButtonArea(){
+    private void makeButtonArea() {
         this.buttonPanel = new JPanel();
         var component = this.buttonPanel;
 
         //Upload File Button
         JButton uploadFileButton = new JButton("Upload File");
-        uploadFileButton.addActionListener((event)->{
+        uploadFileButton.addActionListener((event) -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Upload File");
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setMultiSelectionEnabled(true);
             var result = fileChooser.showOpenDialog(this);
-            if(result==JFileChooser.APPROVE_OPTION){
+            if (result == JFileChooser.APPROVE_OPTION) {
                 File[] files = fileChooser.getSelectedFiles();
-                for(File file:files){
-                    try{
-                        handler.uploadFile(file, FileTransferType.ChatFile);
-                    }catch (FileNotFoundException ignored){}
+                for (File file : files) {
+                    inputArea.uploadFile(file);
                 }
             }
         });
@@ -128,7 +124,7 @@ public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
 
         //Send Button
         JButton sendButton = new JButton("Send Chat");
-        sendButton.addActionListener((event)-> this.onInputFinish());
+        sendButton.addActionListener((event) -> this.onInputFinish());
         component.add(sendButton);
 
 //        //Debug Button
@@ -138,12 +134,12 @@ public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
 //        });
 //        component.add(debugButton);
 
-        appendComponent(component,0,5,4,1);
+        appendComponent(component, 0, 5, 4, 1);
 
     }
 
     @Override
-    public void clearMessageArea(){
+    public void clearMessageArea() {
         this.messageArea.clearMessageArea();
     }
 
@@ -153,8 +149,8 @@ public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
     }
 
     @Override
-    public IDownloadCallback onChatImageReceive(String sender, long stamp, UUID imageUUID, ImageType imageType) {
-        var panel = new ChatImagePanel(handler,sender,stamp,imageUUID,imageType);
+    public IDownloadCallback onChatImageReceive(String sender, long stamp, UUID serverFileId) {
+        var panel = new ChatImagePanel(handler, sender, stamp, serverFileId);
         this.messageArea.add(panel);
         return panel.getDownloadCallback();
     }
@@ -174,13 +170,13 @@ public class RoomFrame extends JFrame implements IRoomFrame,IInputCallback {
     }
 
     @Override
-    public IFileTransferringPanel addFileTransferringPanel(IStringGetter fileNameGetter) {
-        FileTransferringPanel panel = new FileTransferringPanel(fileNameGetter);
+    public IFileTransferringPanel addFileTransferringPanel(IStringGetter fileNameGetter,long fileSize) {
+        UploadPanel panel = new UploadPanel(fileNameGetter,fileSize);
         this.messageArea.add(panel);
         return panel;
     }
 
-    public Client getHandler(){
+    public Client getHandler() {
         return handler;
     }
 

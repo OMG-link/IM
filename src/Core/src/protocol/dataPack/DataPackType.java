@@ -11,7 +11,7 @@ public enum DataPackType {
     //User list
     NameUpdate, UserList,
     //File transfer
-    FileUploadRequest, FileUploadReply, FileUploadResult, FileDownloadRequest, FileDownloadReply, FileContent;
+    FileUploadRequest, FileUploadReply, FileUploadFinish, FileUploadResult, FileDownloadRequest, FileDownloadReply, FileContent;
 
     public int toId(){
         return DataPackType.toId(this);

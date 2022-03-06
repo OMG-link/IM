@@ -1,10 +1,10 @@
 package GUI;
 
+import java.io.File;
+
 public interface IFileTransferringPanel {
-
-    void setVisible(boolean b);
-
-    void setProgress(double progress);
-    void setInfo(String info);
-
+    void setProgress(long downloadedSize);
+    void onTransferStart();
+    void onTransferSucceed(File file);
+    void onTransferFailed(String reason);
 }

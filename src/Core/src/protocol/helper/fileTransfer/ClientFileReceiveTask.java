@@ -2,7 +2,8 @@ package protocol.helper.fileTransfer;
 
 import GUI.IFileTransferringPanel;
 import IM.Client;
-import mutil.file.WriteOnlyFile;
+import mutil.file.ClientFileManager;
+import mutil.file.FileObject;
 import mutil.uuidLocator.UUIDManager;
 import protocol.dataPack.DataPack;
 import protocol.dataPack.FileTransferType;
@@ -14,48 +15,40 @@ import java.util.UUID;
 
 public class ClientFileReceiveTask extends FileReceiveTask {
     private final Client handler;
-    private IFileTransferringPanel panel;
-    private String fileName;
-    private final FileTransferType fileTransferType;
+    private final IFileTransferringPanel panel;
+    private final String fileName;
     private final IDownloadCallback callback;
 
-    public ClientFileReceiveTask(Client handler, FileTransferType fileTransferType, IDownloadCallback callback) {
+    //constructors
+
+    /**
+     * @throws IOException - When the file cannot be created.
+     */
+    public ClientFileReceiveTask(
+            Client handler,
+            String fileName, UUID senderFileId, FileTransferType fileTransferType,
+            IFileTransferringPanel panel, IDownloadCallback callback
+    ) throws IOException {
+        super(fileTransferType);
         this.handler = handler;
-        super.init();
-
-        this.fileTransferType = fileTransferType;
+        this.fileName = fileName;
+        this.panel = panel;
         this.callback = callback;
+        super.setReceiverTaskId();
+        super.setSenderFileId(senderFileId);
 
-        if(fileTransferType==FileTransferType.ChatFile){
-            panel = handler.getRoomFrame().addFileTransferringPanel(this::getFileName);
-        }
+        FileObject fileObject = getFileManager().createFileRenameable(fileName);
+        super.setReceiverFileId(fileObject.getFileId());
+        super.setFileWriter(fileObject.getWriteOnlyInstance());
 
     }
 
-    public ClientFileReceiveTask(Client handler, UUID uuid, FileTransferType fileTransferType) {
-        this(handler,fileTransferType,getDefaultCallback(fileTransferType));
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
+    //abstract
 
     @Override
-    protected void showInfo(String info) {
-        if(fileTransferType!=FileTransferType.ChatFile) return;
-        panel.setInfo(info);
-    }
-
-    @Override
-    public void setWriteOnlyFile(WriteOnlyFile file){
-        super.setWriteOnlyFile(file);
-        this.fileName = file.getFileObject().getFile().getName();
-    }
-
-    @Override
-    protected void setTransferProgress(double progress){
-        if(fileTransferType!=FileTransferType.ChatFile) return;
-        panel.setProgress(progress);
+    protected void onTransferProgressChange(long downloadedSize) {
+        if (getFileTransferType() != FileTransferType.ChatFile) return;
+        panel.setProgress(downloadedSize);
     }
 
     @Override
@@ -64,8 +57,8 @@ public class ClientFileReceiveTask extends FileReceiveTask {
     }
 
     @Override
-    protected FileTransferType getFileTransferType() {
-        return fileTransferType;
+    protected ClientFileManager getFileManager() {
+        return handler.getFileManager();
     }
 
     @Override
@@ -73,45 +66,53 @@ public class ClientFileReceiveTask extends FileReceiveTask {
         handler.getNetworkHandler().send(dataPack);
     }
 
+    //start
+
+    //end
+
     @Override
-    protected void onEndSucceed() {
+    public void onEndSucceed() {
         super.onEndSucceed();
-        if(callback==null) return;
+        if (callback == null) return;
         callback.onSucceed(this);
     }
 
     @Override
-    protected void onEndFailed(String reason) {
+    public void onEndFailed(String reason) {
         super.onEndFailed(reason);
-        if(callback==null) return;
-        callback.onFailed(this);
+        if (callback == null) return;
+        callback.onFailed(this, reason);
     }
 
-    public static IDownloadCallback getDefaultCallback(FileTransferType fileTransferType){
-        switch (fileTransferType){
-            case ChatFile:{
+    //getter
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    //static
+
+    public static IDownloadCallback getDefaultCallback(FileTransferType fileTransferType) {
+        switch (fileTransferType) {
+            case ChatFile: {
                 return new IDownloadCallback() {
                     @Override
                     public void onSucceed(ClientFileReceiveTask task) {
                         var panel = task.panel;
-                        var fileName = task.fileName;
-                        var handler = task.handler;
-                        var file = task.file;
-                        panel.setInfo(String.format("Download succeed: %s",fileName));
-                        handler.getGUI().onFileDownloaded(file.getFileObject().getFile());
+                        var file = task.getFile();
+                        panel.onTransferSucceed(file);
                     }
 
                     @Override
-                    public void onFailed(ClientFileReceiveTask task) {
+                    public void onFailed(ClientFileReceiveTask task, String reason) {
                         var panel = task.panel;
-                        var fileName = task.fileName;
-                        panel.setInfo(String.format("Download failed: %s",fileName));
+                        panel.onTransferFailed(reason);
                     }
 
                 };
             }
-            default:{
-                throw new InvalidParameterException(String.format("No default callback found for %s.",fileTransferType));
+            default: {
+                throw new InvalidParameterException(String.format("No default callback found for %s.", fileTransferType));
             }
         }
     }

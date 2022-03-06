@@ -46,34 +46,38 @@ public class FileObject {
     }
 
     public void setLength(long value) throws IOException {
-        if(value> Config.fileMaxSize)
+        if(value > Config.fileMaxSize) {
             throw new IOException("File too large!");
+        }
         WriteOnlyFile writeOnlyFile = getWriteOnlyInstance();
         writeOnlyFile.setLength(value);
         writeOnlyFile.close();
     }
 
     public void delete() throws FileOccupiedException {
-        if(this.readInstanceCount>0)
+        if(this.readInstanceCount>0) {
             throw new FileOccupiedException("File delete failed: read instance unclosed.");
-        if(this.writeInstanceCount>0)
+        }
+        if(this.writeInstanceCount>0) {
             throw new FileOccupiedException("File delete failed: write instance unclosed.");
+        }
         if(file.exists()){
-            if(!file.delete())
+            if(!file.delete()) {
                 throw new FileOccupiedException("File delete failed: system error.");
+            }
         }
     }
 
     public ReadOnlyFile getReadOnlyInstance() throws FileOccupiedException, FileNotFoundException {
         if (this.writeInstanceCount > 0)
             throw new FileOccupiedException();
-        return new ReadOnlyFile(this,file);
+        return new ReadOnlyFile(this);
     }
 
     public WriteOnlyFile getWriteOnlyInstance() throws FileOccupiedException, FileNotFoundException {
         if (this.readInstanceCount > 0 || this.writeInstanceCount > 0)
             throw new FileOccupiedException();
-        return new WriteOnlyFile(this,file);
+        return new WriteOnlyFile(this);
     }
 
 }

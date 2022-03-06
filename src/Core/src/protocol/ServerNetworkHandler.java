@@ -2,8 +2,6 @@ package protocol;
 
 import IM.Config;
 import IM.Server;
-import mutil.file.WriteOnlyFile;
-import mutil.uuidLocator.UuidConflictException;
 import protocol.dataPack.*;
 import protocol.helper.Attachment;
 import protocol.helper.data.ByteData;
@@ -42,6 +40,7 @@ public class ServerNetworkHandler implements Runnable {
     }
 
     public void start() {
+        System.out.printf("Starting server on port %d.\n",Config.getServerPort());
         try {
             this.selector = Selector.open();
             this.socketChannel = ServerSocketChannel.open();
@@ -55,6 +54,8 @@ public class ServerNetworkHandler implements Runnable {
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(null, "Unable to start server.");
+            e.printStackTrace();
+            System.exit(0);
         }
     }
 
@@ -193,14 +194,14 @@ public class ServerNetworkHandler implements Runnable {
             case FileUploadRequest: {
                 UploadRequestPack requestPack = new UploadRequestPack(data);
                 boolean ok;
-                String desc;
+                String reason;
                 UUID receiverTaskId = new UUID(0,0);
+                UUID receiverFileId = new UUID(0,0);
                 if (requestPack.getFileSize() > Config.fileMaxSize) {
                     ok = false;
-                    desc = "File too large!";
+                    reason = "File too large!";
                 } else {
-                    try {
-                        WriteOnlyFile file = handler.getFileManager().createFile(requestPack.getFileName()).getWriteOnlyInstance();
+                    try{
                         /*
                          * Here is a hidden danger that the client may create lots of upload requests without finishing
                          * it, which may causes memory limit exceed and crashes the program.
@@ -209,31 +210,43 @@ public class ServerNetworkHandler implements Runnable {
                         ServerFileReceiveTask task = new ServerFileReceiveTask(
                                 handler,
                                 socketChannel,
-                                file,
-                                attachment.userName,
-                                requestPack.getFileName(),
-                                requestPack.getFileSize(),
-                                requestPack.getFileTransferType()
+                                requestPack,
+                                attachment.userName
                         );
-                        task.setSenderTaskId(requestPack.getSenderTaskId());
-                        receiverTaskId = task.getUuid();
+                        receiverTaskId = task.getReceiverTaskId();
+                        receiverFileId = task.getReceiverFileId();
                         ok = true;
-                        desc = "";
-                    } catch (UuidConflictException e) {
+                        reason = "";
+                    }catch (IOException e){
                         ok = false;
-                        desc = "Unexpected UUID conflict.";
+                        reason = "Can not create file on server.";
                     }
                 }
                 try{
                     this.send(socketChannel, new UploadReplyPack(
-                            requestPack.getSenderTaskId(),
+                            requestPack,
                             receiverTaskId,
+                            receiverFileId,
                             ok,
-                            desc,
-                            requestPack.getFileTransferType()
+                            reason
                     ));
                 }catch (PackageTooLargeException e){
                     throw new RuntimeException(e);
+                }
+                break;
+            }
+            case FileUploadFinish:{
+                UploadFinishPack pack = new UploadFinishPack(data);
+                Object o = handler.getUuidManager().get(pack.getReceiverTaskId());
+                if(o instanceof ServerFileReceiveTask){
+                    ServerFileReceiveTask task = (ServerFileReceiveTask) o;
+                    task.end();
+                }else{
+                    try{
+                        send(socketChannel,new UploadResultPack(pack.getSenderTaskId()));
+                    }catch (PackageTooLargeException e){
+                        throw new RuntimeException(e);
+                    }
                 }
                 break;
             }
@@ -243,13 +256,9 @@ public class ServerNetworkHandler implements Runnable {
                 if (o instanceof FileReceiveTask) {
                     FileReceiveTask task = (FileReceiveTask) o;
                     try {
-                        if (fileContentPack.getOffset() < 0) {
-                            task.end();
-                        } else {
-                            task.onDataReceived(fileContentPack.getData());
-                        }
+                        task.onDataReceived(fileContentPack.getData());
                     } catch (IOException e) {
-                        task.end(e.toString());
+                        task.onEndFailed(e.toString());
                     }
                 }
                 break;
@@ -258,23 +267,25 @@ public class ServerNetworkHandler implements Runnable {
                 DownloadRequestPack pack = new DownloadRequestPack(data);
                 boolean ok;
                 String reason;
+                ServerFileSendTask task = null;
                 try {
-                    ServerFileSendTask task = new ServerFileSendTask(handler, socketChannel, pack.getFileId(), pack.getFileTransferType());
-                    task.setReceiverTaskId(pack.getReceiverTaskId());
-                    task.start();
+                    task = new ServerFileSendTask(handler, socketChannel, pack);
                     ok = true;
                     reason = "";
                 } catch (FileNotFoundException e) {
                     ok = false;
-                    reason = String.format("No such file.{UUID=%s}.",pack.getFileId());
+                    reason = String.format("No such file.{UUID=%s}.",pack.getSenderFileId());
                 }
                 try{
                     this.send(socketChannel,new DownloadReplyPack(
-                            pack.getReceiverTaskId(),
+                            pack,
+                            task==null?new UUID(0,0):task.getSenderTaskId(),
                             ok,
-                            reason,
-                            pack.getFileTransferType()
+                            reason
                     ));
+                    if(ok){ //UploadRequestPack should be sent after DownloadReplyPack
+                        task.start();
+                    }
                 }catch (PackageTooLargeException e){
                     throw new RuntimeException(e);
                 }
@@ -285,7 +296,7 @@ public class ServerNetworkHandler implements Runnable {
                 Object o = this.handler.getUuidManager().get(pack.getSenderTaskId());
                 if(o instanceof FileSendTask){
                     FileSendTask task = (FileSendTask) o;
-                    task.onReceiveUploadReply(pack.isOk(), pack.getDesc());
+                    task.onReceiveUploadReply(pack);
                 }
                 break;
             }

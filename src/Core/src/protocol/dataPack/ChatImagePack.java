@@ -9,14 +9,14 @@ import java.util.UUID;
 public class ChatImagePack extends DataPack {
     private String sender;
     private long stamp;
-    private UUID imageUUID;
+    private UUID serverImageId;
     private ImageType imageType;
 
-    public ChatImagePack(UUID imageUUID, ImageType imageType) {
+    public ChatImagePack(UUID serverImageId, ImageType imageType) {
         super(DataPackType.ChatImage);
         this.sender = Config.getUsername();
         this.stamp = System.currentTimeMillis();
-        this.imageUUID = imageUUID;
+        this.serverImageId = serverImageId;
         this.imageType = imageType;
     }
 
@@ -31,7 +31,7 @@ public class ChatImagePack extends DataPack {
                 .append(super.encode())
                 .append(ByteData.encode(sender))
                 .append(ByteData.encode(stamp))
-                .append(ByteData.encode(imageUUID))
+                .append(ByteData.encode(serverImageId))
                 .append(ByteData.encode(imageType.toId()));
     }
 
@@ -40,7 +40,7 @@ public class ChatImagePack extends DataPack {
         super.decode(data);
         this.sender = data.decodeString();
         this.stamp = data.decodeLong();
-        this.imageUUID = data.decodeUuid();
+        this.serverImageId = data.decodeUuid();
         this.imageType = ImageType.toType(data.decodeInt());
     }
 
@@ -52,8 +52,8 @@ public class ChatImagePack extends DataPack {
         return stamp;
     }
 
-    public UUID getImageUUID() {
-        return imageUUID;
+    public UUID getServerImageId() {
+        return serverImageId;
     }
 
     public ImageType getImageType() {

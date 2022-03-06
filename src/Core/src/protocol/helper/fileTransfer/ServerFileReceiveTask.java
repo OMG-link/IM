@@ -1,35 +1,56 @@
 package protocol.helper.fileTransfer;
 
 import IM.Server;
-import mutil.file.WriteOnlyFile;
+import mutil.file.FileObject;
+import mutil.file.FileOccupiedException;
+import mutil.file.ServerFileManager;
 import mutil.uuidLocator.UUIDManager;
-import mutil.uuidLocator.UuidConflictException;
 import protocol.dataPack.DataPack;
 import protocol.dataPack.FileTransferType;
 import protocol.dataPack.FileUploadedPack;
+import protocol.dataPack.UploadRequestPack;
 import protocol.helper.data.PackageTooLargeException;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
 
 public class ServerFileReceiveTask extends FileReceiveTask {
     private final Server handler;
     private final SocketChannel socketChannel;
-    private final String fileName;
-    private final String sender;
-    private final FileTransferType fileTransferType;
 
-    public ServerFileReceiveTask(Server handler, SocketChannel socketChannel, WriteOnlyFile file, String sender, String fileName, long fileSize, FileTransferType fileTransferType) throws UuidConflictException {
+    private final String sender;
+
+    //constructor
+
+    /**
+     * @throws IOException - When the file cannot be created.
+     */
+    public ServerFileReceiveTask(
+            Server handler, SocketChannel socketChannel,
+            UploadRequestPack requestPack, String sender
+    ) throws IOException {
+        super(requestPack.getFileTransferType());
         this.handler = handler;
         this.socketChannel = socketChannel;
-        super.init();
-
-        super.setFileSize(fileSize);
-        super.setWriteOnlyFile(file);
-        this.fileName = fileName;
         this.sender = sender;
-        this.fileTransferType = fileTransferType;
+        super.setReceiverTaskId();
+
+        super.setSenderTaskId(requestPack.getSenderTaskId());
+        super.setSenderFileId(requestPack.getSenderFileId());
+
+        try{
+            FileObject fileObject = getFileManager().createFile(requestPack.getFileName());
+            fileObject.setLength(requestPack.getFileSize());
+            super.setReceiverFileId(fileObject.getFileId());
+            super.setFileWriter(fileObject.getWriteOnlyInstance());
+        }catch (FileNotFoundException| FileOccupiedException e){
+            throw new RuntimeException(e); //Never happens.
+        }
+
     }
+
+    //abstract
 
     @Override
     public UUIDManager getUuidManager() {
@@ -37,8 +58,8 @@ public class ServerFileReceiveTask extends FileReceiveTask {
     }
 
     @Override
-    protected FileTransferType getFileTransferType() {
-        return fileTransferType;
+    protected ServerFileManager getFileManager() {
+        return handler.getFileManager();
     }
 
     @Override
@@ -46,12 +67,18 @@ public class ServerFileReceiveTask extends FileReceiveTask {
         handler.getNetworkHandler().send(socketChannel, dataPack);
     }
 
+    //end
+
     @Override
-    protected void onEndSucceed() {
+    public void onEndSucceed() {
         super.onEndSucceed();
-        if (fileTransferType == FileTransferType.ChatFile) {
-            FileUploadedPack pack = new FileUploadedPack(sender, file.getFileObject().getFileId(), fileName, fileSize);
-            handler.getNetworkHandler().broadcast(pack);
+        if (getFileTransferType() == FileTransferType.ChatFile) {
+            try{
+                FileUploadedPack pack = new FileUploadedPack(sender, super.getReceiverFileId(), getFileManager().getFileName(getReceiverFileId()), super.getFileSize());
+                handler.getNetworkHandler().broadcast(pack);
+            }catch (FileNotFoundException e){
+                throw new RuntimeException(e); //This never happens.
+            }
         }
     }
 

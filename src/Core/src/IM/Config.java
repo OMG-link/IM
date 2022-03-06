@@ -8,8 +8,8 @@ import java.security.InvalidParameterException;
 import java.util.Scanner;
 
 public class Config {
-    public static final String version = "1.3.0 beta";
-    public static final String compatibleVersion = "1.3";
+    public static final String version = "1.3.1 beta";
+    public static final String compatibleVersion = "1.3.1";
 
     private static String serverIP = "127.0.0.1";
     private static int serverPort = 8814;

@@ -1,128 +1,41 @@
 package protocol.helper.fileTransfer;
 
+import mutil.file.FileManager;
 import mutil.file.FileObject;
+import mutil.file.FileOccupiedException;
 import mutil.file.ReadOnlyFile;
 import mutil.uuidLocator.IUuidLocatable;
 import mutil.uuidLocator.UuidConflictException;
-import protocol.dataPack.DataPack;
-import protocol.dataPack.FileContentPack;
-import protocol.dataPack.FileTransferType;
-import protocol.dataPack.UploadRequestPack;
+import protocol.dataPack.*;
 import protocol.helper.data.PackageTooLargeException;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.UUID;
 
 public abstract class FileSendTask implements IUuidLocatable, Runnable {
-    /**
-     * This uuid is generated randomly.
-     */
-    protected UUID senderTaskId;
-    protected UUID receiverTaskId = null;
+    private final FileTransferType fileTransferType;
+    private UUID senderTaskId;
+    private UUID receiverTaskId;
+    private UUID senderFileId;
+    private UUID receiverFileId;
 
-    void init(){
-        while(true){
-            try{
-                senderTaskId = UUID.randomUUID();
-                onCreate();
-                break;
-            }catch (UuidConflictException ignored){ //try again
-            }
-        }
+    private FileObject fileObject;
+    private String fileName;
+
+    protected String localEndReason = null;
+
+    //constructors
+
+    public FileSendTask(FileTransferType fileTransferType){
+        this.fileTransferType = fileTransferType;
     }
 
-    public void start(){
-        try{
-            this.sendUploadRequestPack();
-        }catch (IOException e){
-            this.end("Unable to send upload request pack.");
-        }
-    }
+    //abstract
 
-    protected void end(){
-        this.end("Ended.");
-    }
-
-    private void end(String reason){
-        this.showInfo("Upload task ended: "+reason);
-        this.onEnd();
-    }
-
-    protected void onEnd(){
-        try{
-            this.sendUploadFinishPack();
-        }catch (IOException e1){
-            //do nothing
-        }
-    }
-
-    public void onEndSucceed(){
-        this.onDelete();
-    }
-    public void onEndFailed(String reason){
-        this.onDelete();
-    }
-
-    abstract protected UUID getFileId();
-    abstract protected String getFileName();
-    abstract protected FileTransferType getFileTransferType();
-    abstract protected FileObject getFileObject();
     abstract void send(DataPack dataPack) throws IOException, PackageTooLargeException;
-
-    protected void showInfo(String info){}
-    protected void setUploadProgress(double progress){}
-
-    protected void sendUploadRequestPack() throws IOException {
-        UploadRequestPack pack = new UploadRequestPack(
-                getFileName(),
-                getFileObject().getFile().length(),
-                getSenderTaskId(),
-                getReceiverTaskId(),
-                getFileTransferType()
-        );
-        try{
-            this.send(pack);
-        }catch (PackageTooLargeException e){
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void sendUploadFinishPack() throws IOException {
-        FileContentPack pack = new FileContentPack(getReceiverTaskId(),-1,new byte[0],0);
-        try{
-            this.send(pack);
-        }catch (PackageTooLargeException e){
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void onReceiveUploadReply(boolean result, String desc){
-        if(result){
-            Thread thread = new Thread(this,String.format("File Upload Task(%s)", getSenderTaskId()));
-            thread.start();
-        }else{
-            this.end("Upload request was rejected: "+desc);
-        }
-    }
-
-    private void sendDataLoop() throws IOException {
-        try(ReadOnlyFile file = getFileObject().getReadOnlyInstance()){
-            long offset = 0;
-            byte[] buffer = new byte[FileContentPack.packSize];
-            while(true){
-                int length = file.read(buffer);
-                if(length==-1) break;
-                FileContentPack pack = new FileContentPack(getReceiverTaskId(),offset,buffer,length);
-                try{
-                    this.send(pack);
-                }catch (PackageTooLargeException e){
-                    throw new RuntimeException(e);
-                }
-                offset += length;
-                this.setUploadProgress((double)offset/file.length());
-            }
-        }
-    }
+    abstract FileManager getFileManager();
 
     @Override
     public UUID getUuid(){
@@ -136,23 +49,175 @@ public abstract class FileSendTask implements IUuidLocatable, Runnable {
         }catch (Exception e){
             e.printStackTrace();
         }finally {
-            this.end();
+            this.onTransferEnd();
         }
     }
 
-    public UUID getSenderTaskId() {
-        return senderTaskId;
+    //start
+
+    protected void setSenderTaskId(){
+        while(true){
+            try{
+                senderTaskId = UUID.randomUUID();
+                onCreate();
+                break;
+            }catch (UuidConflictException ignored){ //try again
+            }
+        }
     }
 
-    public void setReceiverTaskId(UUID receiverTaskId) {
+    public void setFile(File file) throws FileNotFoundException {
+        setFile(file,file.getName());
+    }
+
+    public void setFile(File file, String fileName) throws FileNotFoundException {
+        FileObject fileObject = getFileManager().openFile(file);
+        setFileObject(fileObject,fileName);
+    }
+
+    public void setFileObject(FileObject fileObject,String fileName){
+        this.fileObject = fileObject;
+        this.senderFileId = fileObject.getFileId();
+        this.fileName = fileName;
+    }
+
+    public void setReceiverTaskId(UUID receiverTaskId){
         this.receiverTaskId = receiverTaskId;
+    }
+
+    public void setSenderFileId(UUID senderFileId) {
+        this.senderFileId = senderFileId;
+    }
+
+    public void setReceiverFileId(UUID receiverFileId){
+        this.receiverFileId = receiverFileId;
+    }
+
+    public void start(){
+        try{
+            this.sendUploadRequestPack();
+        }catch (IOException e){
+            this.onTransferEnd();
+            this.onEndFailed("Unable to send upload request pack.");
+        }
+    }
+
+    //functions
+
+    protected void onTransferProgressChange(long uploadedSize){}
+
+    //steps
+
+    abstract void sendUploadRequestPack() throws IOException ;
+
+    public void onReceiveUploadReply(UploadReplyPack replyPack){
+        if(replyPack.isOk()){
+            setReceiverTaskId(replyPack.getReceiverTaskId());
+            setReceiverFileId(replyPack.getReceiverFileId());
+            Thread thread = new Thread(this,String.format("File Upload Task(%s)", getSenderTaskId()));
+            thread.start();
+        }else{
+            this.localEndReason = "Upload request was rejected: "+replyPack.getReason();
+            this.onTransferEnd();
+        }
+    }
+
+    private void sendDataLoop() throws IOException {
+        try(ReadOnlyFile fileReader = getFileManager().openFile(getSenderFileId()).getReadOnlyInstance()){
+            long offset = 0;
+            byte[] buffer = new byte[FileContentPack.packSize];
+            while(true){
+                int length = fileReader.read(buffer);
+                if(length==-1) break;
+                FileContentPack pack = new FileContentPack(getReceiverTaskId(),offset,buffer,length);
+                try{
+                    this.send(pack);
+                }catch (PackageTooLargeException e){
+                    throw new RuntimeException(e);
+                }
+                offset += length;
+                this.onTransferProgressChange(offset);
+            }
+        }catch (FileNotFoundException e){
+            localEndReason = "File not found.";
+        }catch (FileOccupiedException e){
+            localEndReason = "The file has been occupied.";
+        }
+        //return to run and call onTransferEnd
+    }
+
+    protected void onTransferEnd(){
+        try{
+            this.sendUploadFinishPack();
+        }catch (IOException e1){
+            //do nothing
+        }
+    }
+
+    private void sendUploadFinishPack() throws IOException {
+        try{
+            this.send(new UploadFinishPack(this));
+        }catch (PackageTooLargeException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void onEndSucceed(){
+        this.onDelete();
+    }
+    public void onEndFailed(String reason){
+        this.onDelete();
+    }
+
+    //get
+
+    public UUID getSenderTaskId() {
+        if(senderTaskId==null){
+            throw new NullPointerException();
+        }
+        return senderTaskId;
     }
 
     public UUID getReceiverTaskId() {
         if(receiverTaskId==null){
-            throw new RuntimeException("Receiver task id is not set yet!");
+            throw new NullPointerException();
         }
         return receiverTaskId;
+    }
+
+    public UUID getSenderFileId() {
+        if(senderFileId==null){
+            throw new NullPointerException();
+        }
+        return senderFileId;
+    }
+
+    public UUID getReceiverFileId() {
+        if(receiverFileId==null){
+            throw new NullPointerException();
+        }
+        return receiverFileId;
+    }
+
+    public File getFile() {
+        if(fileObject==null){
+            throw new NullPointerException();
+        }
+        return fileObject.getFile();
+    }
+
+    public String getFileName() {
+        if(fileName==null){
+            throw new NullPointerException();
+        }
+        return fileName;
+    }
+
+    public FileTransferType getFileTransferType() {
+        if(fileTransferType==null){
+            throw new NullPointerException();
+        }
+        return fileTransferType;
     }
 
 }
