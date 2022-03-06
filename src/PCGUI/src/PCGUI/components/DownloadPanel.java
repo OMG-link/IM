@@ -47,6 +47,9 @@ public class DownloadPanel extends JPanel{
         });
         buttonPanel.add(downloadButton);
 
+        buttonPanel.revalidate();
+        buttonPanel.repaint();
+
     }
 
     public void setAfterDownload(File downloadedFile){
