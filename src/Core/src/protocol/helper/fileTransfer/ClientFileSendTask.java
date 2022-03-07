@@ -55,17 +55,17 @@ public class ClientFileSendTask extends FileSendTask {
 
     @Override
     public void start() {
-        if(panel!=null){
+        if (panel != null) {
             panel.onTransferStart();
         }
         super.start();
     }
 
     @Override
-    void sendUploadRequestPack(){
-        try{
+    void sendUploadRequestPack() {
+        try {
             send(new UploadRequestPack(this));
-        }catch (PackageTooLargeException e){
+        } catch (PackageTooLargeException e) {
             throw new RuntimeException(e);
         }
     }
@@ -79,7 +79,7 @@ public class ClientFileSendTask extends FileSendTask {
 
     @Override
     public void onEndSucceed() {
-        if(panel!=null){
+        if (panel != null) {
             panel.onTransferSucceed(getFile());
         }
         if (callback != null) {
@@ -90,13 +90,13 @@ public class ClientFileSendTask extends FileSendTask {
 
     @Override
     public void onEndFailed(String reason) {
-        if(localEndReason!=null){ //use local end reason if exists
+        if (localEndReason != null) { //use local end reason if exists
             reason = localEndReason;
         }
-        if(panel!=null){
+        if (panel != null) {
             panel.onTransferFailed(reason);
         }
-        if (callback != null){
+        if (callback != null) {
             callback.onFailed(this, reason);
         }
         super.onEndFailed(reason);
@@ -106,7 +106,7 @@ public class ClientFileSendTask extends FileSendTask {
 
     @Override
     protected void onTransferProgressChange(long uploadedSize) {
-        if(panel!=null){
+        if (panel != null) {
             panel.setProgress(uploadedSize);
         }
     }

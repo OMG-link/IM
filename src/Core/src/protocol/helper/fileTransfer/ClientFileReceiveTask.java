@@ -73,15 +73,23 @@ public class ClientFileReceiveTask extends FileReceiveTask {
     @Override
     public void onEndSucceed() {
         super.onEndSucceed();
-        if (callback == null) return;
-        callback.onSucceed(this);
+        if (panel != null) {
+            panel.onTransferSucceed(super.getFile());
+        }
+        if (callback != null) {
+            callback.onSucceed(this);
+        }
     }
 
     @Override
     public void onEndFailed(String reason) {
         super.onEndFailed(reason);
-        if (callback == null) return;
-        callback.onFailed(this, reason);
+        if (panel != null) {
+            panel.onTransferFailed(reason);
+        }
+        if (callback != null) {
+            callback.onFailed(this, reason);
+        }
     }
 
     //getter
