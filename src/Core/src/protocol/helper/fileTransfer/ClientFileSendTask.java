@@ -2,8 +2,8 @@ package protocol.helper.fileTransfer;
 
 import GUI.IFileTransferringPanel;
 import IM.Client;
-import mutil.file.FileManager;
-import mutil.uuidLocator.UUIDManager;
+import mutils.file.FileManager;
+import mutils.uuidLocator.UUIDManager;
 import protocol.dataPack.DataPack;
 import protocol.dataPack.FileTransferType;
 import protocol.dataPack.UploadRequestPack;

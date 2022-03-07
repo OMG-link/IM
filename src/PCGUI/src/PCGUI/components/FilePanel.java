@@ -3,7 +3,7 @@ package PCGUI.components;
 import GUI.IFileTransferringPanel;
 import IM.Client;
 import PCGUI.helper.PanelUtil;
-import mutil.FileUtil;
+import mutils.FileUtils;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -54,7 +54,7 @@ public class FilePanel extends JPanel implements IFileTransferringPanel {
             SimpleAttributeSet attributeSet = new SimpleAttributeSet();
             StyleConstants.setFontSize(attributeSet, 14);
             StyleConstants.setForeground(attributeSet, Color.GRAY);
-            document.insertString(document.getLength(), String.format(" (%s)", FileUtil.sizeToString(fileSize)), attributeSet);
+            document.insertString(document.getLength(), String.format(" (%s)", FileUtils.sizeToString(fileSize)), attributeSet);
         } catch (BadLocationException e) {
             e.printStackTrace();
         }
@@ -68,7 +68,7 @@ public class FilePanel extends JPanel implements IFileTransferringPanel {
 
     @Override
     public void setProgress(long downloadedSize) {
-        downloadPanel.setInfo(String.format("Downloading: %s/%s", FileUtil.sizeToString(downloadedSize), FileUtil.sizeToString(fileSize)));
+        downloadPanel.setInfo(String.format("Downloading: %s/%s", FileUtils.sizeToString(downloadedSize), FileUtils.sizeToString(fileSize)));
     }
 
     @Override

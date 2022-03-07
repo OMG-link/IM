@@ -5,7 +5,7 @@ import GUI.IRoomFrame;
 import IM.Client;
 import IM.Config;
 import PCGUI.components.*;
-import mutil.IStringGetter;
+import mutils.IStringGetter;
 import protocol.helper.fileTransfer.IDownloadCallback;
 
 import javax.swing.*;

@@ -1,4 +1,4 @@
-package mutil.file;
+package mutils.file;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

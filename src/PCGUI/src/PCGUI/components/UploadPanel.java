@@ -2,8 +2,8 @@ package PCGUI.components;
 
 import GUI.IFileTransferringPanel;
 import PCGUI.helper.PanelUtil;
-import mutil.FileUtil;
-import mutil.IStringGetter;
+import mutils.FileUtils;
+import mutils.IStringGetter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +30,7 @@ public class UploadPanel extends JPanel implements IFileTransferringPanel {
 
     @Override
     public void setProgress(long progress){
-        setInfo(String.format("Uploading %s (%s/%s)",fileNameGetter.getString(), FileUtil.sizeToString(progress),FileUtil.sizeToString(fileSize)));
+        setInfo(String.format("Uploading %s (%s/%s)",fileNameGetter.getString(), FileUtils.sizeToString(progress), FileUtils.sizeToString(fileSize)));
     }
 
     @Override

@@ -1,6 +1,6 @@
-package mutil.file;
+package mutils.file;
 
-import mutil.uuidLocator.UuidConflictException;
+import mutils.uuidLocator.UuidConflictException;
 
 import java.io.File;
 import java.io.FileNotFoundException;

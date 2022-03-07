@@ -1,6 +1,6 @@
-package mutil;
+package mutils;
 
-public class FileUtil {
+public class FileUtils {
     public static String sizeToString(long size){
         if(size<1000L){
             return String.format("%dB",size);

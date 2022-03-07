@@ -1,4 +1,4 @@
-package mutil.uuidLocator;
+package mutils.uuidLocator;
 
 public class UuidConflictException extends Throwable{
     public UuidConflictException(){

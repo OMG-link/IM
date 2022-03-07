@@ -1,6 +1,6 @@
 package IM;
 
-import mutil.Random;
+import mutils.Random;
 
 import java.awt.*;
 import java.io.*;

@@ -1,6 +1,6 @@
 package GUI;
 
-import mutil.IStringGetter;
+import mutils.IStringGetter;
 import protocol.helper.fileTransfer.IDownloadCallback;
 
 import java.util.UUID;

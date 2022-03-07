@@ -1,8 +1,8 @@
 package IM;
 
 import GUI.IServerGUI;
-import mutil.file.ServerFileManager;
-import mutil.uuidLocator.UUIDManager;
+import mutils.file.ServerFileManager;
+import mutils.uuidLocator.UUIDManager;
 import protocol.ServerNetworkHandler;
 
 import java.util.logging.Level;

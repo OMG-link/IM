@@ -4,7 +4,7 @@ import GUI.IConfirmDialogCallback;
 import GUI.IFileTransferringPanel;
 import IM.Client;
 import PCGUI.RoomFrame;
-import mutil.ImageUtil;
+import mutils.ImageUtils;
 import protocol.dataPack.FileTransferType;
 import protocol.dataPack.ImageType;
 
@@ -49,7 +49,7 @@ public class ChatInputArea extends InputArea implements DropTargetListener {
                 @SuppressWarnings("unchecked")
                 java.util.List<File> fileList = (java.util.List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                 for (File file : fileList) {
-                    if (ImageUtil.isImageFile(file)) {
+                    if (ImageUtils.isImageFile(file)) {
                         isPasteSuppressed = false; //The checkbox will block the key up message.
                         handler.showCheckBox(
                                 "Would you like to send this file as an image?",

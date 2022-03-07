@@ -1,8 +1,8 @@
 package protocol.helper.fileTransfer;
 
 import IM.Server;
-import mutil.file.ServerFileManager;
-import mutil.uuidLocator.UUIDManager;
+import mutils.file.ServerFileManager;
+import mutils.uuidLocator.UUIDManager;
 import protocol.dataPack.DataPack;
 import protocol.dataPack.DownloadRequestPack;
 import protocol.dataPack.UploadRequestPack;

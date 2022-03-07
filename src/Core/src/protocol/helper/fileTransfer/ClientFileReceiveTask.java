@@ -2,9 +2,9 @@ package protocol.helper.fileTransfer;
 
 import GUI.IFileTransferringPanel;
 import IM.Client;
-import mutil.file.ClientFileManager;
-import mutil.file.FileObject;
-import mutil.uuidLocator.UUIDManager;
+import mutils.file.ClientFileManager;
+import mutils.file.FileObject;
+import mutils.uuidLocator.UUIDManager;
 import protocol.dataPack.DataPack;
 import protocol.dataPack.FileTransferType;
 import protocol.helper.data.PackageTooLargeException;

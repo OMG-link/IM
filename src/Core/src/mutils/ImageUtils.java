@@ -1,10 +1,10 @@
-package mutil;
+package mutils;
 
 import java.io.File;
 import java.util.Locale;
 import java.util.Objects;
 
-public class ImageUtil {
+public class ImageUtils {
     public static boolean isImageFile(File file){
         String fileName = file.getName();
         int idx = fileName.lastIndexOf('.');

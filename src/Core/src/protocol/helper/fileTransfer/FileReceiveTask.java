@@ -1,11 +1,11 @@
 package protocol.helper.fileTransfer;
 
-import mutil.FileUtil;
-import mutil.file.FileManager;
-import mutil.file.FileOccupiedException;
-import mutil.file.WriteOnlyFile;
-import mutil.uuidLocator.IUuidLocatable;
-import mutil.uuidLocator.UuidConflictException;
+import mutils.FileUtils;
+import mutils.file.FileManager;
+import mutils.file.FileOccupiedException;
+import mutils.file.WriteOnlyFile;
+import mutils.uuidLocator.IUuidLocatable;
+import mutils.uuidLocator.UuidConflictException;
 import protocol.dataPack.DataPack;
 import protocol.dataPack.FileTransferType;
 import protocol.dataPack.UploadResultPack;
@@ -156,8 +156,8 @@ public abstract class FileReceiveTask implements IUuidLocatable {
             } else {
                 this.onEndFailed(String.format(
                         "Actual received size does not match the request.(%s/%s)",
-                        FileUtil.sizeToString(getFileWriter().fileLength()),
-                        FileUtil.sizeToString(getFileSize()))
+                        FileUtils.sizeToString(getFileWriter().fileLength()),
+                        FileUtils.sizeToString(getFileSize()))
                 );
             }
         } else {

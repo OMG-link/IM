@@ -1,4 +1,4 @@
-package mutil.uuidLocator;
+package mutils.uuidLocator;
 
 import java.util.UUID;
 

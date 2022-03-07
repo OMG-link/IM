@@ -1,4 +1,4 @@
-package mutil;
+package mutils;
 
 public class Random {
     public static int randomInt(int l,int r){
