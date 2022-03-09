@@ -39,4 +39,8 @@ public class CheckVersionPack extends DataPack {
         return version;
     }
 
+    public String getCompatibleVersion() {
+        return compatibleVersion;
+    }
+
 }

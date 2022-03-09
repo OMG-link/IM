@@ -1,7 +1,5 @@
 package GUI;
 
-import java.io.File;
-
 public interface IGUI {
     void createConnectFrame();
 
@@ -16,7 +14,6 @@ public interface IGUI {
     void showException(Exception e);
 
     void openInBrowser(String uri);
-    void onFileDownloaded(File file);
     void alertVersionMismatch(String serverVersion, String clientVersion);
     void alertVersionIncompatible(String serverVersion, String clientVersion);
 

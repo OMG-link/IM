@@ -154,7 +154,9 @@ public class ClientNetworkHandler implements Runnable {
             case CheckVersion: {
                 CheckVersionPack pack = new CheckVersionPack(data);
 
-                if (!Objects.equals(pack.getVersion(), Config.version)) {
+                if(!Objects.equals(pack.getCompatibleVersion(),Config.compatibleVersion)){
+                    this.handler.getGUI().alertVersionIncompatible(pack.getVersion(),Config.version);
+                }else if (!Objects.equals(pack.getVersion(), Config.version)) {
                     this.handler.getGUI().alertVersionMismatch(pack.getVersion(), Config.version);
                 }
                 break;
