@@ -37,7 +37,12 @@ public class ClientFileReceiveTask extends FileReceiveTask {
         super.setReceiverTaskId();
         super.setSenderFileId(senderFileId);
 
-        FileObject fileObject = getFileManager().createFileRenameable(fileName);
+        FileObject fileObject;
+        if(fileTransferType==FileTransferType.ChatFile){
+            fileObject = getFileManager().createFileRenameable(fileName);
+        }else{
+            fileObject = getFileManager().createCacheFileRenameable(fileName);
+        }
         super.setReceiverFileId(fileObject.getFileId());
         super.setFileWriter(fileObject.getWriteOnlyInstance());
 
