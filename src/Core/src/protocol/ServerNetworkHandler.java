@@ -180,8 +180,7 @@ public class ServerNetworkHandler implements Runnable {
                 TextPack textPack = new TextPack(data);
                 textPack.setStamp();
 
-                ByteData newData = textPack.encode();
-                broadcast(newData);
+                broadcast(textPack,true);
                 break;
             }
             case NameUpdate: {
@@ -315,7 +314,7 @@ public class ServerNetworkHandler implements Runnable {
             }
             case ChatImage:{
                 ChatImagePack pack = new ChatImagePack(data);
-                broadcast(pack);
+                broadcast(pack, true);
                 break;
             }
             case Ping: {
@@ -371,12 +370,18 @@ public class ServerNetworkHandler implements Runnable {
         }
     }
 
-    private void broadcast(ByteData data) {
+    public void broadcast(DataPack pack,boolean shouldAddToHistory) {
+        broadcast(pack.encode(),shouldAddToHistory);
+    }
+
+    private void broadcast(ByteData data,boolean shouldAddToHistory) {
         if(data.getData().length>Config.packageMaxLength){
             Logger.getLogger("Server").log(Level.WARNING,"Package too large! It will not be broadcast.");
             return;
         }
-        addRecord(data);
+        if(shouldAddToHistory){
+            addRecord(data);
+        }
         Iterator<SelectionKey> iterator = selectionKeyList.iterator();
         while (iterator.hasNext()) {
             SelectionKey selectionKey = iterator.next();
@@ -389,10 +394,6 @@ public class ServerNetworkHandler implements Runnable {
                 throw new RuntimeException(e);
             }
         }
-    }
-
-    public void broadcast(DataPack pack) {
-        broadcast(pack.encode());
     }
 
     private void checkVersion(SocketChannel channel) throws IOException {
@@ -414,7 +415,7 @@ public class ServerNetworkHandler implements Runnable {
             userList[i++] = attachment.userName;
         }
 
-        broadcast(new UserListPack(userList));
+        broadcast(new UserListPack(userList),false);
 
     }
 

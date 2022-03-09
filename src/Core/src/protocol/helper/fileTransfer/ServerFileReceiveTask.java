@@ -75,7 +75,7 @@ public class ServerFileReceiveTask extends FileReceiveTask {
         if (getFileTransferType() == FileTransferType.ChatFile) {
             try{
                 FileUploadedPack pack = new FileUploadedPack(sender, super.getReceiverFileId(), getFileManager().getFileName(getReceiverFileId()), super.getFileSize());
-                handler.getNetworkHandler().broadcast(pack);
+                handler.getNetworkHandler().broadcast(pack, true);
             }catch (FileNotFoundException e){
                 throw new RuntimeException(e); //This never happens.
             }
