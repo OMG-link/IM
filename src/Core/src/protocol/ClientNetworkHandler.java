@@ -32,11 +32,15 @@ public class ClientNetworkHandler implements Runnable {
 
     private Timer pingTimer;
 
-    private boolean isInterrupted = false;
+    private boolean interrupted = false;
+
+    boolean isInterrupted(){
+        return interrupted;
+    }
 
     public void interrupt() {
-        if (isInterrupted) return;
-        isInterrupted = true;
+        if (interrupted) return;
+        interrupted = true;
         this.close();
     }
 
@@ -102,7 +106,7 @@ public class ClientNetworkHandler implements Runnable {
             }
         } catch (IOException e) {
             //If IOException is caused by interrupt, just return.
-            if (this.isInterrupted) {
+            if (this.interrupted) {
                 Logger.getLogger("IMCore").log(Level.INFO, "thread interrupted");
                 return;
             }
