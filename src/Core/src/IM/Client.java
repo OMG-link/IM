@@ -57,9 +57,6 @@ public class Client{
             }
             client.networkHandler = new ClientNetworkHandler(client, Config.getServerIP(), Config.getServerPort());
             client.networkHandler.connect();
-            if(getRoomFrame()!=null){
-                getRoomFrame().clearMessageArea();
-            }
             //Send CheckVersionPack and NameUpdatePack
             try{
                 client.getNetworkHandler().send(new CheckVersionPack());

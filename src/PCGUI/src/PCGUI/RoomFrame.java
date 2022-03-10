@@ -143,6 +143,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
 
     @Override
     public void onConnectionBuilt() {
+        clearMessageArea();
         inputArea.setEnabled(true);
         for(Component component: buttonPanel.getComponents()){
             if(component instanceof JButton){
