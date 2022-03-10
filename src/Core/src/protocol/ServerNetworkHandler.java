@@ -121,7 +121,6 @@ public class ServerNetworkHandler implements Runnable {
         SelectionKey newSelectionKey = socketChannel.register(selectionKey.selector(), SelectionKey.OP_READ, new Attachment());
         selectionKeyList.add(newSelectionKey);
 
-        checkVersion(socketChannel);
         sendHistory(socketChannel);
 
     }
@@ -175,7 +174,36 @@ public class ServerNetworkHandler implements Runnable {
             throw new InvalidPackageException();
         }
 
+        //Old version does not send CheckVersionPack to server.
+        if(!attachment.isVersionChecked&&type!=DataPackType.CheckVersion){
+            try{
+                attachment.isVersionChecked = true;
+                this.send(socketChannel,new CheckVersionPack());
+            }catch (PackageTooLargeException e){
+                throw new RuntimeException(e);
+            }
+        }
+
         switch (type) {
+            case CheckVersion:{
+                attachment.isVersionChecked = true;
+                //CheckVersionPack for V1.3
+                try{
+                    new CheckVersionPack(data);
+                    this.send(socketChannel,new CheckVersionPack());
+                    break;
+                }catch (PackageTooLargeException e){
+                    throw new RuntimeException(e);
+                }catch (InvalidPackageException ignored){
+                }
+                //Default. Used when a higher version of CheckVersionPack is sent.
+                try{
+                    this.send(socketChannel,new CheckVersionPack());
+                    break;
+                }catch (PackageTooLargeException e){
+                    throw new RuntimeException(e);
+                }
+            }
             case Text: {
                 TextPack textPack = new TextPack(data);
                 textPack.setStamp();

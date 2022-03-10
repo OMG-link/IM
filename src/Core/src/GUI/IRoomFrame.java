@@ -7,6 +7,12 @@ import java.util.UUID;
 
 public interface IRoomFrame {
 
+    /**
+     * Called when connection to the server has been built.
+     * This function should allow user to type texts and so on.
+     */
+    void onConnectionBuilt();
+
     void setVisible(boolean b);
 
     void clearMessageArea();

@@ -1,9 +1,6 @@
 package IM;
 
-import GUI.IConfirmDialogCallback;
-import GUI.IFileTransferringPanel;
-import GUI.IGUI;
-import GUI.IRoomFrame;
+import GUI.*;
 import mutils.file.ClientFileManager;
 import mutils.uuidLocator.UUIDManager;
 import protocol.ClientNetworkHandler;
@@ -22,6 +19,7 @@ public class Client{
     private UUIDManager uuidManager;
     private ClientFileManager fileManager;
     private ClientNetworkHandler networkHandler;
+    private IConnectFrame connectFrame;
     private IRoomFrame roomFrame;
     private IGUI GUI;
 
@@ -48,20 +46,28 @@ public class Client{
         getGUI().createRoomFrame();
     }
 
+    /**
+     * 异步实现
+     */
     public void runNetworkHandler(){
-        if(this.networkHandler!=null){
-            this.networkHandler.interrupt();
-        }
-        this.networkHandler = new ClientNetworkHandler(this, Config.getServerIP(), Config.getServerPort());
-        this.networkHandler.connect();
-        if(this.getRoomFrame()!=null){
-            this.getRoomFrame().clearMessageArea();
-        }
-        try{
-            this.networkHandler.send(new NameUpdatePack(Config.getUsername()));
-        }catch (PackageTooLargeException e){
-            throw new RuntimeException(e);
-        }
+        final Client client = this;
+        new Thread(() -> {
+            if(client.networkHandler!=null){
+                client.networkHandler.interrupt();
+            }
+            client.networkHandler = new ClientNetworkHandler(client, Config.getServerIP(), Config.getServerPort());
+            client.networkHandler.connect();
+            if(getRoomFrame()!=null){
+                getRoomFrame().clearMessageArea();
+            }
+            try{
+                client.getNetworkHandler().send(new CheckVersionPack());
+                client.networkHandler.send(new NameUpdatePack(Config.getUsername()));
+            }catch (PackageTooLargeException e){
+                throw new RuntimeException(e);
+            }
+            client.getRoomFrame().onConnectionBuilt();
+        }).start();
     }
 
     public boolean setConfigAndStart(String url,String username,boolean shouldRunLocalServer){
@@ -170,6 +176,14 @@ public class Client{
 
     public ClientNetworkHandler getNetworkHandler() {
         return networkHandler;
+    }
+
+    public IConnectFrame getConnectFrame() {
+        return connectFrame;
+    }
+
+    public void setConnectFrame(IConnectFrame connectFrame) {
+        this.connectFrame = connectFrame;
     }
 
     public IRoomFrame getRoomFrame() {

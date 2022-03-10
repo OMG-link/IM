@@ -9,7 +9,6 @@ import IM.Config;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,6 +34,7 @@ public class PCGUI implements IGUI {
     public void createConnectFrame() {
         IConnectFrame connectFrame = new ConnectFrame(client);
         connectFrame.setVisible(true);
+        client.setConnectFrame(connectFrame);
     }
 
     @Override
@@ -46,16 +46,18 @@ public class PCGUI implements IGUI {
 
     @Override
     public void showMessageDialog(String message) {
-        JOptionPane.showMessageDialog(null, message);
+        new Thread(()-> JOptionPane.showMessageDialog(null, message)).start();
     }
 
     @Override
     public void showConfirmDialog(String message, IConfirmDialogCallback callback) {
-        if (JOptionPane.showConfirmDialog(null, message, "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-            callback.onPositiveInput();
-        } else {
-            callback.onNegativeInput();
-        }
+        new Thread(()->{
+            if (JOptionPane.showConfirmDialog(null, message, "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                callback.onPositiveInput();
+            } else {
+                callback.onNegativeInput();
+            }
+        }).start();
     }
 
     @Override
@@ -73,26 +75,13 @@ public class PCGUI implements IGUI {
     }
 
     @Override
-    public void onFileDownloaded(File file) {
-        try{
-            //Open file directly is dangerous, we just need to open the folder.
-            if(System.getProperty("os.name").toUpperCase().contains("WINDOWS")){
-                Runtime.getRuntime().exec("explorer /select,"+file.getPath());
-            }else{
-                Desktop.getDesktop().open(file.getParentFile());
-            }
-        }catch (IOException ignored){
-        }
-    }
-
-    @Override
     public void alertVersionMismatch(String serverVersion, String clientVersion) {
         client.showCheckBox(
                 String.format("The server runs on version \"%s\", while your client runs on version \"%s\".\n Do you want to download a new version?", serverVersion, clientVersion),
                 new IConfirmDialogCallback() {
                     @Override
                     public void onPositiveInput() {
-                        openInBrowser("https://www.omg-link.com:8888/IM/");
+                        openInBrowser("https://www.omg-link.com/IM/");
                     }
 
                     @Override
@@ -110,7 +99,7 @@ public class PCGUI implements IGUI {
                 new IConfirmDialogCallback() {
                     @Override
                     public void onPositiveInput() {
-                        openInBrowser("https://www.omg-link.com:8888/IM/");
+                        openInBrowser("https://www.omg-link.com/IM/");
                         System.exit(0);
                     }
 

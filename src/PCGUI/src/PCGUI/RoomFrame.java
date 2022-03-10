@@ -76,7 +76,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
         component.setPreferredSize(new Dimension(200, 450));
         component.setBackground(Color.GRAY);
         component.setFont(Config.getPreferredFont());
-        component.setText(String.format("User list is being developed.\nYour name is \"%s\".\n", Config.getUsername()));
+        component.setText(String.format("Please wait while connecting to %s:%d.",Config.getServerIP(),Config.getServerPort()));
         component.setEditable(false);
         component.setLineWrap(true);
         component.setWrapStyleWord(true);
@@ -95,6 +95,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
         component.setText("");
         component.setLineWrap(true);
         component.setWrapStyleWord(true);
+        component.setEnabled(false);
 
         JScrollPane pane = new JScrollPane(component, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         appendComponent(pane, 0, 4, 4, 1);
@@ -107,6 +108,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
 
         //Upload File Button
         JButton uploadFileButton = new JButton("Upload File");
+        uploadFileButton.setEnabled(false);
         uploadFileButton.addActionListener((event) -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Upload File");
@@ -124,6 +126,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
 
         //Send Button
         JButton sendButton = new JButton("Send Chat");
+        sendButton.setEnabled(false);
         sendButton.addActionListener((event) -> this.onInputFinish());
         component.add(sendButton);
 
@@ -136,6 +139,16 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
 
         appendComponent(component, 0, 5, 4, 1);
 
+    }
+
+    @Override
+    public void onConnectionBuilt() {
+        inputArea.setEnabled(true);
+        for(Component component: buttonPanel.getComponents()){
+            if(component instanceof JButton){
+                component.setEnabled(true);
+            }
+        }
     }
 
     @Override

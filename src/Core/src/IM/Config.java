@@ -8,7 +8,7 @@ import java.security.InvalidParameterException;
 import java.util.Scanner;
 
 public class Config {
-    public static final String version = "1.3.1 beta";
+    public static final String version = "1.3.2 beta";
     public static final String compatibleVersion = "1.3.1";
 
     private static String serverIP = "127.0.0.1";

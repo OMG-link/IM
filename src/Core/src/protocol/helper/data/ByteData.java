@@ -6,8 +6,13 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-public class ByteData {
+public class ByteData implements Cloneable{
     private byte[] data;
+
+    @Override
+    public ByteData clone(){
+        return new ByteData(this);
+    }
 
     private void checkLength(int expectLength) throws InvalidPackageException {
         if (this.data.length < expectLength)
@@ -29,6 +34,10 @@ public class ByteData {
 
     public ByteData() {
         this.data = new byte[0];
+    }
+
+    public ByteData(ByteData byteData){
+        this.setData(byteData.getData());
     }
 
     public ByteData(byte[] bytes){
@@ -102,6 +111,11 @@ public class ByteData {
 
     public byte[] getData() {
         return this.data;
+    }
+
+    public void setData(byte[] data) {
+        this.data = new byte[data.length];
+        memcpy(this.data,0,data);
     }
 
     public int length() {
