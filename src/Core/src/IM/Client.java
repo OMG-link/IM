@@ -60,13 +60,23 @@ public class Client{
             if(getRoomFrame()!=null){
                 getRoomFrame().clearMessageArea();
             }
+            //Send CheckVersionPack and NameUpdatePack
             try{
                 client.getNetworkHandler().send(new CheckVersionPack());
                 client.networkHandler.send(new NameUpdatePack(Config.getUsername()));
             }catch (PackageTooLargeException e){
                 throw new RuntimeException(e);
             }
-            client.getRoomFrame().onConnectionBuilt();
+            //Call onConnectionBuilt
+            try{
+                IRoomFrame roomFrame;
+                while((roomFrame=client.getRoomFrame())==null){
+                    Thread.sleep(1); //In case of room frame is not built, we should wait.
+                }
+                roomFrame.onConnectionBuilt();
+            }catch (InterruptedException e){
+                throw new RuntimeException(e); //Obviously, I won't interrupt it.
+            }
         }).start();
     }
 
