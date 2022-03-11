@@ -13,11 +13,11 @@ import protocol.helper.data.PackageTooLargeException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.SelectionKey;
 
 public class ServerFileReceiveTask extends FileReceiveTask {
     private final Server handler;
-    private final SocketChannel socketChannel;
+    private final SelectionKey selectionKey;
 
     private final String sender;
 
@@ -27,12 +27,12 @@ public class ServerFileReceiveTask extends FileReceiveTask {
      * @throws IOException - When the file cannot be created.
      */
     public ServerFileReceiveTask(
-            Server handler, SocketChannel socketChannel,
+            Server handler, SelectionKey selectionKey,
             UploadRequestPack requestPack, String sender
     ) throws IOException {
         super(requestPack.getFileTransferType());
         this.handler = handler;
-        this.socketChannel = socketChannel;
+        this.selectionKey = selectionKey;
         this.sender = sender;
         super.setReceiverTaskId();
 
@@ -64,7 +64,7 @@ public class ServerFileReceiveTask extends FileReceiveTask {
 
     @Override
     protected void send(DataPack dataPack) throws IOException, PackageTooLargeException {
-        handler.getNetworkHandler().send(socketChannel, dataPack);
+        handler.getNetworkHandler().send(selectionKey, dataPack);
     }
 
     //end

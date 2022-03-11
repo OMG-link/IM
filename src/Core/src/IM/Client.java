@@ -57,24 +57,30 @@ public class Client{
             }
             client.networkHandler = new ClientNetworkHandler(client, Config.getServerIP(), Config.getServerPort());
             client.networkHandler.connect();
-            //Send CheckVersionPack and NameUpdatePack
+            //Send CheckVersionPack
             try{
                 client.getNetworkHandler().send(new CheckVersionPack());
-                client.networkHandler.send(new NameUpdatePack(Config.getUsername()));
             }catch (PackageTooLargeException e){
                 throw new RuntimeException(e);
             }
-            //Call onConnectionBuilt
-            try{
-                IRoomFrame roomFrame;
-                while((roomFrame=client.getRoomFrame())==null){
-                    Thread.sleep(1); //In case of room frame is not built, we should wait.
-                }
-                roomFrame.onConnectionBuilt();
-            }catch (InterruptedException e){
-                throw new RuntimeException(e); //Obviously, I won't interrupt it.
-            }
         }).start();
+    }
+
+    /**
+     * Called when version check is done.
+     * SEND NOTHING BEFORE VERSION IS CHECKED!
+     */
+    public void onVersionChecked(){
+        //Call onConnectionBuilt
+        try{
+            IRoomFrame roomFrame;
+            while((roomFrame=getRoomFrame())==null){
+                Thread.sleep(1); //In case of room frame is not built, we should wait.
+            }
+            roomFrame.onConnectionBuilt();
+        }catch (InterruptedException e){
+            throw new RuntimeException(e); //Obviously, I won't interrupt it.
+        }
     }
 
     public boolean setConfigAndStart(String url,String username,boolean shouldRunLocalServer){

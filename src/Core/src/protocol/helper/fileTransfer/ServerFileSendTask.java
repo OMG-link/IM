@@ -10,21 +10,21 @@ import protocol.helper.data.PackageTooLargeException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.SelectionKey;
 
 public class ServerFileSendTask extends FileSendTask{
     private final Server handler;
-    private final SocketChannel socketChannel;
+    private final SelectionKey selectionKey;
 
     //construct
 
     public ServerFileSendTask(
-            Server handler, SocketChannel socketChannel,
+            Server handler, SelectionKey selectionKey,
             DownloadRequestPack requestPack
     ) throws FileNotFoundException {
         super(requestPack.getFileTransferType());
         this.handler = handler;
-        this.socketChannel = socketChannel;
+        this.selectionKey = selectionKey;
         super.setSenderTaskId();
 
         super.setReceiverTaskId(requestPack.getReceiverTaskId());
@@ -41,7 +41,7 @@ public class ServerFileSendTask extends FileSendTask{
 
     @Override
     protected void send(DataPack dataPack) throws IOException, PackageTooLargeException {
-        handler.getNetworkHandler().send(socketChannel,dataPack);
+        handler.getNetworkHandler().send(selectionKey,dataPack);
     }
 
     @Override

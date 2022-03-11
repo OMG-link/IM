@@ -32,6 +32,7 @@ public class ClientNetworkHandler implements Runnable {
 
     private Timer pingTimer;
 
+    private boolean versionChecked = false;
     private boolean interrupted = false;
 
     boolean isInterrupted(){
@@ -82,6 +83,7 @@ public class ClientNetworkHandler implements Runnable {
     }
 
     public void close() {
+        interrupted = true;
         try {
             pingTimer.cancel();
             this.socket.close();
@@ -106,10 +108,7 @@ public class ClientNetworkHandler implements Runnable {
             }
         } catch (IOException e) {
             //If IOException is caused by interrupt, just return.
-            if (this.interrupted) {
-                Logger.getLogger("IMCore").log(Level.INFO, "thread interrupted");
-                return;
-            }
+            if (this.isInterrupted()) return;
             //Otherwise, try auto reconnect.
             if (this.handler.getRoomFrame() != null) {
                 this.handler.getRoomFrame().onMessageReceive(
@@ -133,10 +132,16 @@ public class ClientNetworkHandler implements Runnable {
     }
 
     public void send(DataPack dataPack) throws PackageTooLargeException {
+        if(isInterrupted()) return;
+        if(!versionChecked && !(dataPack instanceof CheckVersionPack)){
+            throw new VersionNotCheckedException();
+        }
+
         this.send(dataPack.encode());
+
     }
 
-    public synchronized void send(ByteData data) throws PackageTooLargeException {
+    private synchronized void send(ByteData data) throws PackageTooLargeException {
         if (data.length() > Config.packageMaxLength)
             throw new PackageTooLargeException();
 
@@ -154,15 +159,24 @@ public class ClientNetworkHandler implements Runnable {
 
     private void onRecv(ByteData data) throws InvalidPackageException {
         DataPackType type = DataPackType.toType(ByteData.peekInt(data));
+
+        if(!versionChecked&&type!=DataPackType.CheckVersion) return;
+
         switch (type) {
             case CheckVersion: {
                 CheckVersionPack pack = new CheckVersionPack(data);
 
                 if(!Objects.equals(pack.getCompatibleVersion(),Config.compatibleVersion)){
+                    this.close();
                     this.handler.getGUI().alertVersionIncompatible(pack.getVersion(),Config.version);
-                }else if (!Objects.equals(pack.getVersion(), Config.version)) {
-                    this.handler.getGUI().alertVersionMismatch(pack.getVersion(), Config.version);
+                }else{
+                    if (!Objects.equals(pack.getVersion(), Config.version)) {
+                        this.handler.getGUI().alertVersionMismatch(pack.getVersion(), Config.version);
+                    }
+                    versionChecked = true;
+                    handler.onVersionChecked();
                 }
+
                 break;
             }
             case Text: {

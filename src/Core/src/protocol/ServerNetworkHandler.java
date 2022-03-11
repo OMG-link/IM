@@ -121,8 +121,6 @@ public class ServerNetworkHandler implements Runnable {
         SelectionKey newSelectionKey = socketChannel.register(selectionKey.selector(), SelectionKey.OP_READ, new Attachment());
         selectionKeyList.add(newSelectionKey);
 
-        sendHistory(socketChannel);
-
     }
 
     private void handleRead(SelectionKey selectionKey) throws IOException, InvalidPackageException {
@@ -175,34 +173,36 @@ public class ServerNetworkHandler implements Runnable {
         }
 
         //Old version does not send CheckVersionPack to server.
-        if(!attachment.isVersionChecked&&type!=DataPackType.CheckVersion){
-            try{
+        if(type!=DataPackType.CheckVersion){
+            if(!attachment.isVersionChecked){ //Old version
                 attachment.isVersionChecked = true;
-                this.send(socketChannel,new CheckVersionPack());
-            }catch (PackageTooLargeException e){
-                throw new RuntimeException(e);
+                doVersionCheck(selectionKey,new CheckVersionPack());
+                return;
+            }
+            if(!attachment.allowCommunication){
+                return;
             }
         }
 
         switch (type) {
             case CheckVersion:{
                 attachment.isVersionChecked = true;
-                //CheckVersionPack for V1.3
+                //CheckVersionPack for V1.3 (Server Version)
                 try{
-                    new CheckVersionPack(data);
-                    this.send(socketChannel,new CheckVersionPack());
+                    CheckVersionPack pack = new CheckVersionPack(data);
+                    if(Objects.equals(pack.getCompatibleVersion(), Config.compatibleVersion)){
+                        attachment.allowCommunication = true;
+                    }
+                    doVersionCheck(selectionKey,new CheckVersionPack());
+                    if(attachment.allowCommunication){
+                        onVersionChecked(selectionKey);
+                    }
                     break;
-                }catch (PackageTooLargeException e){
-                    throw new RuntimeException(e);
                 }catch (InvalidPackageException ignored){
                 }
                 //Default. Used when a higher version of CheckVersionPack is sent.
-                try{
-                    this.send(socketChannel,new CheckVersionPack());
-                    break;
-                }catch (PackageTooLargeException e){
-                    throw new RuntimeException(e);
-                }
+                doVersionCheck(selectionKey,new CheckVersionPack());
+                break;
             }
             case Text: {
                 TextPack textPack = new TextPack(data);
@@ -236,7 +236,7 @@ public class ServerNetworkHandler implements Runnable {
                          */
                         ServerFileReceiveTask task = new ServerFileReceiveTask(
                                 handler,
-                                socketChannel,
+                                selectionKey,
                                 requestPack,
                                 attachment.userName
                         );
@@ -250,7 +250,7 @@ public class ServerNetworkHandler implements Runnable {
                     }
                 }
                 try{
-                    this.send(socketChannel, new UploadReplyPack(
+                    this.send(selectionKey, new UploadReplyPack(
                             requestPack,
                             receiverTaskId,
                             receiverFileId,
@@ -270,7 +270,7 @@ public class ServerNetworkHandler implements Runnable {
                     task.end();
                 }else{
                     try{
-                        send(socketChannel,new UploadResultPack(pack.getSenderTaskId()));
+                        send(selectionKey,new UploadResultPack(pack.getSenderTaskId()));
                     }catch (PackageTooLargeException e){
                         throw new RuntimeException(e);
                     }
@@ -296,7 +296,7 @@ public class ServerNetworkHandler implements Runnable {
                 String reason;
                 ServerFileSendTask task = null;
                 try {
-                    task = new ServerFileSendTask(handler, socketChannel, pack);
+                    task = new ServerFileSendTask(handler, selectionKey, pack);
                     ok = true;
                     reason = "";
                 } catch (FileNotFoundException e) {
@@ -304,7 +304,7 @@ public class ServerNetworkHandler implements Runnable {
                     reason = String.format("No such file.{UUID=%s}.",pack.getSenderFileId());
                 }
                 try{
-                    this.send(socketChannel,new DownloadReplyPack(
+                    this.send(selectionKey,new DownloadReplyPack(
                             pack,
                             task==null?new UUID(0,0):task.getSenderTaskId(),
                             ok,
@@ -357,13 +357,24 @@ public class ServerNetworkHandler implements Runnable {
 
     }
 
-    public void send(SocketChannel socketChannel, DataPack dataPack) throws IOException, PackageTooLargeException {
-        send(socketChannel, dataPack.encode());
+    public void send(SelectionKey selectionKey, DataPack dataPack) throws IOException, PackageTooLargeException {
+        if(dataPack.getType()!=DataPackType.CheckVersion&&!((Attachment)selectionKey.attachment()).allowCommunication){
+            return;
+        }
+        send(selectionKey, dataPack.encode());
     }
 
-    private void send(SocketChannel socketChannel, ByteData data) throws IOException, PackageTooLargeException {
+    private void send(SelectionKey selectionKey, ByteData data) throws IOException, PackageTooLargeException {
         if(data.getData().length>Config.packageMaxLength){
             throw new PackageTooLargeException();
+        }
+
+        SocketChannel socketChannel;
+        try{
+            socketChannel = (SocketChannel) selectionKey.channel();
+        }catch (ClassCastException e){
+            Logger.getLogger("IMServer").log(Level.WARNING,"Cannot cast selectionKey.channel() to SocketChannel.");
+            return;
         }
 
         ByteData rawData = new ByteData();
@@ -374,7 +385,7 @@ public class ServerNetworkHandler implements Runnable {
         buffer.position(rawData.length());
         buffer.flip();
 
-        synchronized (socketChannel) {
+        synchronized (selectionKey.attachment()) {
             while (buffer.hasRemaining()) {
                 socketChannel.write(buffer);
             }
@@ -388,10 +399,10 @@ public class ServerNetworkHandler implements Runnable {
         }
     }
 
-    private void sendHistory(SocketChannel channel) throws IOException {
+    private void sendHistory(SelectionKey selectionKey) throws IOException {
         for (ByteData data : records) {
             try{
-                send(channel, data);
+                send(selectionKey, data);
             }catch (PackageTooLargeException e){
                 throw new RuntimeException(e);
             }
@@ -414,7 +425,7 @@ public class ServerNetworkHandler implements Runnable {
         while (iterator.hasNext()) {
             SelectionKey selectionKey = iterator.next();
             try {
-                send((SocketChannel) selectionKey.channel(), data);
+                send(selectionKey, data);
             } catch (IOException e) {
                 iterator.remove();
             } catch (PackageTooLargeException e){
@@ -424,13 +435,22 @@ public class ServerNetworkHandler implements Runnable {
         }
     }
 
-    private void checkVersion(SocketChannel channel) throws IOException {
-        CheckVersionPack pack = new CheckVersionPack();
+    /**
+     * Reply a version check pack to the client.
+     * @param selectionKey SelectionKey for the client.
+     * @param replyPack CheckVersionPack to reply.
+     * @throws IOException If the package cannot be sent.
+     */
+    private void doVersionCheck(SelectionKey selectionKey,DataPack replyPack) throws IOException {
         try{
-            send(channel, pack);
+            send(selectionKey,replyPack);
         }catch (PackageTooLargeException e){
             throw new RuntimeException(e);
         }
+    }
+
+    private void onVersionChecked(SelectionKey selectionKey) throws IOException {
+        sendHistory(selectionKey);
     }
 
     private void broadcastUserList() {

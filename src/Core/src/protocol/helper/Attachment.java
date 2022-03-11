@@ -7,6 +7,7 @@ public class Attachment {
     public String userName;
     public long lastPackageTime;
     public boolean isVersionChecked = false;
+    public boolean allowCommunication = false;
 
     public Attachment(){
         data = new ByteData();

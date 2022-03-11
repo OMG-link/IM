@@ -47,6 +47,9 @@ public class ByteData implements Cloneable{
     }
 
     public ByteData(InputStream inputStream, int length) throws IOException {
+        if(inputStream==null){
+            throw new IOException("InputStream is null!");
+        }
         this.data = new byte[length];
         int pos = 0;
         while(pos<length){
