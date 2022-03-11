@@ -6,8 +6,6 @@ import IM.Client;
 import IM.Config;
 import PCGUI.components.*;
 import mutils.IStringGetter;
-import protocol.dataPack.NameUpdatePack;
-import protocol.helper.data.PackageTooLargeException;
 import protocol.helper.fileTransfer.IDownloadCallback;
 
 import javax.swing.*;
@@ -145,12 +143,6 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
 
     @Override
     public void onConnectionBuilt() {
-        //Update name
-        try{
-            handler.getNetworkHandler().send(new NameUpdatePack(Config.getUsername()));
-        }catch (PackageTooLargeException e){
-            throw new RuntimeException(e);
-        }
         //Clear message area
         clearMessageArea();
         //Enable buttons

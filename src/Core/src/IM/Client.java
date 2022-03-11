@@ -71,13 +71,19 @@ public class Client{
      * SEND NOTHING BEFORE VERSION IS CHECKED!
      */
     public void onVersionChecked(){
-        //Call onConnectionBuilt
         try{
+            //Call onConnectionBuilt
             IRoomFrame roomFrame;
             while((roomFrame=getRoomFrame())==null){
                 Thread.sleep(1); //In case of room frame is not built, we should wait.
             }
             roomFrame.onConnectionBuilt();
+            //Update name
+            try{
+                getNetworkHandler().send(new NameUpdatePack(Config.getUsername()));
+            }catch (PackageTooLargeException e){
+                throw new RuntimeException(e);
+            }
         }catch (InterruptedException e){
             throw new RuntimeException(e); //Obviously, I won't interrupt it.
         }
