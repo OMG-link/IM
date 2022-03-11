@@ -35,7 +35,7 @@ public class ClientNetworkHandler implements Runnable {
     private boolean versionChecked = false;
     private boolean interrupted = false;
 
-    boolean isInterrupted(){
+    public boolean isInterrupted(){
         return interrupted;
     }
 
