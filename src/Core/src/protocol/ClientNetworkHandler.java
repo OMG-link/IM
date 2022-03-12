@@ -210,6 +210,11 @@ public class ClientNetworkHandler implements Runnable {
                 this.handler.getRoomFrame().onUserListUpdate(userListPack.getUserList());
                 break;
             }
+            case RoomName:{
+                RoomNamePack roomNamePack = new RoomNamePack(data);
+                this.handler.getRoomFrame().onRoomNameUpdate(roomNamePack.getRoomName());
+                break;
+            }
             case FileUploadRequest: {
                 UploadRequestPack pack = new UploadRequestPack(data);
                 boolean ok;

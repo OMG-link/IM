@@ -31,6 +31,7 @@ public interface IRoomFrame {
 
     void onFileUploadedReceive(String sender, long stamp, UUID uuid, String fileName, long fileSize);
     void onUserListUpdate(String[] userList);
+    void onRoomNameUpdate(String roomName);
     IFileTransferringPanel addFileTransferringPanel(IStringGetter fileNameGetter,long fileSize);
 
 }

@@ -181,6 +181,13 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     }
 
     @Override
+    public void onRoomNameUpdate(String roomName) {
+        if(roomName.length()>0){
+            setTitle(String.format("%s | IM - Made by OMG_link",roomName));
+        }
+    }
+
+    @Override
     public void onFileUploadedReceive(String sender, long stamp, UUID uuid, String fileName, long fileSize) {
         this.messageArea.add(new FilePanel(handler, sender, stamp, uuid, fileName, fileSize));
     }

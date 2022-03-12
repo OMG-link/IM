@@ -451,6 +451,13 @@ public class ServerNetworkHandler implements Runnable {
 
     private void onVersionChecked(SelectionKey selectionKey) throws IOException {
         sendHistory(selectionKey);
+
+        try{
+            send(selectionKey,new RoomNamePack());
+        }catch (PackageTooLargeException e){
+            throw new RuntimeException(e);
+        }
+
     }
 
     private void broadcastUserList() {

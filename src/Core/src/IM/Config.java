@@ -14,6 +14,7 @@ public class Config {
     private static String serverIP = "127.0.0.1";
     private static int serverPort = 8814;
     private static String username = String.format("User %d", Random.randomInt(1000,9999));
+    private static String roomName = "";
 
     private static String url = "www.omg-link.com:8814";
 
@@ -51,6 +52,18 @@ public class Config {
                             setUrl(value);
                             break;
                         }
+                        case "serverIp":{
+                            setUrl(value+":"+serverPort);
+                            break;
+                        }
+                        case "port":{
+                            setUrl(serverIP+":"+value);
+                            break;
+                        }
+                        case "roomName":{
+                            setRoomName(value);
+                            break;
+                        }
                     }
                 }catch (ConfigSetFailedException ignored){
                 }
@@ -70,7 +83,8 @@ public class Config {
             FileOutputStream outputStream = new FileOutputStream(file);
             PrintWriter printWriter = new PrintWriter(outputStream);
             printWriter.printf("username=%s\n", getUsername());
-            printWriter.printf("url=%s\n", getUrl());
+            printWriter.printf("serverIp=%s\n", getServerIP());
+            printWriter.printf("port=%s\n", getServerPort());
             printWriter.close();
             outputStream.close();
         }catch (IOException ignored){}
@@ -127,6 +141,14 @@ public class Config {
             throw new ConfigSetFailedException(String.format("Your name should be no longer than %d characters.",Config.nickMaxLength));
         }
         Config.username = username;
+    }
+
+    public static String getRoomName() {
+        return roomName;
+    }
+
+    public static void setRoomName(String roomName) {
+        Config.roomName = roomName;
     }
 
     private static String toDirName(String dirName){
