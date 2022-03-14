@@ -127,11 +127,8 @@ public class ServerNetworkHandler implements Runnable {
         SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
         Attachment attachment = (Attachment) selectionKey.attachment();
 
-        //log last communicate time
-        attachment.lastPackageTime = System.currentTimeMillis();
-
         //Receive data
-        ByteData data = attachment.data;
+        ByteData data = attachment.receiveBuffer;
         ByteData tData = new ByteData();
         ByteBuffer byteBuffer = ByteBuffer.allocate(10 * 1024); //10KB
 
