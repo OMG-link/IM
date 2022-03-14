@@ -2,13 +2,11 @@ package im.protocol;
 
 import im.Client;
 import im.config.Config;
-import im.gui.protocol.dataPack.*;
 import im.protocol.dataPack.*;
 import im.protocol.fileTransfer.ClientFileReceiveTask;
 import im.protocol.fileTransfer.ClientFileSendTask;
 import im.protocol.fileTransfer.NoSuchTaskIdException;
 import im.protocol.helper.data.InvalidPackageException;
-import protocol.dataPack.*;
 import im.protocol.helper.data.ByteData;
 import im.protocol.helper.data.PackageTooLargeException;
 

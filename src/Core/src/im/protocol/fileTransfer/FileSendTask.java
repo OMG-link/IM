@@ -1,10 +1,7 @@
 package im.protocol.fileTransfer;
 
-import im.gui.protocol.dataPack.*;
 import im.file_manager.*;
 import im.protocol.dataPack.*;
-import mutils.file.*;
-import protocol.dataPack.*;
 import im.protocol.helper.data.PackageTooLargeException;
 
 import java.io.File;
