@@ -1,9 +1,8 @@
-package protocol.helper.fileTransfer;
+package protocol.fileTransfer;
 
 import GUI.IFileTransferringPanel;
 import IM.Client;
 import mutils.file.FileManager;
-import mutils.uuidLocator.UUIDManager;
 import protocol.dataPack.DataPack;
 import protocol.dataPack.FileTransferType;
 import protocol.dataPack.UploadRequestPack;
@@ -11,24 +10,25 @@ import protocol.helper.data.PackageTooLargeException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.UUID;
 
 public class ClientFileSendTask extends FileSendTask {
-    private final Client handler;
+    private final Client client;
     private final IFileTransferringPanel panel;
     private final IUploadCallback callback;
 
     //constructors
 
     public ClientFileSendTask(
-            Client handler,
+            Client client, UUID senderTaskId,
             File file, FileTransferType fileTransferType,
             IFileTransferringPanel panel, IUploadCallback callback
     ) throws FileNotFoundException {
         super(fileTransferType);
-        this.handler = handler;
+        this.client = client;
         this.panel = panel;
         this.callback = callback;
-        super.setSenderTaskId();
+        super.setSenderTaskId(senderTaskId);
 
         super.setFile(file);
 
@@ -38,17 +38,21 @@ public class ClientFileSendTask extends FileSendTask {
 
     @Override
     protected void send(DataPack dataPack) throws PackageTooLargeException {
-        this.handler.getNetworkHandler().send(dataPack);
+        this.client.getNetworkHandler().send(dataPack);
     }
 
     @Override
     FileManager getFileManager() {
-        return handler.getFileManager();
+        return client.getFileManager();
     }
 
     @Override
-    public UUIDManager getUuidManager() {
-        return handler.getUuidManager();
+    void removeFromFactory() {
+        try{
+            client.getFactoryManager().getFileSendTaskFactory().remove(this);
+        }catch (NoSuchTaskIdException e){
+            throw new RuntimeException(e);
+        }
     }
 
     //start
@@ -71,11 +75,6 @@ public class ClientFileSendTask extends FileSendTask {
     }
 
     //end
-
-    @Override
-    protected void onTransferEnd() {
-        super.onTransferEnd();
-    }
 
     @Override
     public void onEndSucceed() {

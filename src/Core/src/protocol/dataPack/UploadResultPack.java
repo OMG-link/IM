@@ -2,7 +2,7 @@ package protocol.dataPack;
 
 import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
-import protocol.helper.fileTransfer.FileReceiveTask;
+import protocol.fileTransfer.FileReceiveTask;
 
 import java.util.UUID;
 

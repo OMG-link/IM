@@ -1,31 +1,31 @@
-package protocol.helper.fileTransfer;
+package protocol.fileTransfer;
 
 import IM.Server;
+import mutils.file.NoSuchFileIdException;
 import mutils.file.ServerFileManager;
-import mutils.uuidLocator.UUIDManager;
 import protocol.dataPack.DataPack;
 import protocol.dataPack.DownloadRequestPack;
 import protocol.dataPack.UploadRequestPack;
 import protocol.helper.data.PackageTooLargeException;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
+import java.util.UUID;
 
 public class ServerFileSendTask extends FileSendTask{
-    private final Server handler;
+    private final Server server;
     private final SelectionKey selectionKey;
 
     //construct
 
     public ServerFileSendTask(
-            Server handler, SelectionKey selectionKey,
+            Server server, SelectionKey selectionKey, UUID senderTaskId,
             DownloadRequestPack requestPack
-    ) throws FileNotFoundException {
+    ) throws NoSuchFileIdException {
         super(requestPack.getFileTransferType());
-        this.handler = handler;
+        this.server = server;
         this.selectionKey = selectionKey;
-        super.setSenderTaskId();
+        super.setSenderTaskId(senderTaskId);
 
         super.setReceiverTaskId(requestPack.getReceiverTaskId());
         super.setSenderFileId(requestPack.getSenderFileId());
@@ -41,17 +41,21 @@ public class ServerFileSendTask extends FileSendTask{
 
     @Override
     protected void send(DataPack dataPack) throws IOException, PackageTooLargeException {
-        handler.getNetworkHandler().send(selectionKey,dataPack);
+        server.getNetworkHandler().send(selectionKey,dataPack);
     }
 
     @Override
     ServerFileManager getFileManager() {
-        return handler.getFileManager();
+        return server.getFileManager();
     }
 
     @Override
-    public UUIDManager getUuidManager() {
-        return handler.getUuidManager();
+    void removeFromFactory() {
+        try{
+            server.getFactoryManager().getFileSendTaskFactory().remove(this);
+        }catch (NoSuchTaskIdException e){
+            throw new RuntimeException(e);
+        }
     }
 
     //steps

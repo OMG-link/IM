@@ -1,10 +1,10 @@
-package protocol.helper.fileTransfer;
+package protocol.fileTransfer;
 
 import IM.Server;
 import mutils.file.FileObject;
 import mutils.file.FileOccupiedException;
+import mutils.file.NoSuchFileIdException;
 import mutils.file.ServerFileManager;
-import mutils.uuidLocator.UUIDManager;
 import protocol.dataPack.DataPack;
 import protocol.dataPack.FileTransferType;
 import protocol.dataPack.FileUploadedPack;
@@ -14,9 +14,10 @@ import protocol.helper.data.PackageTooLargeException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
+import java.util.UUID;
 
 public class ServerFileReceiveTask extends FileReceiveTask {
-    private final Server handler;
+    private final Server server;
     private final SelectionKey selectionKey;
 
     private final String sender;
@@ -27,14 +28,14 @@ public class ServerFileReceiveTask extends FileReceiveTask {
      * @throws IOException - When the file cannot be created.
      */
     public ServerFileReceiveTask(
-            Server handler, SelectionKey selectionKey,
+            Server server, SelectionKey selectionKey, UUID receiverTaskId,
             UploadRequestPack requestPack, String sender
     ) throws IOException {
         super(requestPack.getFileTransferType());
-        this.handler = handler;
+        this.server = server;
         this.selectionKey = selectionKey;
         this.sender = sender;
-        super.setReceiverTaskId();
+        super.setReceiverTaskId(receiverTaskId);
 
         super.setSenderTaskId(requestPack.getSenderTaskId());
         super.setSenderFileId(requestPack.getSenderFileId());
@@ -53,18 +54,22 @@ public class ServerFileReceiveTask extends FileReceiveTask {
     //abstract
 
     @Override
-    public UUIDManager getUuidManager() {
-        return handler.getUuidManager();
+    protected ServerFileManager getFileManager() {
+        return server.getFileManager();
     }
 
     @Override
-    protected ServerFileManager getFileManager() {
-        return handler.getFileManager();
+    void removeFromFactory() {
+        try{
+            server.getFactoryManager().getFileReceiveTaskFactory().remove(this);
+        }catch (NoSuchTaskIdException e){
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     protected void send(DataPack dataPack) throws IOException, PackageTooLargeException {
-        handler.getNetworkHandler().send(selectionKey, dataPack);
+        server.getNetworkHandler().send(selectionKey, dataPack);
     }
 
     //end
@@ -75,8 +80,8 @@ public class ServerFileReceiveTask extends FileReceiveTask {
         if (getFileTransferType() == FileTransferType.ChatFile) {
             try{
                 FileUploadedPack pack = new FileUploadedPack(sender, super.getReceiverFileId(), getFileManager().getFileName(getReceiverFileId()), super.getFileSize());
-                handler.getNetworkHandler().broadcast(pack, true);
-            }catch (FileNotFoundException e){
+                server.getNetworkHandler().broadcast(pack, true);
+            }catch (NoSuchFileIdException e){
                 throw new RuntimeException(e); //This never happens.
             }
         }

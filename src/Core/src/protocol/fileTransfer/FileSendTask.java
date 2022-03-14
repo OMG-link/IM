@@ -1,11 +1,6 @@
-package protocol.helper.fileTransfer;
+package protocol.fileTransfer;
 
-import mutils.file.FileManager;
-import mutils.file.FileObject;
-import mutils.file.FileOccupiedException;
-import mutils.file.ReadOnlyFile;
-import mutils.uuidLocator.IUuidLocatable;
-import mutils.uuidLocator.UuidConflictException;
+import mutils.file.*;
 import protocol.dataPack.*;
 import protocol.helper.data.PackageTooLargeException;
 
@@ -14,7 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.UUID;
 
-public abstract class FileSendTask implements IUuidLocatable, Runnable {
+public abstract class FileSendTask implements Runnable {
     private final FileTransferType fileTransferType;
     private UUID senderTaskId;
     private UUID receiverTaskId;
@@ -36,11 +31,7 @@ public abstract class FileSendTask implements IUuidLocatable, Runnable {
 
     abstract void send(DataPack dataPack) throws IOException, PackageTooLargeException;
     abstract FileManager getFileManager();
-
-    @Override
-    public UUID getUuid(){
-        return getSenderTaskId();
-    }
+    abstract void removeFromFactory();
 
     @Override
     public void run() {
@@ -55,15 +46,8 @@ public abstract class FileSendTask implements IUuidLocatable, Runnable {
 
     //start
 
-    protected void setSenderTaskId(){
-        while(true){
-            try{
-                senderTaskId = UUID.randomUUID();
-                onCreate();
-                break;
-            }catch (UuidConflictException ignored){ //try again
-            }
-        }
+    protected void setSenderTaskId(UUID senderTaskId){
+        this.senderTaskId = senderTaskId;
     }
 
     public void setFile(File file) throws FileNotFoundException {
@@ -138,7 +122,7 @@ public abstract class FileSendTask implements IUuidLocatable, Runnable {
                 offset += length;
                 this.onTransferProgressChange(offset);
             }
-        }catch (FileNotFoundException e){
+        }catch (NoSuchFileIdException e){
             localEndReason = "File not found.";
         }catch (FileOccupiedException e){
             localEndReason = "The file has been occupied.";
@@ -163,10 +147,10 @@ public abstract class FileSendTask implements IUuidLocatable, Runnable {
     }
 
     public void onEndSucceed(){
-        this.onDelete();
+        this.removeFromFactory();
     }
     public void onEndFailed(String reason){
-        this.onDelete();
+        this.removeFromFactory();
     }
 
     //get

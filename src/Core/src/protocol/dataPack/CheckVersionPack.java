@@ -14,6 +14,10 @@ public class CheckVersionPack extends DataPack {
         this.compatibleVersion = Config.compatibleVersion;
     }
 
+    /**
+     * Constructor for ByteData.
+     * This constructor will not change the parameter data if an InvalidPackageException was thrown.
+     */
     public CheckVersionPack(ByteData data) throws InvalidPackageException {
         super(DataPackType.CheckVersion);
         this.decode(data);

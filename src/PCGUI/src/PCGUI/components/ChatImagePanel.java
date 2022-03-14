@@ -2,9 +2,11 @@ package PCGUI.components;
 
 import IM.Client;
 import PCGUI.helper.PanelUtil;
+import mutils.file.FileObject;
+import mutils.file.NoSuchFileIdException;
 import protocol.dataPack.FileTransferType;
-import protocol.helper.fileTransfer.ClientFileReceiveTask;
-import protocol.helper.fileTransfer.IDownloadCallback;
+import protocol.fileTransfer.ClientFileReceiveTask;
+import protocol.fileTransfer.IDownloadCallback;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +30,13 @@ public class ChatImagePanel extends JPanel {
         return new IDownloadCallback() {
             @Override
             public void onSucceed(ClientFileReceiveTask task) {
-                var imagePath = handler.getFileManager().getFile(task.getReceiverFileId()).getFile().getAbsolutePath();
+                FileObject imageFileObject;
+                try{
+                    imageFileObject = handler.getFileManager().openFile(task.getReceiverFileId());
+                }catch (NoSuchFileIdException e){
+                    throw new RuntimeException("Image file not found!",e);
+                }
+                var imagePath = imageFileObject.getFile().getAbsolutePath();
                 var icon = new ImageIcon(imagePath);
                 if(icon.getIconHeight()<=0){
                     add(PanelUtil.makeTextArea(Color.RED,22,"[Image] Unable to resolve image."));

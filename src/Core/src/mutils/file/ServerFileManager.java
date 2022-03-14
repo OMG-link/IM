@@ -3,7 +3,6 @@ package mutils.file;
 import IM.Config;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +22,10 @@ public class ServerFileManager extends FileManager{
         makeFolder(new File(getFolderName()).getAbsoluteFile(),true);
     }
 
+    private String getFolderName() {
+        return Config.getCacheDir()+folderName;
+    }
+
     /**
      * Create a file on the server.
      * Note that you always create a new file with a different UUID, which means you must use the UUID to locate the file when needed.
@@ -31,7 +34,7 @@ public class ServerFileManager extends FileManager{
      */
     public FileObject createFile(String fileName){
         try{
-            FileObject fileObject = super.createFileInFolder(getFolderName());
+            FileObject fileObject = super.createUnnamedFileInFolder(getFolderName());
             uuidToNameMap.put(fileObject.getFileId(),fileName);
             return fileObject;
         }catch (IOException e){
@@ -40,19 +43,11 @@ public class ServerFileManager extends FileManager{
         }
     }
 
-    public FileObject openFile(UUID fileId) throws FileNotFoundException {
-        return openFile(new File(getFolderName()+'/'+fileId.toString()));
-    }
-
-    public String getFileName(UUID uuid) throws FileNotFoundException {
+    public String getFileName(UUID uuid) throws NoSuchFileIdException {
         if(!uuidToNameMap.containsKey(uuid)) {
-            throw new FileNotFoundException();
+            throw new NoSuchFileIdException();
         }
         return uuidToNameMap.get(uuid);
-    }
-
-    public String getFolderName() {
-        return Config.getCacheDir()+folderName;
     }
 
 }

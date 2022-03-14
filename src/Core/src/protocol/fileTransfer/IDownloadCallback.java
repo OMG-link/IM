@@ -1,4 +1,4 @@
-package protocol.helper.fileTransfer;
+package protocol.fileTransfer;
 
 public interface IDownloadCallback {
     void onSucceed(ClientFileReceiveTask task);

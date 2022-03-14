@@ -1,7 +1,7 @@
 package GUI;
 
 import mutils.IStringGetter;
-import protocol.helper.fileTransfer.IDownloadCallback;
+import protocol.fileTransfer.IDownloadCallback;
 
 import java.util.UUID;
 

@@ -1,12 +1,12 @@
 package IM;
 
 import GUI.*;
+import IM.FactoryManager.ClientFactoryManager;
 import mutils.file.ClientFileManager;
-import mutils.uuidLocator.UUIDManager;
 import protocol.ClientNetworkHandler;
 import protocol.dataPack.*;
+import protocol.fileTransfer.*;
 import protocol.helper.data.PackageTooLargeException;
-import protocol.helper.fileTransfer.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,7 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Client{
-    private UUIDManager uuidManager;
+    private final ClientFactoryManager factoryManager = new ClientFactoryManager();
     private ClientFileManager fileManager;
     private ClientNetworkHandler networkHandler;
     private IConnectFrame connectFrame;
@@ -26,7 +26,6 @@ public class Client{
     public Client(IGUI GUI){
         try{
             this.GUI = GUI;
-            this.uuidManager = new UUIDManager();
             this.fileManager = new ClientFileManager();
         }catch (Exception e){
             Logger.getGlobal().log(Level.SEVERE,"Unable to create server instance: "+e);
@@ -147,7 +146,7 @@ public class Client{
     }
 
     public FileSendTask uploadFile(File file, FileTransferType fileTransferType, IFileTransferringPanel panel, IUploadCallback callback) throws FileNotFoundException {
-        FileSendTask task = new ClientFileSendTask(this,file,fileTransferType,panel,callback);
+        FileSendTask task = getFactoryManager().getFileSendTaskFactory().create(this, file, fileTransferType, panel, callback);
         task.start();
         return task;
     }
@@ -158,7 +157,7 @@ public class Client{
 
     public void downloadFile(String fileName, UUID fileId, FileTransferType fileTransferType, IFileTransferringPanel panel, IDownloadCallback callback){
         try{
-            FileReceiveTask task = new ClientFileReceiveTask(this,fileName,fileId,fileTransferType,panel,callback);
+            FileReceiveTask task = getFactoryManager().getFileReceiveTaskFactory().create(this, fileName, fileId, fileTransferType, panel, callback);
             getNetworkHandler().send(new DownloadRequestPack(
                     task.getReceiverTaskId(),
                     task.getSenderFileId(),
@@ -174,7 +173,7 @@ public class Client{
     }
 
     public void downloadFile(String fileName, UUID fileId,FileTransferType fileTransferType, IFileTransferringPanel panel){
-        downloadFile(fileName, fileId,fileTransferType,panel,ClientFileReceiveTask.getDefaultCallback(fileTransferType));
+        downloadFile(fileName, fileId,fileTransferType,panel, ClientFileReceiveTask.getDefaultCallback(fileTransferType));
     }
 
     //show messages
@@ -192,6 +191,10 @@ public class Client{
     }
 
     //getter and setter
+
+    public ClientFactoryManager getFactoryManager() {
+        return factoryManager;
+    }
 
     public ClientNetworkHandler getNetworkHandler() {
         return networkHandler;
@@ -213,10 +216,6 @@ public class Client{
         this.roomFrame = roomFrame;
     }
 
-    public UUIDManager getUuidManager() {
-        return uuidManager;
-    }
-
     public ClientFileManager getFileManager() {
         return fileManager;
     }
@@ -224,4 +223,5 @@ public class Client{
     public IGUI getGUI() {
         return GUI;
     }
+
 }

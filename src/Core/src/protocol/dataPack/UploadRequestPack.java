@@ -2,8 +2,8 @@ package protocol.dataPack;
 
 import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
-import protocol.helper.fileTransfer.ClientFileSendTask;
-import protocol.helper.fileTransfer.ServerFileSendTask;
+import protocol.fileTransfer.ClientFileSendTask;
+import protocol.fileTransfer.ServerFileSendTask;
 
 import java.util.UUID;
 

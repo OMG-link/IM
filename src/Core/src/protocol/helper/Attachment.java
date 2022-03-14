@@ -3,7 +3,7 @@ package protocol.helper;
 import protocol.helper.data.ByteData;
 
 public class Attachment {
-    public ByteData receiveBuffer;
+    public final ByteData receiveBuffer;
     public String userName;
     public boolean isVersionChecked = false;
     public boolean allowCommunication = false;

@@ -1,11 +1,9 @@
-package protocol.helper.fileTransfer;
+package protocol.fileTransfer;
 
 import mutils.FileUtils;
 import mutils.file.FileManager;
 import mutils.file.FileOccupiedException;
 import mutils.file.WriteOnlyFile;
-import mutils.uuidLocator.IUuidLocatable;
-import mutils.uuidLocator.UuidConflictException;
 import protocol.dataPack.DataPack;
 import protocol.dataPack.FileTransferType;
 import protocol.dataPack.UploadResultPack;
@@ -17,7 +15,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public abstract class FileReceiveTask implements IUuidLocatable {
+public abstract class FileReceiveTask {
     private final FileTransferType fileTransferType;
     private UUID senderTaskId;
     private UUID receiverTaskId;
@@ -41,26 +39,12 @@ public abstract class FileReceiveTask implements IUuidLocatable {
     abstract void send(DataPack dataPack) throws IOException, PackageTooLargeException;
 
     abstract FileManager getFileManager();
-
-    @Override
-    public UUID getUuid() {
-        return getReceiverTaskId();
-    }
+    abstract void removeFromFactory();
 
     //start
 
-    /**
-     * Gives this task a unique receiverTaskId.
-     */
-    public void setReceiverTaskId() {
-        while (true) {
-            try {
-                receiverTaskId = UUID.randomUUID();
-                onCreate();
-                break;
-            } catch (UuidConflictException ignored) {
-            }
-        }
+    protected void setReceiverTaskId(UUID receiverTaskId) {
+        this.receiverTaskId = receiverTaskId;
     }
 
     public void setSenderTaskId(UUID senderTaskId) {
@@ -110,7 +94,7 @@ public abstract class FileReceiveTask implements IUuidLocatable {
             }
         }
         //task end
-        onDelete();
+        this.removeFromFactory();
     }
 
     public void onEndFailed(String reason) {
@@ -142,7 +126,7 @@ public abstract class FileReceiveTask implements IUuidLocatable {
             }
         }
         //task end
-        onDelete();
+        this.removeFromFactory();
     }
 
     /**

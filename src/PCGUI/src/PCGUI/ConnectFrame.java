@@ -152,7 +152,7 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
     }
 
     private static class SubmitButtonListener implements ActionListener{
-        ConnectFrame handler;
+        final ConnectFrame handler;
 
         SubmitButtonListener(ConnectFrame handler){
             this.handler = handler;

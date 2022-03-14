@@ -6,7 +6,7 @@ import IM.Client;
 import IM.Config;
 import PCGUI.components.*;
 import mutils.IStringGetter;
-import protocol.helper.fileTransfer.IDownloadCallback;
+import protocol.fileTransfer.IDownloadCallback;
 
 import javax.swing.*;
 import java.awt.*;

@@ -2,18 +2,17 @@ package protocol;
 
 import IM.Config;
 import IM.Server;
+import mutils.file.NoSuchFileIdException;
 import protocol.dataPack.*;
 import protocol.helper.Attachment;
 import protocol.helper.data.ByteData;
 import protocol.helper.data.InvalidPackageException;
 import protocol.helper.data.PackageTooLargeException;
-import protocol.helper.fileTransfer.FileReceiveTask;
-import protocol.helper.fileTransfer.FileSendTask;
-import protocol.helper.fileTransfer.ServerFileReceiveTask;
-import protocol.helper.fileTransfer.ServerFileSendTask;
+import protocol.fileTransfer.NoSuchTaskIdException;
+import protocol.fileTransfer.ServerFileReceiveTask;
+import protocol.fileTransfer.ServerFileSendTask;
 
 import javax.swing.*;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -27,7 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ServerNetworkHandler implements Runnable {
-    private final Server handler;
+    private final Server server;
 
     private ServerSocketChannel socketChannel;
     private Selector selector;
@@ -35,8 +34,8 @@ public class ServerNetworkHandler implements Runnable {
     private final Queue<ByteData> records = new LinkedList<>();
     private final Set<SelectionKey> selectionKeyList = new HashSet<>();
 
-    public ServerNetworkHandler(Server handler) {
-        this.handler = handler;
+    public ServerNetworkHandler(Server server) {
+        this.server = server;
     }
 
     public void start() {
@@ -159,7 +158,6 @@ public class ServerNetworkHandler implements Runnable {
     }
 
     private void handlePacket(SelectionKey selectionKey, ByteData data) throws IOException, InvalidPackageException {
-        SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
         Attachment attachment = (Attachment) selectionKey.attachment();
 
         DataPackType type;
@@ -202,16 +200,16 @@ public class ServerNetworkHandler implements Runnable {
                 break;
             }
             case Text: {
-                TextPack textPack = new TextPack(data);
-                textPack.setStamp();
+                TextPack pack = new TextPack(data);
+                pack.setStamp();
 
-                broadcast(textPack,true);
+                broadcast(pack,true);
                 break;
             }
             case NameUpdate: {
-                NameUpdatePack nameUpdatePack = new NameUpdatePack(data);
-                if (nameUpdatePack.getUserName().length() >= Config.nickMaxLength) return;
-                attachment.userName = nameUpdatePack.getUserName();
+                NameUpdatePack pack = new NameUpdatePack(data);
+                if (pack.getUserName().length() >= Config.nickMaxLength) return;
+                attachment.userName = pack.getUserName();
                 this.broadcastUserList();
                 break;
             }
@@ -231,8 +229,8 @@ public class ServerNetworkHandler implements Runnable {
                          * it, which may causes memory limit exceed and crashes the program.
                          * Maybe we need to clear unused upload requests in later version.
                          */
-                        ServerFileReceiveTask task = new ServerFileReceiveTask(
-                                handler,
+                        ServerFileReceiveTask task = server.getFactoryManager().getFileReceiveTaskFactory().create(
+                                server,
                                 selectionKey,
                                 requestPack,
                                 attachment.userName
@@ -261,29 +259,30 @@ public class ServerNetworkHandler implements Runnable {
             }
             case FileUploadFinish:{
                 UploadFinishPack pack = new UploadFinishPack(data);
-                Object o = handler.getUuidManager().get(pack.getReceiverTaskId());
-                if(o instanceof ServerFileReceiveTask){
-                    ServerFileReceiveTask task = (ServerFileReceiveTask) o;
+                try{
+                    ServerFileReceiveTask task = server.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                     task.end();
-                }else{
+                }catch (NoSuchTaskIdException e){
+                    Logger.getLogger("Server").log(Level.INFO,String.format("There is no ServerFileReceiveTask with UUID %s.",pack.getReceiverTaskId()));
                     try{
                         send(selectionKey,new UploadResultPack(pack.getSenderTaskId()));
-                    }catch (PackageTooLargeException e){
-                        throw new RuntimeException(e);
+                    }catch (PackageTooLargeException e2){
+                        throw new RuntimeException(e2);
                     }
                 }
                 break;
             }
             case FileContent: {
-                FileContentPack fileContentPack = new FileContentPack(data);
-                Object o = handler.getUuidManager().get(fileContentPack.getReceiverTaskId());
-                if (o instanceof FileReceiveTask) {
-                    FileReceiveTask task = (FileReceiveTask) o;
+                FileContentPack pack = new FileContentPack(data);
+                try{
+                    ServerFileReceiveTask task = server.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                     try {
-                        task.onDataReceived(fileContentPack.getData());
+                        task.onDataReceived(pack.getData());
                     } catch (IOException e) {
                         task.onEndFailed(e.toString());
                     }
+                }catch (NoSuchTaskIdException e){
+                    Logger.getLogger("Server").log(Level.INFO,String.format("There is no ServerFileReceiveTask with UUID %s.",pack.getReceiverTaskId()));
                 }
                 break;
             }
@@ -293,10 +292,10 @@ public class ServerNetworkHandler implements Runnable {
                 String reason;
                 ServerFileSendTask task = null;
                 try {
-                    task = new ServerFileSendTask(handler, selectionKey, pack);
+                    task = server.getFactoryManager().getFileSendTaskFactory().create(server, selectionKey, pack);
                     ok = true;
                     reason = "";
-                } catch (FileNotFoundException e) {
+                } catch (NoSuchFileIdException e) {
                     ok = false;
                     reason = String.format("No such file.{UUID=%s}.",pack.getSenderFileId());
                 }
@@ -308,6 +307,7 @@ public class ServerNetworkHandler implements Runnable {
                             reason
                     ));
                     if(ok){ //UploadRequestPack should be sent after DownloadReplyPack
+                        assert task != null;
                         task.start();
                     }
                 }catch (PackageTooLargeException e){
@@ -317,23 +317,25 @@ public class ServerNetworkHandler implements Runnable {
             }
             case FileUploadReply: {
                 UploadReplyPack pack = new UploadReplyPack(data);
-                Object o = this.handler.getUuidManager().get(pack.getSenderTaskId());
-                if(o instanceof FileSendTask){
-                    FileSendTask task = (FileSendTask) o;
+                try{
+                    ServerFileSendTask task = server.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
                     task.onReceiveUploadReply(pack);
+                }catch (NoSuchTaskIdException e){
+                    Logger.getLogger("Server").log(Level.INFO,String.format("There is no ServerFileSendTask with UUID %s.",pack.getSenderTaskId()));
                 }
                 break;
             }
             case FileUploadResult: {
                 UploadResultPack pack = new UploadResultPack(data);
-                Object o = this.handler.getUuidManager().get(pack.getSenderTaskId());
-                if(o instanceof FileSendTask){
-                    FileSendTask task = (FileSendTask) o;
+                try{
+                    ServerFileSendTask task = server.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
                     if(pack.isOk()){
                         task.onEndSucceed();
                     }else{
                         task.onEndFailed(pack.getReason());
                     }
+                }catch (NoSuchTaskIdException e){
+                    Logger.getLogger("Server").log(Level.INFO,String.format("There is no ServerFileSendTask with UUID %s.",pack.getSenderTaskId()));
                 }
                 break;
             }

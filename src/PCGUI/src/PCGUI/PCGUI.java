@@ -75,6 +75,25 @@ public class PCGUI implements IGUI {
     }
 
     @Override
+    public void alertVersionUnrecognizable(String clientVersion) {
+        client.showCheckBox(
+                String.format("Unable to read the version of the server, and the program will end shortly.\nYour client runs on version %s\nDo you want to download a new version?", clientVersion),
+                new IConfirmDialogCallback() {
+                    @Override
+                    public void onPositiveInput() {
+                        openInBrowser("https://www.omg-link.com/IM/");
+                        System.exit(0);
+                    }
+
+                    @Override
+                    public void onNegativeInput() {
+                        System.exit(0);
+                    }
+                }
+        );
+    }
+
+    @Override
     public void alertVersionMismatch(String serverVersion, String clientVersion) {
         client.showCheckBox(
                 String.format("The server runs on version \"%s\", while your client runs on version \"%s\".\n Do you want to download a new version?", serverVersion, clientVersion),

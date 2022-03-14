@@ -1,10 +1,9 @@
-package protocol.helper.fileTransfer;
+package protocol.fileTransfer;
 
 import GUI.IFileTransferringPanel;
 import IM.Client;
 import mutils.file.ClientFileManager;
 import mutils.file.FileObject;
-import mutils.uuidLocator.UUIDManager;
 import protocol.dataPack.DataPack;
 import protocol.dataPack.FileTransferType;
 import protocol.helper.data.PackageTooLargeException;
@@ -14,7 +13,7 @@ import java.security.InvalidParameterException;
 import java.util.UUID;
 
 public class ClientFileReceiveTask extends FileReceiveTask {
-    private final Client handler;
+    private final Client client;
     private final IFileTransferringPanel panel;
     private final String fileName;
     private final IDownloadCallback callback;
@@ -22,19 +21,19 @@ public class ClientFileReceiveTask extends FileReceiveTask {
     //constructors
 
     /**
-     * @throws IOException - When the file cannot be created.
+     * @throws IOException When the file cannot be created.
      */
     public ClientFileReceiveTask(
-            Client handler,
+            Client client, UUID receiverTaskId,
             String fileName, UUID senderFileId, FileTransferType fileTransferType,
             IFileTransferringPanel panel, IDownloadCallback callback
     ) throws IOException {
         super(fileTransferType);
-        this.handler = handler;
+        this.client = client;
         this.fileName = fileName;
         this.panel = panel;
         this.callback = callback;
-        super.setReceiverTaskId();
+        super.setReceiverTaskId(receiverTaskId);
         super.setSenderFileId(senderFileId);
 
         FileObject fileObject;
@@ -57,18 +56,22 @@ public class ClientFileReceiveTask extends FileReceiveTask {
     }
 
     @Override
-    public UUIDManager getUuidManager() {
-        return handler.getUuidManager();
-    }
-
-    @Override
     protected ClientFileManager getFileManager() {
-        return handler.getFileManager();
+        return client.getFileManager();
     }
 
     @Override
-    protected void send(DataPack dataPack) throws IOException, PackageTooLargeException {
-        handler.getNetworkHandler().send(dataPack);
+    void removeFromFactory() {
+        try{
+            client.getFactoryManager().getFileReceiveTaskFactory().remove(this);
+        }catch (NoSuchTaskIdException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    protected void send(DataPack dataPack) throws PackageTooLargeException {
+        client.getNetworkHandler().send(dataPack);
     }
 
     //start

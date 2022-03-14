@@ -1,23 +1,22 @@
 package IM;
 
 import GUI.IServerGUI;
+import IM.FactoryManager.ServerFactoryManager;
 import mutils.file.ServerFileManager;
-import mutils.uuidLocator.UUIDManager;
 import protocol.ServerNetworkHandler;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Server {
-    UUIDManager uuidManager;
+    ServerFactoryManager factoryManager = new ServerFactoryManager();
     ServerFileManager fileManager;
     ServerNetworkHandler networkHandler;
-    IServerGUI GUI;
+    final IServerGUI GUI;
 
     public Server(IServerGUI GUI){
         this.GUI = GUI;
         try{
-            this.uuidManager = new UUIDManager();
             this.fileManager = new ServerFileManager();
         }catch (Exception e){
             Logger.getGlobal().log(Level.SEVERE,"Unable to create server instance.");
@@ -34,12 +33,12 @@ public class Server {
         }
     }
 
-    public ServerFileManager getFileManager() {
-        return fileManager;
+    public ServerFactoryManager getFactoryManager() {
+        return factoryManager;
     }
 
-    public UUIDManager getUuidManager() {
-        return uuidManager;
+    public ServerFileManager getFileManager() {
+        return fileManager;
     }
 
     public ServerNetworkHandler getNetworkHandler() {
