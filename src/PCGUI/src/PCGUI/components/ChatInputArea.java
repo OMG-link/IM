@@ -1,12 +1,12 @@
 package PCGUI.components;
 
-import GUI.IConfirmDialogCallback;
-import GUI.IFileTransferringPanel;
-import IM.Client;
+import im.gui.IConfirmDialogCallback;
+import im.gui.IFileTransferringPanel;
+import im.Client;
 import PCGUI.RoomFrame;
 import mutils.ImageUtils;
-import protocol.dataPack.FileTransferType;
-import protocol.dataPack.ImageType;
+import im.protocol.dataPack.FileTransferType;
+import im.protocol.dataPack.ImageType;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;

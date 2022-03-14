@@ -1,6 +1,6 @@
 package PCGUI.components;
 
-import IM.Config;
+import im.config.Config;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;

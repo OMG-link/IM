@@ -1,8 +1,8 @@
 package PCGUI;
 
-import GUI.IConnectFrame;
-import IM.Client;
-import IM.Config;
+import im.gui.IConnectFrame;
+import im.Client;
+import im.config.Config;
 import PCGUI.components.IInputCallback;
 
 import javax.swing.*;

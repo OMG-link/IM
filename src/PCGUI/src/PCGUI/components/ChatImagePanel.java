@@ -1,12 +1,12 @@
 package PCGUI.components;
 
-import IM.Client;
+import im.Client;
 import PCGUI.helper.PanelUtil;
-import mutils.file.FileObject;
-import mutils.file.NoSuchFileIdException;
-import protocol.dataPack.FileTransferType;
-import protocol.fileTransfer.ClientFileReceiveTask;
-import protocol.fileTransfer.IDownloadCallback;
+import im.file_manager.FileObject;
+import im.file_manager.NoSuchFileIdException;
+import im.protocol.dataPack.FileTransferType;
+import im.protocol.fileTransfer.ClientFileReceiveTask;
+import im.protocol.fileTransfer.IDownloadCallback;
 
 import javax.swing.*;
 import java.awt.*;

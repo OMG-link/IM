@@ -1,8 +1,8 @@
 package PCGUI.components;
 
-import GUI.IFileTransferringPanel;
-import IM.Client;
-import protocol.dataPack.FileTransferType;
+import im.gui.IFileTransferringPanel;
+import im.Client;
+import im.protocol.dataPack.FileTransferType;
 
 import javax.swing.*;
 import java.awt.*;

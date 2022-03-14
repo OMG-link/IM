@@ -1,11 +1,11 @@
 package PCGUI;
 
-import GUI.IConfirmDialogCallback;
-import GUI.IConnectFrame;
-import GUI.IGUI;
-import GUI.IRoomFrame;
-import IM.Client;
-import IM.Config;
+import im.gui.IConfirmDialogCallback;
+import im.gui.IConnectFrame;
+import im.gui.IGUI;
+import im.gui.IRoomFrame;
+import im.Client;
+import im.config.Config;
 
 import javax.swing.*;
 import java.awt.*;

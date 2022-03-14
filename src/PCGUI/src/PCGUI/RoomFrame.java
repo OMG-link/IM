@@ -1,12 +1,12 @@
 package PCGUI;
 
-import GUI.IFileTransferringPanel;
-import GUI.IRoomFrame;
-import IM.Client;
-import IM.Config;
+import im.gui.IFileTransferringPanel;
+import im.gui.IRoomFrame;
+import im.Client;
+import im.config.Config;
 import PCGUI.components.*;
 import mutils.IStringGetter;
-import protocol.fileTransfer.IDownloadCallback;
+import im.protocol.fileTransfer.IDownloadCallback;
 
 import javax.swing.*;
 import java.awt.*;

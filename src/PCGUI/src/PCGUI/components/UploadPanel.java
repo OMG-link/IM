@@ -1,6 +1,6 @@
 package PCGUI.components;
 
-import GUI.IFileTransferringPanel;
+import im.gui.IFileTransferringPanel;
 import PCGUI.helper.PanelUtil;
 import mutils.FileUtils;
 import mutils.IStringGetter;

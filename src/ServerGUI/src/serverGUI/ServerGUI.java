@@ -1,8 +1,8 @@
 package serverGUI;
 
-import GUI.IServerGUI;
-import IM.Config;
-import IM.Server;
+import im.gui.IServerGUI;
+import im.config.Config;
+import im.Server;
 
 public class ServerGUI implements IServerGUI {
 
