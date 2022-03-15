@@ -83,7 +83,9 @@ public class ClientNetworkHandler implements Runnable {
     public void close() {
         interrupted = true;
         try {
-            pingTimer.cancel();
+            if(pingTimer!=null){
+                pingTimer.cancel();
+            }
             this.socket.close();
         } catch (IOException e) {
             //do nothing
