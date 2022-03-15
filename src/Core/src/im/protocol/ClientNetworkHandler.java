@@ -68,18 +68,6 @@ public class ClientNetworkHandler implements Runnable {
             Thread thread = new Thread(this, "Client Receive Thread");
             thread.start();
 
-            pingTimer = new Timer();
-            pingTimer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    try {
-                        client.getNetworkHandler().send(new PingPack());
-                    } catch (PackageTooLargeException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }, 5000, 10 * 1000);
-
         } catch (UnknownHostException e) {
             this.client.showInfo("Unknown host!");
             System.exit(0);
@@ -185,7 +173,7 @@ public class ClientNetworkHandler implements Runnable {
                             this.client.getGUI().alertVersionMismatch(pack.getVersion(), Config.version);
                         }
                         versionChecked = true;
-                        client.onVersionChecked();
+                        onVersionChecked();
                     }
                     break;
                 }catch (InvalidPackageException ignored){
@@ -390,4 +378,21 @@ public class ClientNetworkHandler implements Runnable {
             }
         }
     }
+
+    public void onVersionChecked(){
+        pingTimer = new Timer();
+        pingTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    client.getNetworkHandler().send(new PingPack());
+                } catch (PackageTooLargeException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }, 5000, 10 * 1000);
+
+        client.onVersionChecked();
+    }
+
 }
