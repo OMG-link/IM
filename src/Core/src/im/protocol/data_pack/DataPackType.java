@@ -1,4 +1,4 @@
-package im.protocol.dataPack;
+package im.protocol.data_pack;
 
 import java.security.InvalidParameterException;
 
@@ -9,7 +9,8 @@ public enum DataPackType {
     //Chat
     Text, ChatImage, FileUploaded,
     //User list
-    NameUpdate, UserList, RoomName,
+    SetUserName,SetUid,SetRoomName,
+    BroadcastUserList,BroadcastUserEnter,BroadcastUserLeft,BroadcastUserNameChanged,
     //File transfer
     FileUploadRequest, FileUploadReply, FileUploadFinish, FileUploadResult, FileDownloadRequest, FileDownloadReply, FileContent;
 

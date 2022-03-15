@@ -1,7 +1,7 @@
-package im.protocol.dataPack;
+package im.protocol.data_pack;
 
-import im.protocol.helper.data.ByteData;
-import im.protocol.helper.data.InvalidPackageException;
+import im.protocol.data.ByteData;
+import im.protocol.data.InvalidPackageException;
 
 public abstract class DataPack {
     private int type;
@@ -13,7 +13,7 @@ public abstract class DataPack {
     public static boolean canDecode(ByteData data){
         try{
             int length = ByteData.peekInt(data);
-            return data.length()>=length+4;
+            return data.getLength()>=length+4;
         }catch(InvalidPackageException e){
             return false;
         }
@@ -21,7 +21,7 @@ public abstract class DataPack {
 
     public ByteData encode(){
         ByteData data = new ByteData();
-        data.append(new ByteData(type));
+        data.append(ByteData.encode(type));
         return data;
     }
 

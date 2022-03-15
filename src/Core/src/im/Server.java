@@ -4,12 +4,14 @@ import im.gui.IServerGUI;
 import im.factory_manager.ServerFactoryManager;
 import im.file_manager.ServerFileManager;
 import im.protocol.ServerNetworkHandler;
+import im.user_manager.ServerUserManager;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Server {
     ServerFactoryManager factoryManager = new ServerFactoryManager();
+    ServerUserManager userManager = new ServerUserManager(this);
     ServerFileManager fileManager;
     ServerNetworkHandler networkHandler;
     final IServerGUI GUI;
@@ -31,6 +33,10 @@ public class Server {
         if(GUI!=null){
             GUI.createGUI();
         }
+    }
+
+    public ServerUserManager getUserManager() {
+        return userManager;
     }
 
     public ServerFactoryManager getFactoryManager() {

@@ -1,4 +1,4 @@
-package im.protocol.helper.data;
+package im.protocol.data;
 
 public class InvalidPackageException extends Throwable{
     public InvalidPackageException(){

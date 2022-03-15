@@ -5,8 +5,8 @@ import im.gui.IFileTransferringPanel;
 import im.Client;
 import PCGUI.RoomFrame;
 import mutils.ImageUtils;
-import im.protocol.dataPack.FileTransferType;
-import im.protocol.dataPack.ImageType;
+import im.protocol.data_pack.file_transfer.FileTransferType;
+import mutils.ImageType;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;

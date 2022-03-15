@@ -1,7 +1,7 @@
 package im.protocol.fileTransfer;
 
 import im.Server;
-import im.protocol.dataPack.UploadRequestPack;
+import im.protocol.data_pack.file_transfer.UploadRequestPack;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;

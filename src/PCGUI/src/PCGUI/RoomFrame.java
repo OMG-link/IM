@@ -1,16 +1,18 @@
 package PCGUI;
 
-import im.gui.IFileTransferringPanel;
-import im.gui.IRoomFrame;
+import PCGUI.components.*;
 import im.Client;
 import im.config.Config;
-import PCGUI.components.*;
-import mutils.IStringGetter;
+import im.gui.IFileTransferringPanel;
+import im.gui.IRoomFrame;
 import im.protocol.fileTransfer.IDownloadCallback;
+import im.user_manager.User;
+import mutils.IStringGetter;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.Collection;
 import java.util.UUID;
 
 public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
@@ -172,10 +174,10 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     }
 
     @Override
-    public void onUserListUpdate(String[] userList) {
+    public void onUserListUpdate(Collection<User> userList) {
         StringBuilder text = new StringBuilder();
-        for (String s : userList) {
-            text.append(s).append('\n');
+        for (User user : userList) {
+            text.append(user.getName()).append('\n');
         }
         this.userListArea.setText(text.toString());
     }

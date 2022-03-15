@@ -1,19 +1,21 @@
-package im.protocol.dataPack;
+package im.protocol.data_pack.user_list;
 
 import im.config.Config;
-import im.protocol.helper.data.ByteData;
-import im.protocol.helper.data.InvalidPackageException;
+import im.protocol.data.ByteData;
+import im.protocol.data.InvalidPackageException;
+import im.protocol.data_pack.DataPack;
+import im.protocol.data_pack.DataPackType;
 
-public class RoomNamePack extends DataPack {
+public class SetRoomNamePack extends DataPack {
     private String roomName;
 
-    public RoomNamePack(){
-        super(DataPackType.RoomName);
+    public SetRoomNamePack(){
+        super(DataPackType.SetRoomName);
         roomName = Config.getRoomName();
     }
 
-    public RoomNamePack(ByteData data) throws InvalidPackageException {
-        super(DataPackType.RoomName);
+    public SetRoomNamePack(ByteData data) throws InvalidPackageException {
+        super(DataPackType.SetRoomName);
         this.decode(data);
     }
 

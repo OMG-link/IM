@@ -1,8 +1,11 @@
-package im.protocol.dataPack;
+package im.protocol.data_pack.chat;
 
 import im.config.Config;
-import im.protocol.helper.data.ByteData;
-import im.protocol.helper.data.InvalidPackageException;
+import im.protocol.data.ByteData;
+import im.protocol.data.InvalidPackageException;
+import im.protocol.data_pack.DataPack;
+import im.protocol.data_pack.DataPackType;
+import mutils.ImageType;
 
 import java.util.UUID;
 

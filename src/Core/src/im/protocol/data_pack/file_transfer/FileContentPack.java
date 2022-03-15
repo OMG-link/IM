@@ -1,13 +1,15 @@
-package im.protocol.dataPack;
+package im.protocol.data_pack.file_transfer;
 
-import im.protocol.helper.data.ByteData;
-import im.protocol.helper.data.InvalidPackageException;
+import im.protocol.data.ByteData;
+import im.protocol.data.InvalidPackageException;
+import im.protocol.data_pack.DataPack;
+import im.protocol.data_pack.DataPackType;
 
 import java.util.Arrays;
 import java.util.UUID;
 
 public class FileContentPack extends DataPack {
-    public static final int packSize = 64*1024; //64KB
+    public static final int packSize = 63*1024; //63KB (1kb left for other information)
 
     private UUID receiverTaskId;
     private long offset;
@@ -35,12 +37,11 @@ public class FileContentPack extends DataPack {
 
     @Override
     public ByteData encode(){
-        ByteData data = new ByteData();
-        data.append(super.encode());
-        data.append(new ByteData(offset));
-        data.append(new ByteData(receiverTaskId));
-        data.append(new ByteData(this.data));
-        return data;
+        return new ByteData()
+                .append(super.encode())
+                .append(ByteData.encode(offset))
+                .append(ByteData.encode(receiverTaskId))
+                .append(ByteData.encode(this.data));
     }
 
     public long getOffset() {

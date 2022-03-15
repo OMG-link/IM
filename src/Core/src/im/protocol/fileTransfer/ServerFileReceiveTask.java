@@ -1,15 +1,15 @@
 package im.protocol.fileTransfer;
 
-import im.protocol.dataPack.DataPack;
+import im.protocol.data_pack.DataPack;
 import im.Server;
 import im.file_manager.FileObject;
 import im.file_manager.FileOccupiedException;
 import im.file_manager.NoSuchFileIdException;
 import im.file_manager.ServerFileManager;
-import im.protocol.dataPack.FileTransferType;
-import im.protocol.dataPack.FileUploadedPack;
-import im.protocol.dataPack.UploadRequestPack;
-import im.protocol.helper.data.PackageTooLargeException;
+import im.protocol.data_pack.file_transfer.FileTransferType;
+import im.protocol.data_pack.chat.FileUploadedPack;
+import im.protocol.data_pack.file_transfer.UploadRequestPack;
+import im.protocol.data.PackageTooLargeException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

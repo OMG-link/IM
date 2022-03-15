@@ -1,8 +1,10 @@
-package im.protocol.dataPack;
+package im.protocol.data_pack.chat;
 
 import im.config.Config;
-import im.protocol.helper.data.ByteData;
-import im.protocol.helper.data.InvalidPackageException;
+import im.protocol.data.ByteData;
+import im.protocol.data.InvalidPackageException;
+import im.protocol.data_pack.DataPack;
+import im.protocol.data_pack.DataPackType;
 
 public class TextPack extends DataPack {
     private String sender;
@@ -23,12 +25,10 @@ public class TextPack extends DataPack {
 
     @Override
     public ByteData encode(){
-        ByteData data = new ByteData();
-        data.append(super.encode());
-        data.append(new ByteData(sender));
-        data.append(new ByteData(stamp));
-        data.append(ByteData.encode(text));
-        return data;
+        return super.encode()
+                .append(ByteData.encode(sender))
+                .append(ByteData.encode(stamp))
+                .append(ByteData.encode(text));
     }
 
     @Override

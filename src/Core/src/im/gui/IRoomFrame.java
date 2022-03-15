@@ -1,8 +1,10 @@
 package im.gui;
 
-import mutils.IStringGetter;
 import im.protocol.fileTransfer.IDownloadCallback;
+import im.user_manager.User;
+import mutils.IStringGetter;
 
+import java.util.Collection;
 import java.util.UUID;
 
 public interface IRoomFrame {
@@ -30,7 +32,7 @@ public interface IRoomFrame {
     IDownloadCallback onChatImageReceive(String sender, long stamp, UUID serverFileId);
 
     void onFileUploadedReceive(String sender, long stamp, UUID uuid, String fileName, long fileSize);
-    void onUserListUpdate(String[] userList);
+    void onUserListUpdate(Collection<User> userList);
     void onRoomNameUpdate(String roomName);
     IFileTransferringPanel addFileTransferringPanel(IStringGetter fileNameGetter,long fileSize);
 

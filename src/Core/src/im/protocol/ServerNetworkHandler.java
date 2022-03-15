@@ -1,16 +1,24 @@
 package im.protocol;
 
-import im.config.Config;
-import im.protocol.dataPack.*;
-import im.protocol.helper.Attachment;
-import im.protocol.helper.data.InvalidPackageException;
 import im.Server;
+import im.config.Config;
 import im.file_manager.NoSuchFileIdException;
-import im.protocol.helper.data.ByteData;
-import im.protocol.helper.data.PackageTooLargeException;
+import im.protocol.data.ByteArrayInfo;
+import im.protocol.data_pack.*;
+import im.protocol.data_pack.chat.ChatImagePack;
+import im.protocol.data_pack.chat.TextPack;
+import im.protocol.data_pack.file_transfer.*;
+import im.protocol.data_pack.system.CheckVersionPack;
+import im.protocol.data_pack.system.PingPack;
+import im.protocol.data_pack.user_list.SetUserNamePack;
+import im.protocol.data_pack.user_list.SetRoomNamePack;
+import im.protocol.data_pack.user_list.BroadcastUserListPack;
 import im.protocol.fileTransfer.NoSuchTaskIdException;
 import im.protocol.fileTransfer.ServerFileReceiveTask;
 import im.protocol.fileTransfer.ServerFileSendTask;
+import im.protocol.data.ByteData;
+import im.protocol.data.InvalidPackageException;
+import im.protocol.data.PackageTooLargeException;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -109,7 +117,8 @@ public class ServerNetworkHandler implements Runnable {
             } catch (IOException ignored) {
             }
             selectionKeyList.remove(selectionKey);
-            this.broadcastUserList();
+            Attachment attachment = (Attachment) selectionKey.attachment();
+            attachment.onDisconnect();
         }
     }
 
@@ -117,7 +126,7 @@ public class ServerNetworkHandler implements Runnable {
         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) selectionKey.channel();
         SocketChannel socketChannel = serverSocketChannel.accept();
         socketChannel.configureBlocking(false);
-        SelectionKey newSelectionKey = socketChannel.register(selectionKey.selector(), SelectionKey.OP_READ, new Attachment());
+        SelectionKey newSelectionKey = socketChannel.register(selectionKey.selector(), SelectionKey.OP_READ, new Attachment(server));
         selectionKeyList.add(newSelectionKey);
 
     }
@@ -134,12 +143,14 @@ public class ServerNetworkHandler implements Runnable {
         int length = socketChannel.read(byteBuffer);
         if (length == -1) throw new IOException("Connection Closed.");
         byteBuffer.flip();
-        tData.resize(byteBuffer.limit());
-        byteBuffer.get(tData.getData(), 0, byteBuffer.limit());
+        tData.setLength(byteBuffer.limit());
+
+        ByteArrayInfo tDataInfo = tData.getData();
+        byteBuffer.get(tDataInfo.getArray(), tDataInfo.getOffset(), tDataInfo.getLength());
         data.append(tData);
 
         //Avoid large package buffer
-        if (data.length() >= 4) {
+        if (data.getLength() >= 4) {
             int packageLength = ByteData.peekInt(data);
             if (packageLength > Config.packageMaxLength) {
                 throw new InvalidPackageException();
@@ -206,11 +217,10 @@ public class ServerNetworkHandler implements Runnable {
                 broadcast(pack,true);
                 break;
             }
-            case NameUpdate: {
-                NameUpdatePack pack = new NameUpdatePack(data);
+            case SetUserName: {
+                SetUserNamePack pack = new SetUserNamePack(data);
                 if (pack.getUserName().length() >= Config.nickMaxLength) return;
-                attachment.userName = pack.getUserName();
-                this.broadcastUserList();
+                attachment.user.setName(pack.getUserName());
                 break;
             }
             case FileUploadRequest: {
@@ -233,7 +243,7 @@ public class ServerNetworkHandler implements Runnable {
                                 server,
                                 selectionKey,
                                 requestPack,
-                                attachment.userName
+                                attachment.user.getName()
                         );
                         receiverTaskId = task.getReceiverTaskId();
                         receiverFileId = task.getReceiverFileId();
@@ -364,7 +374,7 @@ public class ServerNetworkHandler implements Runnable {
     }
 
     private void send(SelectionKey selectionKey, ByteData data) throws IOException, PackageTooLargeException {
-        if(data.getData().length>Config.packageMaxLength){
+        if(data.getLength()>Config.packageMaxLength){
             throw new PackageTooLargeException();
         }
 
@@ -377,11 +387,12 @@ public class ServerNetworkHandler implements Runnable {
         }
 
         ByteData rawData = new ByteData();
-        rawData.append(new ByteData(data.length()));
+        rawData.append(ByteData.encode(data.getLength()));
         rawData.append(data);
 
-        ByteBuffer buffer = ByteBuffer.wrap(rawData.getData());
-        buffer.position(rawData.length());
+        ByteArrayInfo rawDataInfo = rawData.getData();
+        ByteBuffer buffer = ByteBuffer.wrap(rawDataInfo.getArray(), rawDataInfo.getOffset(), rawDataInfo.getLength());
+        buffer.position(rawData.getLength());
         buffer.flip();
 
         synchronized (selectionKey.attachment()) {
@@ -413,7 +424,7 @@ public class ServerNetworkHandler implements Runnable {
     }
 
     private void broadcast(ByteData data,boolean shouldAddToHistory) {
-        if(data.getData().length>Config.packageMaxLength){
+        if(data.getLength()>Config.packageMaxLength){
             Logger.getLogger("Server").log(Level.WARNING,"Package too large! It will not be broadcast.");
             return;
         }
@@ -449,28 +460,14 @@ public class ServerNetworkHandler implements Runnable {
     }
 
     private void onVersionChecked(SelectionKey selectionKey) throws IOException {
-        sendHistory(selectionKey);
-
         try{
-            send(selectionKey,new RoomNamePack());
+            sendHistory(selectionKey);
+            send(selectionKey,new SetRoomNamePack());
+            //todo: tell the client uid, update name when NameUpdatePack received
+            send(selectionKey,new BroadcastUserListPack(server.getUserManager().getUserList()));
         }catch (PackageTooLargeException e){
             throw new RuntimeException(e);
         }
-
-    }
-
-    private void broadcastUserList() {
-        int length = selectionKeyList.size();
-        String[] userList = new String[length];
-
-        int i = 0;
-        for (SelectionKey selectionKey : selectionKeyList) {
-            Attachment attachment = (Attachment) selectionKey.attachment();
-            userList[i++] = attachment.userName;
-        }
-
-        broadcast(new UserListPack(userList),false);
-
     }
 
 }

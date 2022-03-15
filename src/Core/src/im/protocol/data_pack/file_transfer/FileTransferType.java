@@ -1,4 +1,4 @@
-package im.protocol.dataPack;
+package im.protocol.data_pack.file_transfer;
 
 import java.security.InvalidParameterException;
 

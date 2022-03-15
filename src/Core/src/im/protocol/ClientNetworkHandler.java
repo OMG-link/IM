@@ -2,13 +2,23 @@ package im.protocol;
 
 import im.Client;
 import im.config.Config;
-import im.protocol.dataPack.*;
+import im.protocol.data.ByteArrayInfo;
+import im.protocol.data_pack.*;
+import im.protocol.data_pack.chat.ChatImagePack;
+import im.protocol.data_pack.chat.FileUploadedPack;
+import im.protocol.data_pack.chat.TextPack;
+import im.protocol.data_pack.file_transfer.*;
+import im.protocol.data_pack.system.CheckVersionPack;
+import im.protocol.data_pack.system.CheckVersionPackV1;
+import im.protocol.data_pack.system.PingPack;
+import im.protocol.data_pack.user_list.SetRoomNamePack;
+import im.protocol.data_pack.user_list.BroadcastUserListPack;
 import im.protocol.fileTransfer.ClientFileReceiveTask;
 import im.protocol.fileTransfer.ClientFileSendTask;
 import im.protocol.fileTransfer.NoSuchTaskIdException;
-import im.protocol.helper.data.InvalidPackageException;
-import im.protocol.helper.data.ByteData;
-import im.protocol.helper.data.PackageTooLargeException;
+import im.protocol.data.InvalidPackageException;
+import im.protocol.data.ByteData;
+import im.protocol.data.PackageTooLargeException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -100,8 +110,9 @@ public class ClientNetworkHandler implements Runnable {
             while (true) {
                 ByteData lengthBuffer = new ByteData(this.inputStream, 4);
                 int length = ByteData.decodeInt(lengthBuffer);
-                if (length > Config.packageMaxLength)
+                if (length > Config.packageMaxLength) {
                     throw new InvalidPackageException();
+                }
                 ByteData data = new ByteData(this.inputStream, length);
                 this.onReceive(data);
             }
@@ -141,14 +152,16 @@ public class ClientNetworkHandler implements Runnable {
     }
 
     private synchronized void send(ByteData data) throws PackageTooLargeException {
-        if (data.length() > Config.packageMaxLength)
+        if (data.getLength() > Config.packageMaxLength)
             throw new PackageTooLargeException();
 
         ByteData rawData = new ByteData();
-        rawData.append(new ByteData(data.length()));
+        rawData.append(ByteData.encode(data.getLength()));
         rawData.append(data);
+
         try {
-            outputStream.write(rawData.getData());
+            ByteArrayInfo arrayInfo = rawData.getData();
+            outputStream.write(arrayInfo.getArray(),arrayInfo.getOffset(),arrayInfo.getLength());
             outputStream.flush();
         } catch (IOException e) {
             this.client.showInfo("Connection Error!");
@@ -218,14 +231,14 @@ public class ClientNetworkHandler implements Runnable {
                 );
                 break;
             }
-            case UserList: {
-                UserListPack userListPack = new UserListPack(data);
-                this.client.getRoomFrame().onUserListUpdate(userListPack.getUserList());
+            case BroadcastUserList: {
+                BroadcastUserListPack userListPack = new BroadcastUserListPack(data);
+                this.client.getUserManager().updateFromUserList(userListPack.getUserList());
                 break;
             }
-            case RoomName:{
-                RoomNamePack roomNamePack = new RoomNamePack(data);
-                this.client.getRoomFrame().onRoomNameUpdate(roomNamePack.getRoomName());
+            case SetRoomName:{
+                SetRoomNamePack setRoomNamePack = new SetRoomNamePack(data);
+                this.client.getRoomFrame().onRoomNameUpdate(setRoomNamePack.getRoomName());
                 break;
             }
             case FileUploadRequest: {

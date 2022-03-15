@@ -1,8 +1,10 @@
-package im.protocol.dataPack;
+package im.protocol.data_pack.system;
 
 import im.config.Config;
-import im.protocol.helper.data.ByteData;
-import im.protocol.helper.data.InvalidPackageException;
+import im.protocol.data.ByteData;
+import im.protocol.data.InvalidPackageException;
+import im.protocol.data_pack.DataPack;
+import im.protocol.data_pack.DataPackType;
 
 public class CheckVersionPack extends DataPack {
     private String version;
@@ -40,7 +42,7 @@ public class CheckVersionPack extends DataPack {
             this.version = data.decodeString();
             this.compatibleVersion = data.decodeString();
         }catch (InvalidPackageException e){
-            data.setData(backup.getData());
+            data.setData(backup);
             throw e;
         }
     }

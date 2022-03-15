@@ -1,25 +1,21 @@
-package im.protocol.dataPack;
+package im.protocol.data_pack.file_transfer;
 
-import im.protocol.helper.data.ByteData;
-import im.protocol.helper.data.InvalidPackageException;
+import im.protocol.data.ByteData;
+import im.protocol.data.InvalidPackageException;
+import im.protocol.data_pack.DataPack;
+import im.protocol.data_pack.DataPackType;
 
 import java.util.UUID;
 
-public class UploadReplyPack extends DataPack {
-    private UUID senderTaskId;
-    private UUID receiverTaskId;
-    private UUID senderFileId;
-    private UUID receiverFileId;
+public class DownloadReplyPack extends DataPack {
+    private UUID senderTaskId,receiverTaskId,senderFileId,receiverFileId;
     private boolean ok;
     private String reason;
     private FileTransferType fileTransferType;
 
-    /**
-     * Constructor used by client.
-     */
-    public UploadReplyPack(UploadRequestPack requestPack,boolean ok,String reason){
-        super(DataPackType.FileUploadReply);
-        this.senderTaskId = requestPack.getSenderTaskId();
+    public DownloadReplyPack(DownloadRequestPack requestPack,UUID senderTaskId,boolean ok,String reason){
+        super(DataPackType.FileDownloadReply);
+        this.senderTaskId = senderTaskId;
         this.receiverTaskId = requestPack.getReceiverTaskId();
         this.senderFileId = requestPack.getSenderFileId();
         this.receiverFileId = requestPack.getReceiverFileId();
@@ -28,27 +24,13 @@ public class UploadReplyPack extends DataPack {
         this.fileTransferType = requestPack.getFileTransferType();
     }
 
-    /**
-     * Constructor used by server.
-     */
-    public UploadReplyPack(UploadRequestPack requestPack,UUID receiverTaskId,UUID receiverFileId,boolean ok,String reason){
-        super(DataPackType.FileUploadReply);
-        this.senderTaskId = requestPack.getSenderTaskId();
-        this.receiverTaskId = receiverTaskId;
-        this.senderFileId = requestPack.getSenderFileId();
-        this.receiverFileId = receiverFileId;
-        this.ok = ok;
-        this.reason = reason;
-        this.fileTransferType = requestPack.getFileTransferType();
-    }
-
-    public UploadReplyPack(ByteData data) throws InvalidPackageException {
-        super(DataPackType.FileUploadReply);
+    public DownloadReplyPack(ByteData data) throws InvalidPackageException {
+        super(DataPackType.FileDownloadReply);
         this.decode(data);
     }
 
     @Override
-    public ByteData encode() {
+    public ByteData encode(){
         return new ByteData()
                 .append(super.encode())
                 .append(ByteData.encode(senderTaskId))
@@ -71,7 +53,6 @@ public class UploadReplyPack extends DataPack {
         reason = data.decodeString();
         fileTransferType = FileTransferType.toType(data.decodeInt());
     }
-
 
     public UUID getSenderTaskId() {
         return senderTaskId;

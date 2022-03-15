@@ -1,8 +1,12 @@
 package im.protocol.fileTransfer;
 
 import im.file_manager.*;
-import im.protocol.dataPack.*;
-import im.protocol.helper.data.PackageTooLargeException;
+import im.protocol.data_pack.*;
+import im.protocol.data.PackageTooLargeException;
+import im.protocol.data_pack.file_transfer.FileContentPack;
+import im.protocol.data_pack.file_transfer.FileTransferType;
+import im.protocol.data_pack.file_transfer.UploadFinishPack;
+import im.protocol.data_pack.file_transfer.UploadReplyPack;
 
 import java.io.File;
 import java.io.FileNotFoundException;

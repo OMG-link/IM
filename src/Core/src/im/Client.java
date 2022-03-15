@@ -4,11 +4,18 @@ import im.config.Config;
 import im.config.ConfigSetFailedException;
 import im.factory_manager.ClientFactoryManager;
 import im.gui.*;
-import im.protocol.dataPack.*;
+import im.protocol.data_pack.chat.ChatImagePack;
+import im.protocol.data_pack.chat.TextPack;
+import im.protocol.data_pack.file_transfer.DownloadRequestPack;
+import im.protocol.data_pack.file_transfer.FileTransferType;
+import im.protocol.data_pack.system.CheckVersionPack;
+import im.protocol.data_pack.user_list.SetUserNamePack;
 import im.protocol.fileTransfer.*;
 import im.file_manager.ClientFileManager;
 import im.protocol.ClientNetworkHandler;
-import im.protocol.helper.data.PackageTooLargeException;
+import im.protocol.data.PackageTooLargeException;
+import im.user_manager.ClientUserManager;
+import mutils.ImageType;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -19,8 +26,10 @@ import java.util.logging.Logger;
 
 public class Client{
     private final ClientFactoryManager factoryManager = new ClientFactoryManager();
+    private final ClientUserManager userManager = new ClientUserManager(this);
     private ClientFileManager fileManager;
     private ClientNetworkHandler networkHandler;
+
     private IConnectFrame connectFrame;
     private IRoomFrame roomFrame;
     private IGUI GUI;
@@ -81,7 +90,7 @@ public class Client{
             roomFrame.onConnectionBuilt();
             //Update name
             try{
-                getNetworkHandler().send(new NameUpdatePack(Config.getUsername()));
+                getNetworkHandler().send(new SetUserNamePack(Config.getUsername()));
             }catch (PackageTooLargeException e){
                 throw new RuntimeException(e);
             }
@@ -127,7 +136,7 @@ public class Client{
         return true;
     }
 
-    public void sendChatImage(File image,ImageType imageType) throws FileNotFoundException {
+    public void sendChatImage(File image, ImageType imageType) throws FileNotFoundException {
         uploadFile(image, FileTransferType.ChatImage, null, new IUploadCallback() {
             @Override
             public void onSucceed(ClientFileSendTask task) {
@@ -193,6 +202,10 @@ public class Client{
     }
 
     //getter and setter
+
+    public ClientUserManager getUserManager() {
+        return userManager;
+    }
 
     public ClientFactoryManager getFactoryManager() {
         return factoryManager;

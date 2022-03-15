@@ -1,4 +1,4 @@
-package im.protocol.dataPack;
+package mutils;
 
 import java.security.InvalidParameterException;
 

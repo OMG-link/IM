@@ -1,11 +1,13 @@
-package im.protocol.dataPack;
+package im.protocol.data_pack.chat;
 
-import im.protocol.helper.data.ByteData;
-import im.protocol.helper.data.InvalidPackageException;
+import im.protocol.data.ByteData;
+import im.protocol.data.InvalidPackageException;
+import im.protocol.data_pack.DataPack;
+import im.protocol.data_pack.DataPackType;
 
 import java.util.UUID;
 
-public class FileUploadedPack extends DataPack{
+public class FileUploadedPack extends DataPack {
     private String sender;
     private long stamp;
     private UUID fileId;
@@ -28,14 +30,12 @@ public class FileUploadedPack extends DataPack{
 
     @Override
     public ByteData encode(){
-        ByteData data = new ByteData();
-        data.append(super.encode());
-        data.append(new ByteData(sender));
-        data.append(new ByteData(stamp));
-        data.append(new ByteData(fileId));
-        data.append(new ByteData(fileName));
-        data.append(new ByteData(fileSize));
-        return data;
+        return super.encode()
+                .append(ByteData.encode(sender))
+                .append(ByteData.encode(stamp))
+                .append(ByteData.encode(fileId))
+                .append(ByteData.encode(fileName))
+                .append(ByteData.encode(fileSize));
     }
 
     @Override

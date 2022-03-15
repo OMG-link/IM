@@ -2,7 +2,7 @@ package im.protocol.fileTransfer;
 
 import im.gui.IFileTransferringPanel;
 import im.Client;
-import im.protocol.dataPack.FileTransferType;
+import im.protocol.data_pack.file_transfer.FileTransferType;
 
 import java.io.IOException;
 import java.util.HashMap;

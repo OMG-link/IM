@@ -1,12 +1,12 @@
 package im.protocol.fileTransfer;
 
-import im.protocol.dataPack.DataPack;
+import im.protocol.data_pack.DataPack;
 import im.Server;
 import im.file_manager.NoSuchFileIdException;
 import im.file_manager.ServerFileManager;
-import im.protocol.dataPack.DownloadRequestPack;
-import im.protocol.dataPack.UploadRequestPack;
-import im.protocol.helper.data.PackageTooLargeException;
+import im.protocol.data_pack.file_transfer.DownloadRequestPack;
+import im.protocol.data_pack.file_transfer.UploadRequestPack;
+import im.protocol.data.PackageTooLargeException;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;

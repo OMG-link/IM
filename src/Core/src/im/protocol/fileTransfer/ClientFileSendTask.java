@@ -2,11 +2,11 @@ package im.protocol.fileTransfer;
 
 import im.gui.IFileTransferringPanel;
 import im.Client;
-import im.protocol.dataPack.DataPack;
+import im.protocol.data_pack.DataPack;
 import im.file_manager.FileManager;
-import im.protocol.dataPack.FileTransferType;
-import im.protocol.dataPack.UploadRequestPack;
-import im.protocol.helper.data.PackageTooLargeException;
+import im.protocol.data_pack.file_transfer.FileTransferType;
+import im.protocol.data_pack.file_transfer.UploadRequestPack;
+import im.protocol.data.PackageTooLargeException;
 
 import java.io.File;
 import java.io.FileNotFoundException;

@@ -2,11 +2,11 @@ package im.protocol.fileTransfer;
 
 import im.gui.IFileTransferringPanel;
 import im.Client;
-import im.protocol.dataPack.DataPack;
+import im.protocol.data_pack.DataPack;
 import im.file_manager.ClientFileManager;
 import im.file_manager.FileObject;
-import im.protocol.dataPack.FileTransferType;
-import im.protocol.helper.data.PackageTooLargeException;
+import im.protocol.data_pack.file_transfer.FileTransferType;
+import im.protocol.data.PackageTooLargeException;
 
 import java.io.IOException;
 import java.security.InvalidParameterException;

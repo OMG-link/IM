@@ -2,7 +2,7 @@ package im.protocol.fileTransfer;
 
 import im.Server;
 import im.file_manager.NoSuchFileIdException;
-import im.protocol.dataPack.DownloadRequestPack;
+import im.protocol.data_pack.file_transfer.DownloadRequestPack;
 
 import java.nio.channels.SelectionKey;
 import java.util.HashMap;

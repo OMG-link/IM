@@ -1,8 +1,10 @@
-package im.protocol.dataPack;
+package im.protocol.data_pack.file_transfer;
 
+import im.protocol.data_pack.DataPack;
+import im.protocol.data_pack.DataPackType;
 import im.protocol.fileTransfer.FileReceiveTask;
-import im.protocol.helper.data.ByteData;
-import im.protocol.helper.data.InvalidPackageException;
+import im.protocol.data.ByteData;
+import im.protocol.data.InvalidPackageException;
 
 import java.util.UUID;
 

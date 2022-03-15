@@ -4,7 +4,7 @@ import im.Client;
 import PCGUI.helper.PanelUtil;
 import im.file_manager.FileObject;
 import im.file_manager.NoSuchFileIdException;
-import im.protocol.dataPack.FileTransferType;
+import im.protocol.data_pack.file_transfer.FileTransferType;
 import im.protocol.fileTransfer.ClientFileReceiveTask;
 import im.protocol.fileTransfer.IDownloadCallback;
 

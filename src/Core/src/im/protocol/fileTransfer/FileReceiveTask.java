@@ -1,13 +1,13 @@
 package im.protocol.fileTransfer;
 
-import im.protocol.dataPack.DataPack;
+import im.protocol.data_pack.DataPack;
 import mutils.FileUtils;
 import im.file_manager.FileManager;
 import im.file_manager.FileOccupiedException;
 import im.file_manager.WriteOnlyFile;
-import im.protocol.dataPack.FileTransferType;
-import im.protocol.dataPack.UploadResultPack;
-import im.protocol.helper.data.PackageTooLargeException;
+import im.protocol.data_pack.file_transfer.FileTransferType;
+import im.protocol.data_pack.file_transfer.UploadResultPack;
+import im.protocol.data.PackageTooLargeException;
 
 import java.io.File;
 import java.io.IOException;
