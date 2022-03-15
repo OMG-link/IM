@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Server {
+    Logger logger = Logger.getLogger("IMServer");
     ServerFactoryManager factoryManager = new ServerFactoryManager();
     ServerUserManager userManager = new ServerUserManager(this);
     ServerFileManager fileManager;
@@ -33,6 +34,10 @@ public class Server {
         if(GUI!=null){
             GUI.createGUI();
         }
+    }
+
+    public Logger getLogger() {
+        return logger;
     }
 
     public ServerUserManager getUserManager() {

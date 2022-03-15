@@ -56,12 +56,14 @@ public class MessageArea {
 
     public void clearMessageArea(){
         box.removeAll();
-        box.revalidate();
+        this.box.revalidate();
+        this.box.repaint();
     }
 
     public void add(Component component){
         this.box.add(component);
         this.box.revalidate();
+        this.box.repaint();
     }
 
 }

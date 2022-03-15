@@ -19,12 +19,12 @@ public class ServerUserManager extends UserManager {
         this.server = server;
     }
 
-    public User createUser(){
+    public User createUser(String username){
         UUID uuid;
         do{
             uuid = UUID.randomUUID();
         }while (map.containsKey(uuid));
-        User user = new User("anonymous",uuid);
+        User user = new User(username,uuid);
         user.setUserManager(this);
         map.put(uuid,user);
         onUserJoin(user);

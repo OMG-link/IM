@@ -15,8 +15,6 @@ public interface IRoomFrame {
      */
     void onConnectionBuilt();
 
-    void setVisible(boolean b);
-
     void clearMessageArea();
 
     void onMessageReceive(String sender,long stamp,String text);
@@ -32,8 +30,12 @@ public interface IRoomFrame {
     IDownloadCallback onChatImageReceive(String sender, long stamp, UUID serverFileId);
 
     void onFileUploadedReceive(String sender, long stamp, UUID uuid, String fileName, long fileSize);
-    void onUserListUpdate(Collection<User> userList);
     void onRoomNameUpdate(String roomName);
     IFileTransferringPanel addFileTransferringPanel(IStringGetter fileNameGetter,long fileSize);
+
+    void updateUserList(Collection<User> userList);
+    void onUserJoined(User user);
+    void onUserLeft(User user);
+    void onUsernameChanged(User user,String previousName);
 
 }

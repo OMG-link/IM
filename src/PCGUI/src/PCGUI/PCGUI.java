@@ -1,11 +1,9 @@
 package PCGUI;
 
-import im.gui.IConfirmDialogCallback;
-import im.gui.IConnectFrame;
-import im.gui.IGUI;
-import im.gui.IRoomFrame;
 import im.Client;
 import im.config.Config;
+import im.gui.IConfirmDialogCallback;
+import im.gui.IGUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,14 +30,14 @@ public class PCGUI implements IGUI {
 
     @Override
     public void createConnectFrame() {
-        IConnectFrame connectFrame = new ConnectFrame(client);
+        ConnectFrame connectFrame = new ConnectFrame(client);
         connectFrame.setVisible(true);
         client.setConnectFrame(connectFrame);
     }
 
     @Override
     public void createRoomFrame() {
-        IRoomFrame roomFrame = new RoomFrame(client);
+        RoomFrame roomFrame = new RoomFrame(client);
         roomFrame.setVisible(true);
         client.setRoomFrame(roomFrame);
     }

@@ -27,7 +27,7 @@ public class ChatInputArea extends InputArea implements DropTargetListener {
 
     public ChatInputArea(RoomFrame roomFrame) {
         super(roomFrame);
-        handler = roomFrame.getHandler();
+        handler = roomFrame.getClient();
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
     }
 

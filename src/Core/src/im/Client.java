@@ -3,17 +3,16 @@ package im;
 import im.config.Config;
 import im.config.ConfigSetFailedException;
 import im.factory_manager.ClientFactoryManager;
+import im.file_manager.ClientFileManager;
 import im.gui.*;
+import im.protocol.ClientNetworkHandler;
+import im.protocol.data.PackageTooLargeException;
 import im.protocol.data_pack.chat.ChatImagePack;
 import im.protocol.data_pack.chat.TextPack;
 import im.protocol.data_pack.file_transfer.DownloadRequestPack;
 import im.protocol.data_pack.file_transfer.FileTransferType;
 import im.protocol.data_pack.system.CheckVersionPack;
-import im.protocol.data_pack.user_list.SetUsernamePack;
 import im.protocol.fileTransfer.*;
-import im.file_manager.ClientFileManager;
-import im.protocol.ClientNetworkHandler;
-import im.protocol.data.PackageTooLargeException;
 import im.user_manager.ClientUserManager;
 import mutils.ImageType;
 
@@ -81,7 +80,7 @@ public class Client{
      * Called when version check is done.
      * SEND NOTHING BEFORE VERSION IS CHECKED!
      */
-    public void onVersionChecked(){
+    public void onConnectionBuilt(){
         try{
             //Call onConnectionBuilt
             IRoomFrame roomFrame;
@@ -89,12 +88,6 @@ public class Client{
                 Thread.sleep(1); //In case of room frame is not built, we should wait.
             }
             roomFrame.onConnectionBuilt();
-            //Update name
-            try{
-                getNetworkHandler().send(new SetUsernamePack(Config.getUsername()));
-            }catch (PackageTooLargeException e){
-                throw new RuntimeException(e);
-            }
         }catch (InterruptedException e){
             throw new RuntimeException(e); //Obviously, I won't interrupt it.
         }

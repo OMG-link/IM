@@ -2,10 +2,7 @@ package im.user_manager;
 
 import im.Client;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 
 public class ClientUserManager extends UserManager {
@@ -18,43 +15,45 @@ public class ClientUserManager extends UserManager {
     }
 
     public void onUserListUpdated(){
-        client.getRoomFrame().onUserListUpdate(getUserList());
+        client.getRoomFrame().updateUserList(getUserList());
     }
 
     public void joinUser(User user){
         if(userList.containsKey(user.getUid())){
             client.getLogger().log(
                     Level.WARNING,
-                    "UUID conflict in ClientUserManager::onUserJoin. The old one will be replaced."
+                    "UUID conflict in ClientUserManager::joinUser. The old one will be replaced."
             );
         }
         user.setUserManager(this);
         userList.put(user.getUid(),user);
-        onUserListUpdated();
+        client.getRoomFrame().onUserJoined(user);
     }
 
     public void removeUser(UUID uid){
         if(!userList.containsKey(uid)){
             client.getLogger().log(
                     Level.WARNING,
-                    "UUID not found in ClientUserManager::onUserLeft. The operation will be ignored."
+                    "UUID not found in ClientUserManager::removeUser. The operation will be ignored."
             );
             return;
         }
-        userList.remove(uid);
-        onUserListUpdated();
+        var user = userList.remove(uid);
+        client.getRoomFrame().onUserLeft(user);
     }
 
     public void changeUsername(UUID uid, String name){
         if(!userList.containsKey(uid)){
             client.getLogger().log(
                     Level.WARNING,
-                    "UUID not found in ClientUserManager::onUserNameChanged. The operation will be ignored."
+                    "UUID not found in ClientUserManager::changeUsername. The operation will be ignored."
             );
             return;
         }
+        var user = userList.get(uid);
+        var previousName = user.getName();
         userList.get(uid).setName(name);
-        onUserListUpdated();
+        client.getRoomFrame().onUsernameChanged(user,previousName);
     }
 
     public void updateFromUserList(Collection<User> userList){
@@ -62,6 +61,7 @@ public class ClientUserManager extends UserManager {
         for(User user:userList){
             this.userList.put(user.getUid(),user);
         }
+        this.userList.put(currentUser.getUid(),currentUser); //Replace the one from network.
         onUserListUpdated();
     }
 

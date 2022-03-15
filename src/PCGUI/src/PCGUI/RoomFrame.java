@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
-    private final Client handler;
+    private final Client client;
 
     private final GridBagLayout gridBagLayout = new GridBagLayout();
     private final GridBagConstraints gridBagConstraints = new GridBagConstraints();
@@ -25,8 +25,8 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     private ChatInputArea inputArea;
     private JPanel buttonPanel;
 
-    public RoomFrame(Client handler) {
-        this.handler = handler;
+    public RoomFrame(Client client) {
+        this.client = client;
 
         this.setTitle("IM - Made by OMG_link");
         this.setLocationRelativeTo(null);
@@ -48,7 +48,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     }
 
     public void onInputFinish() {
-        if (handler.sendChat(this.inputArea.getText())) {
+        if (client.sendChat(this.inputArea.getText())) {
             this.inputArea.setText("");
         }
     }
@@ -143,6 +143,19 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
 
     }
 
+    private void updateUserList(){
+        updateUserList(client.getUserManager().getUserList());
+    }
+
+    @Override
+    public void updateUserList(Collection<User> userList) {
+        StringBuilder text = new StringBuilder();
+        for (User user : userList) {
+            text.append(user.getName()).append('\n');
+        }
+        this.userListArea.setText(text.toString());
+    }
+
     @Override
     public void onConnectionBuilt() {
         //Clear message area
@@ -154,6 +167,8 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
                 component.setEnabled(true);
             }
         }
+        //Fetch data from user list
+        updateUserList();
     }
 
     @Override
@@ -168,18 +183,9 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
 
     @Override
     public IDownloadCallback onChatImageReceive(String sender, long stamp, UUID serverFileId) {
-        var panel = new ChatImagePanel(handler, sender, stamp, serverFileId);
+        var panel = new ChatImagePanel(client, sender, stamp, serverFileId);
         this.messageArea.add(panel);
         return panel.getDownloadCallback();
-    }
-
-    @Override
-    public void onUserListUpdate(Collection<User> userList) {
-        StringBuilder text = new StringBuilder();
-        for (User user : userList) {
-            text.append(user.getName()).append('\n');
-        }
-        this.userListArea.setText(text.toString());
     }
 
     @Override
@@ -191,7 +197,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
 
     @Override
     public void onFileUploadedReceive(String sender, long stamp, UUID uuid, String fileName, long fileSize) {
-        this.messageArea.add(new FilePanel(handler, sender, stamp, uuid, fileName, fileSize));
+        this.messageArea.add(new FilePanel(client, sender, stamp, uuid, fileName, fileSize));
     }
 
     @Override
@@ -201,8 +207,25 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
         return panel;
     }
 
-    public Client getHandler() {
-        return handler;
+    @Override
+    public void onUserJoined(User user) {
+        updateUserList();
+        onMessageReceive("System",System.currentTimeMillis(),String.format("%s joined the chatroom",user.getName()));
+    }
+
+    @Override
+    public void onUserLeft(User user) {
+        updateUserList();
+        onMessageReceive("System",System.currentTimeMillis(),String.format("%s left the chatroom",user.getName()));
+    }
+
+    @Override
+    public void onUsernameChanged(User user,String previousName) {
+        updateUserList();
+    }
+
+    public Client getClient() {
+        return client;
     }
 
 }

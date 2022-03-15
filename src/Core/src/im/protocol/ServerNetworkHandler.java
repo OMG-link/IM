@@ -4,22 +4,23 @@ import im.Server;
 import im.config.Config;
 import im.file_manager.NoSuchFileIdException;
 import im.protocol.data.ByteArrayInfo;
-import im.protocol.data_pack.*;
+import im.protocol.data.ByteData;
+import im.protocol.data.InvalidPackageException;
+import im.protocol.data.PackageTooLargeException;
+import im.protocol.data_pack.DataPack;
+import im.protocol.data_pack.DataPackType;
 import im.protocol.data_pack.chat.ChatImagePack;
 import im.protocol.data_pack.chat.TextPack;
 import im.protocol.data_pack.file_transfer.*;
 import im.protocol.data_pack.system.CheckVersionPack;
 import im.protocol.data_pack.system.PingPack;
+import im.protocol.data_pack.user_list.BroadcastUserListPack;
+import im.protocol.data_pack.user_list.SetRoomNamePack;
 import im.protocol.data_pack.user_list.SetUidPack;
 import im.protocol.data_pack.user_list.SetUsernamePack;
-import im.protocol.data_pack.user_list.SetRoomNamePack;
-import im.protocol.data_pack.user_list.BroadcastUserListPack;
 import im.protocol.fileTransfer.NoSuchTaskIdException;
 import im.protocol.fileTransfer.ServerFileReceiveTask;
 import im.protocol.fileTransfer.ServerFileSendTask;
-import im.protocol.data.ByteData;
-import im.protocol.data.InvalidPackageException;
-import im.protocol.data.PackageTooLargeException;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -179,36 +180,28 @@ public class ServerNetworkHandler implements Runnable {
             throw new InvalidPackageException();
         }
 
-        //Old version does not send CheckVersionPack to server.
-        if (type != DataPackType.CheckVersion) {
-            if (!attachment.isVersionChecked) { //Old version
-                attachment.isVersionChecked = true;
-                doVersionCheck(selectionKey, new CheckVersionPack());
-                return;
-            }
-            if (!attachment.allowCommunication) {
+        if(attachment.expectedReceiveType!=null){
+            if(type!=attachment.expectedReceiveType){ //兼容低版本
+                attachment.expectedSendType = DataPackType.CheckVersion;
+                attachment.expectedReceiveType = DataPackType.Undefined;
+                send(selectionKey, new CheckVersionPack());
                 return;
             }
         }
 
         switch (type) {
             case CheckVersion: {
-                attachment.isVersionChecked = true;
+                attachment.expectedSendType = DataPackType.CheckVersion;
+                attachment.expectedReceiveType = DataPackType.Undefined;
                 //CheckVersionPack for V1.3 (Server Version)
                 try {
                     CheckVersionPack pack = new CheckVersionPack(data);
-                    if (Objects.equals(pack.getCompatibleVersion(), Config.compatibleVersion)) {
-                        attachment.allowCommunication = true;
-                    }
-                    doVersionCheck(selectionKey, new CheckVersionPack());
-                    if (attachment.allowCommunication) {
-                        onVersionChecked(selectionKey);
-                    }
+                    send(selectionKey, new CheckVersionPack());
                     break;
                 } catch (InvalidPackageException ignored) {
                 }
                 //Default. Used when a higher version of CheckVersionPack is sent.
-                doVersionCheck(selectionKey, new CheckVersionPack());
+                send(selectionKey, new CheckVersionPack());
                 break;
             }
             case Text: {
@@ -220,11 +213,14 @@ public class ServerNetworkHandler implements Runnable {
             }
             case SetUserName: {
                 SetUsernamePack pack = new SetUsernamePack(data);
-                if (pack.getUserName().length() >= Config.nickMaxLength) return;
-                //For safety reasons, users are not allowed to change their name more than once.
-                if (attachment.isUsernameSet) return;
-                attachment.isUsernameSet = true;
-                attachment.user.setName(pack.getUserName());
+                if (pack.getUserName().length() > Config.nickMaxLength) return;
+                if (attachment.isUserCreated()) return;
+
+                attachment.expectedSendType = DataPackType.SetUid;
+                attachment.expectedReceiveType = DataPackType.Undefined;
+
+                attachment.user = server.getUserManager().createUser(pack.getUserName());
+                send(selectionKey,new SetUidPack(attachment.user));
                 break;
             }
             case FileUploadRequest: {
@@ -371,13 +367,39 @@ public class ServerNetworkHandler implements Runnable {
     }
 
     public void send(SelectionKey selectionKey, DataPack dataPack) throws IOException, PackageTooLargeException {
-        if (dataPack.getType() != DataPackType.CheckVersion && !((Attachment) selectionKey.attachment()).allowCommunication) {
-            return;
+        Attachment attachment = (Attachment) selectionKey.attachment();
+
+        boolean isConnectionJustBuilt = false;
+
+        if(attachment.expectedSendType!=null){
+            if(dataPack.getType()!=attachment.expectedSendType){
+                server.getLogger().log(
+                        Level.WARNING,
+                        String.format("Server wants to send package of type %s, but it is expected to send type %s. Package ignored.",dataPack.getType(),attachment.expectedSendType)
+                );
+                return;
+            }else{
+                switch (dataPack.getType()){
+                    case CheckVersion:{
+                        attachment.expectedSendType = DataPackType.Undefined;
+                        attachment.expectedReceiveType = DataPackType.SetUserName;
+                        break;
+                    }
+                    case SetUid:{
+                        isConnectionJustBuilt = true;
+                        break;
+                    }
+                }
+            }
         }
+
         send(selectionKey, dataPack.encode());
+        if(isConnectionJustBuilt){
+            onConnectionBuilt(selectionKey);
+        }
     }
 
-    private void send(SelectionKey selectionKey, ByteData data) throws IOException, PackageTooLargeException {
+    private void send(SelectionKey selectionKey, ByteData data) throws IOException {
         if (data.getLength() > Config.packageMaxLength) {
             throw new PackageTooLargeException();
         }
@@ -424,52 +446,29 @@ public class ServerNetworkHandler implements Runnable {
     }
 
     public void broadcast(DataPack pack, boolean shouldAddToHistory) {
-        broadcast(pack.encode(), shouldAddToHistory);
-    }
-
-    private void broadcast(ByteData data, boolean shouldAddToHistory) {
-        if (data.getLength() > Config.packageMaxLength) {
-            Logger.getLogger("Server").log(Level.WARNING, "Package too large! It will not be broadcast.");
-            return;
-        }
         if (shouldAddToHistory) {
-            addRecord(data);
+            addRecord(pack.encode());
         }
         Iterator<SelectionKey> iterator = selectionKeyList.iterator();
         while (iterator.hasNext()) {
             SelectionKey selectionKey = iterator.next();
             try {
-                send(selectionKey, data);
+                if(((Attachment)selectionKey.attachment()).isConnectionBuilt()) {
+                    send(selectionKey, pack);
+                }
             } catch (IOException e) {
                 iterator.remove();
-            } catch (PackageTooLargeException e) {
-                //This should have been checked before.
-                throw new RuntimeException(e);
             }
         }
     }
 
-    /**
-     * Reply a version check pack to the client.
-     *
-     * @param selectionKey SelectionKey for the client.
-     * @param replyPack    CheckVersionPack to reply.
-     * @throws IOException If the package cannot be sent.
-     */
-    private void doVersionCheck(SelectionKey selectionKey, DataPack replyPack) throws IOException {
-        try {
-            send(selectionKey, replyPack);
-        } catch (PackageTooLargeException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void onVersionChecked(SelectionKey selectionKey) throws IOException {
+    private void onConnectionBuilt(SelectionKey selectionKey) throws IOException {
         Attachment attachment = (Attachment) selectionKey.attachment();
+        attachment.expectedSendType = null;
+        attachment.expectedReceiveType = null;
         try {
             sendHistory(selectionKey);
             send(selectionKey, new SetRoomNamePack());
-            send(selectionKey, new SetUidPack(attachment.user));
             send(selectionKey, new BroadcastUserListPack(server.getUserManager().getUserList()));
         } catch (PackageTooLargeException e) {
             throw new RuntimeException(e);

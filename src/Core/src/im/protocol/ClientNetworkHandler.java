@@ -40,8 +40,10 @@ public class ClientNetworkHandler implements Runnable {
 
     private Timer pingTimer;
 
-    private boolean versionChecked = false;
     private boolean interrupted = false;
+
+    private DataPackType expectedSendType = DataPackType.CheckVersion;
+    private DataPackType expectedReceiveType = DataPackType.Undefined;
 
     public boolean isInterrupted(){
         return interrupted;
@@ -128,10 +130,30 @@ public class ClientNetworkHandler implements Runnable {
         }
     }
 
-    public void send(DataPack dataPack) throws PackageTooLargeException {
+    public void send(DataPack dataPack) {
         if(isInterrupted()) return;
-        if(!versionChecked && !(dataPack instanceof CheckVersionPack)){
-            throw new VersionNotCheckedException();
+
+        if(expectedSendType!=null){
+            if(dataPack.getType()!=expectedSendType){
+                client.getLogger().log(
+                        Level.WARNING,
+                        String.format("The client wants to send package of type %s, but it is expected to send %s. This package will not be sent.",dataPack.getType(),expectedSendType)
+                );
+                return;
+            }else{
+                switch (dataPack.getType()){
+                    case CheckVersion:{
+                        expectedSendType = DataPackType.Undefined;
+                        expectedReceiveType = DataPackType.CheckVersion;
+                        break;
+                    }
+                    case SetUserName:{
+                        expectedSendType = DataPackType.Undefined;
+                        expectedReceiveType = DataPackType.SetUid;
+                        break;
+                    }
+                }
+            }
         }
 
         this.send(dataPack.encode());
@@ -139,8 +161,9 @@ public class ClientNetworkHandler implements Runnable {
     }
 
     private synchronized void send(ByteData data) throws PackageTooLargeException {
-        if (data.getLength() > Config.packageMaxLength)
+        if (data.getLength() > Config.packageMaxLength) {
             throw new PackageTooLargeException();
+        }
 
         ByteData rawData = new ByteData();
         rawData.append(ByteData.encode(data.getLength()));
@@ -159,7 +182,13 @@ public class ClientNetworkHandler implements Runnable {
     private void onReceive(ByteData data) throws InvalidPackageException {
         DataPackType type = DataPackType.toType(ByteData.peekInt(data));
 
-        if(!versionChecked&&type!=DataPackType.CheckVersion) return;
+        if(expectedReceiveType!=null&&type!=expectedReceiveType){
+            client.getLogger().log(
+                    Level.WARNING,
+                    String.format("The client is expecting package of type %s, but we received %s. The package will not be processed.",expectedSendType,type)
+            );
+            return;
+        }
 
         switch (type) {
             case CheckVersion: {
@@ -172,8 +201,10 @@ public class ClientNetworkHandler implements Runnable {
                         if (!Objects.equals(pack.getVersion(), Config.version)) {
                             this.client.getGUI().alertVersionMismatch(pack.getVersion(), Config.version);
                         }
-                        versionChecked = true;
-                        onVersionChecked();
+                        expectedSendType = DataPackType.SetUserName;
+                        expectedReceiveType = DataPackType.Undefined;
+
+                        send(new SetUsernamePack(client.getUserManager().getCurrentUser().getName()));
                     }
                     break;
                 }catch (InvalidPackageException ignored){
@@ -221,6 +252,7 @@ public class ClientNetworkHandler implements Runnable {
             case SetUid:{
                 SetUidPack pack = new SetUidPack(data);
                 client.getUserManager().getCurrentUser().setUid(pack.getUid());
+                onConnectionBuilt();
                 break;
             }
             case SetRoomName:{
@@ -379,7 +411,10 @@ public class ClientNetworkHandler implements Runnable {
         }
     }
 
-    public void onVersionChecked(){
+    public void onConnectionBuilt(){
+        expectedSendType = null;
+        expectedReceiveType = null;
+
         pingTimer = new Timer();
         pingTimer.schedule(new TimerTask() {
             @Override
@@ -392,7 +427,7 @@ public class ClientNetworkHandler implements Runnable {
             }
         }, 5000, 10 * 1000);
 
-        client.onVersionChecked();
+        client.onConnectionBuilt();
     }
 
 }
