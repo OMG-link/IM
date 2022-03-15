@@ -10,7 +10,8 @@ import im.protocol.data_pack.chat.TextPack;
 import im.protocol.data_pack.file_transfer.*;
 import im.protocol.data_pack.system.CheckVersionPack;
 import im.protocol.data_pack.system.PingPack;
-import im.protocol.data_pack.user_list.SetUserNamePack;
+import im.protocol.data_pack.user_list.SetUidPack;
+import im.protocol.data_pack.user_list.SetUsernamePack;
 import im.protocol.data_pack.user_list.SetRoomNamePack;
 import im.protocol.data_pack.user_list.BroadcastUserListPack;
 import im.protocol.fileTransfer.NoSuchTaskIdException;
@@ -47,7 +48,7 @@ public class ServerNetworkHandler implements Runnable {
     }
 
     public void start() {
-        System.out.printf("Starting server on port %d.\n",Config.getServerPort());
+        System.out.printf("Starting server on port %d.\n", Config.getServerPort());
         try {
             this.selector = Selector.open();
             this.socketChannel = ServerSocketChannel.open();
@@ -179,47 +180,50 @@ public class ServerNetworkHandler implements Runnable {
         }
 
         //Old version does not send CheckVersionPack to server.
-        if(type!=DataPackType.CheckVersion){
-            if(!attachment.isVersionChecked){ //Old version
+        if (type != DataPackType.CheckVersion) {
+            if (!attachment.isVersionChecked) { //Old version
                 attachment.isVersionChecked = true;
-                doVersionCheck(selectionKey,new CheckVersionPack());
+                doVersionCheck(selectionKey, new CheckVersionPack());
                 return;
             }
-            if(!attachment.allowCommunication){
+            if (!attachment.allowCommunication) {
                 return;
             }
         }
 
         switch (type) {
-            case CheckVersion:{
+            case CheckVersion: {
                 attachment.isVersionChecked = true;
                 //CheckVersionPack for V1.3 (Server Version)
-                try{
+                try {
                     CheckVersionPack pack = new CheckVersionPack(data);
-                    if(Objects.equals(pack.getCompatibleVersion(), Config.compatibleVersion)){
+                    if (Objects.equals(pack.getCompatibleVersion(), Config.compatibleVersion)) {
                         attachment.allowCommunication = true;
                     }
-                    doVersionCheck(selectionKey,new CheckVersionPack());
-                    if(attachment.allowCommunication){
+                    doVersionCheck(selectionKey, new CheckVersionPack());
+                    if (attachment.allowCommunication) {
                         onVersionChecked(selectionKey);
                     }
                     break;
-                }catch (InvalidPackageException ignored){
+                } catch (InvalidPackageException ignored) {
                 }
                 //Default. Used when a higher version of CheckVersionPack is sent.
-                doVersionCheck(selectionKey,new CheckVersionPack());
+                doVersionCheck(selectionKey, new CheckVersionPack());
                 break;
             }
             case Text: {
                 TextPack pack = new TextPack(data);
                 pack.setStamp();
 
-                broadcast(pack,true);
+                broadcast(pack, true);
                 break;
             }
             case SetUserName: {
-                SetUserNamePack pack = new SetUserNamePack(data);
+                SetUsernamePack pack = new SetUsernamePack(data);
                 if (pack.getUserName().length() >= Config.nickMaxLength) return;
+                //For safety reasons, users are not allowed to change their name more than once.
+                if (attachment.isUsernameSet) return;
+                attachment.isUsernameSet = true;
                 attachment.user.setName(pack.getUserName());
                 break;
             }
@@ -227,13 +231,13 @@ public class ServerNetworkHandler implements Runnable {
                 UploadRequestPack requestPack = new UploadRequestPack(data);
                 boolean ok;
                 String reason;
-                UUID receiverTaskId = new UUID(0,0);
-                UUID receiverFileId = new UUID(0,0);
+                UUID receiverTaskId = new UUID(0, 0);
+                UUID receiverFileId = new UUID(0, 0);
                 if (requestPack.getFileSize() > Config.fileMaxSize) {
                     ok = false;
                     reason = "File too large!";
                 } else {
-                    try{
+                    try {
                         /*
                          * Here is a hidden danger that the client may create lots of upload requests without finishing
                          * it, which may causes memory limit exceed and crashes the program.
@@ -249,12 +253,12 @@ public class ServerNetworkHandler implements Runnable {
                         receiverFileId = task.getReceiverFileId();
                         ok = true;
                         reason = "";
-                    }catch (IOException e){
+                    } catch (IOException e) {
                         ok = false;
                         reason = "Can not create file on server.";
                     }
                 }
-                try{
+                try {
                     this.send(selectionKey, new UploadReplyPack(
                             requestPack,
                             receiverTaskId,
@@ -262,21 +266,21 @@ public class ServerNetworkHandler implements Runnable {
                             ok,
                             reason
                     ));
-                }catch (PackageTooLargeException e){
+                } catch (PackageTooLargeException e) {
                     throw new RuntimeException(e);
                 }
                 break;
             }
-            case FileUploadFinish:{
+            case FileUploadFinish: {
                 UploadFinishPack pack = new UploadFinishPack(data);
-                try{
+                try {
                     ServerFileReceiveTask task = server.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                     task.end();
-                }catch (NoSuchTaskIdException e){
-                    Logger.getLogger("Server").log(Level.INFO,String.format("There is no ServerFileReceiveTask with UUID %s.",pack.getReceiverTaskId()));
-                    try{
-                        send(selectionKey,new UploadResultPack(pack.getSenderTaskId()));
-                    }catch (PackageTooLargeException e2){
+                } catch (NoSuchTaskIdException e) {
+                    Logger.getLogger("Server").log(Level.INFO, String.format("There is no ServerFileReceiveTask with UUID %s.", pack.getReceiverTaskId()));
+                    try {
+                        send(selectionKey, new UploadResultPack(pack.getSenderTaskId()));
+                    } catch (PackageTooLargeException e2) {
                         throw new RuntimeException(e2);
                     }
                 }
@@ -284,15 +288,15 @@ public class ServerNetworkHandler implements Runnable {
             }
             case FileContent: {
                 FileContentPack pack = new FileContentPack(data);
-                try{
+                try {
                     ServerFileReceiveTask task = server.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                     try {
                         task.onDataReceived(pack.getData());
                     } catch (IOException e) {
                         task.onEndFailed(e.toString());
                     }
-                }catch (NoSuchTaskIdException e){
-                    Logger.getLogger("Server").log(Level.INFO,String.format("There is no ServerFileReceiveTask with UUID %s.",pack.getReceiverTaskId()));
+                } catch (NoSuchTaskIdException e) {
+                    Logger.getLogger("Server").log(Level.INFO, String.format("There is no ServerFileReceiveTask with UUID %s.", pack.getReceiverTaskId()));
                 }
                 break;
             }
@@ -307,49 +311,49 @@ public class ServerNetworkHandler implements Runnable {
                     reason = "";
                 } catch (NoSuchFileIdException e) {
                     ok = false;
-                    reason = String.format("No such file.{UUID=%s}.",pack.getSenderFileId());
+                    reason = String.format("No such file.{UUID=%s}.", pack.getSenderFileId());
                 }
-                try{
-                    this.send(selectionKey,new DownloadReplyPack(
+                try {
+                    this.send(selectionKey, new DownloadReplyPack(
                             pack,
-                            task==null?new UUID(0,0):task.getSenderTaskId(),
+                            task == null ? new UUID(0, 0) : task.getSenderTaskId(),
                             ok,
                             reason
                     ));
-                    if(ok){ //UploadRequestPack should be sent after DownloadReplyPack
+                    if (ok) { //UploadRequestPack should be sent after DownloadReplyPack
                         assert task != null;
                         task.start();
                     }
-                }catch (PackageTooLargeException e){
+                } catch (PackageTooLargeException e) {
                     throw new RuntimeException(e);
                 }
                 break;
             }
             case FileUploadReply: {
                 UploadReplyPack pack = new UploadReplyPack(data);
-                try{
+                try {
                     ServerFileSendTask task = server.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
                     task.onReceiveUploadReply(pack);
-                }catch (NoSuchTaskIdException e){
-                    Logger.getLogger("Server").log(Level.INFO,String.format("There is no ServerFileSendTask with UUID %s.",pack.getSenderTaskId()));
+                } catch (NoSuchTaskIdException e) {
+                    Logger.getLogger("Server").log(Level.INFO, String.format("There is no ServerFileSendTask with UUID %s.", pack.getSenderTaskId()));
                 }
                 break;
             }
             case FileUploadResult: {
                 UploadResultPack pack = new UploadResultPack(data);
-                try{
+                try {
                     ServerFileSendTask task = server.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
-                    if(pack.isOk()){
+                    if (pack.isOk()) {
                         task.onEndSucceed();
-                    }else{
+                    } else {
                         task.onEndFailed(pack.getReason());
                     }
-                }catch (NoSuchTaskIdException e){
-                    Logger.getLogger("Server").log(Level.INFO,String.format("There is no ServerFileSendTask with UUID %s.",pack.getSenderTaskId()));
+                } catch (NoSuchTaskIdException e) {
+                    Logger.getLogger("Server").log(Level.INFO, String.format("There is no ServerFileSendTask with UUID %s.", pack.getSenderTaskId()));
                 }
                 break;
             }
-            case ChatImage:{
+            case ChatImage: {
                 ChatImagePack pack = new ChatImagePack(data);
                 broadcast(pack, true);
                 break;
@@ -367,22 +371,22 @@ public class ServerNetworkHandler implements Runnable {
     }
 
     public void send(SelectionKey selectionKey, DataPack dataPack) throws IOException, PackageTooLargeException {
-        if(dataPack.getType()!=DataPackType.CheckVersion&&!((Attachment)selectionKey.attachment()).allowCommunication){
+        if (dataPack.getType() != DataPackType.CheckVersion && !((Attachment) selectionKey.attachment()).allowCommunication) {
             return;
         }
         send(selectionKey, dataPack.encode());
     }
 
     private void send(SelectionKey selectionKey, ByteData data) throws IOException, PackageTooLargeException {
-        if(data.getLength()>Config.packageMaxLength){
+        if (data.getLength() > Config.packageMaxLength) {
             throw new PackageTooLargeException();
         }
 
         SocketChannel socketChannel;
-        try{
+        try {
             socketChannel = (SocketChannel) selectionKey.channel();
-        }catch (ClassCastException e){
-            Logger.getLogger("IMServer").log(Level.WARNING,"Cannot cast selectionKey.channel() to SocketChannel.");
+        } catch (ClassCastException e) {
+            Logger.getLogger("IMServer").log(Level.WARNING, "Cannot cast selectionKey.channel() to SocketChannel.");
             return;
         }
 
@@ -411,24 +415,24 @@ public class ServerNetworkHandler implements Runnable {
 
     private void sendHistory(SelectionKey selectionKey) throws IOException {
         for (ByteData data : records) {
-            try{
+            try {
                 send(selectionKey, data);
-            }catch (PackageTooLargeException e){
+            } catch (PackageTooLargeException e) {
                 throw new RuntimeException(e);
             }
         }
     }
 
-    public void broadcast(DataPack pack,boolean shouldAddToHistory) {
-        broadcast(pack.encode(),shouldAddToHistory);
+    public void broadcast(DataPack pack, boolean shouldAddToHistory) {
+        broadcast(pack.encode(), shouldAddToHistory);
     }
 
-    private void broadcast(ByteData data,boolean shouldAddToHistory) {
-        if(data.getLength()>Config.packageMaxLength){
-            Logger.getLogger("Server").log(Level.WARNING,"Package too large! It will not be broadcast.");
+    private void broadcast(ByteData data, boolean shouldAddToHistory) {
+        if (data.getLength() > Config.packageMaxLength) {
+            Logger.getLogger("Server").log(Level.WARNING, "Package too large! It will not be broadcast.");
             return;
         }
-        if(shouldAddToHistory){
+        if (shouldAddToHistory) {
             addRecord(data);
         }
         Iterator<SelectionKey> iterator = selectionKeyList.iterator();
@@ -438,7 +442,7 @@ public class ServerNetworkHandler implements Runnable {
                 send(selectionKey, data);
             } catch (IOException e) {
                 iterator.remove();
-            } catch (PackageTooLargeException e){
+            } catch (PackageTooLargeException e) {
                 //This should have been checked before.
                 throw new RuntimeException(e);
             }
@@ -447,25 +451,27 @@ public class ServerNetworkHandler implements Runnable {
 
     /**
      * Reply a version check pack to the client.
+     *
      * @param selectionKey SelectionKey for the client.
-     * @param replyPack CheckVersionPack to reply.
+     * @param replyPack    CheckVersionPack to reply.
      * @throws IOException If the package cannot be sent.
      */
-    private void doVersionCheck(SelectionKey selectionKey,DataPack replyPack) throws IOException {
-        try{
-            send(selectionKey,replyPack);
-        }catch (PackageTooLargeException e){
+    private void doVersionCheck(SelectionKey selectionKey, DataPack replyPack) throws IOException {
+        try {
+            send(selectionKey, replyPack);
+        } catch (PackageTooLargeException e) {
             throw new RuntimeException(e);
         }
     }
 
     private void onVersionChecked(SelectionKey selectionKey) throws IOException {
-        try{
+        Attachment attachment = (Attachment) selectionKey.attachment();
+        try {
             sendHistory(selectionKey);
-            send(selectionKey,new SetRoomNamePack());
-            //todo: tell the client uid, update name when NameUpdatePack received
-            send(selectionKey,new BroadcastUserListPack(server.getUserManager().getUserList()));
-        }catch (PackageTooLargeException e){
+            send(selectionKey, new SetRoomNamePack());
+            send(selectionKey, new SetUidPack(attachment.user));
+            send(selectionKey, new BroadcastUserListPack(server.getUserManager().getUserList()));
+        } catch (PackageTooLargeException e) {
             throw new RuntimeException(e);
         }
     }

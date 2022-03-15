@@ -7,17 +7,22 @@ import im.protocol.data_pack.DataPackType;
 
 import java.util.UUID;
 
-public class SetUserNamePack extends DataPack {
+/**
+ * Client -> Server
+ * <p>
+ * Change user name.
+ */
+public class SetUsernamePack extends DataPack {
     private UUID uid;
     private String userName;
 
-    public SetUserNamePack(String userName){
+    public SetUsernamePack(String userName){
         super(DataPackType.SetUserName);
         this.uid = new UUID(0,0);
         this.userName = userName;
     }
 
-    public SetUserNamePack(ByteData data) throws InvalidPackageException {
+    public SetUsernamePack(ByteData data) throws InvalidPackageException {
         super(DataPackType.SetUserName);
         this.decode(data);
     }

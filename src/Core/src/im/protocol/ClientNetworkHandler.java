@@ -3,7 +3,11 @@ package im.protocol;
 import im.Client;
 import im.config.Config;
 import im.protocol.data.ByteArrayInfo;
-import im.protocol.data_pack.*;
+import im.protocol.data.ByteData;
+import im.protocol.data.InvalidPackageException;
+import im.protocol.data.PackageTooLargeException;
+import im.protocol.data_pack.DataPack;
+import im.protocol.data_pack.DataPackType;
 import im.protocol.data_pack.chat.ChatImagePack;
 import im.protocol.data_pack.chat.FileUploadedPack;
 import im.protocol.data_pack.chat.TextPack;
@@ -11,14 +15,10 @@ import im.protocol.data_pack.file_transfer.*;
 import im.protocol.data_pack.system.CheckVersionPack;
 import im.protocol.data_pack.system.CheckVersionPackV1;
 import im.protocol.data_pack.system.PingPack;
-import im.protocol.data_pack.user_list.SetRoomNamePack;
-import im.protocol.data_pack.user_list.BroadcastUserListPack;
+import im.protocol.data_pack.user_list.*;
 import im.protocol.fileTransfer.ClientFileReceiveTask;
 import im.protocol.fileTransfer.ClientFileSendTask;
 import im.protocol.fileTransfer.NoSuchTaskIdException;
-import im.protocol.data.InvalidPackageException;
-import im.protocol.data.ByteData;
-import im.protocol.data.PackageTooLargeException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,7 +29,6 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ClientNetworkHandler implements Runnable {
     private final Client client;
@@ -231,14 +230,34 @@ public class ClientNetworkHandler implements Runnable {
                 );
                 break;
             }
-            case BroadcastUserList: {
-                BroadcastUserListPack userListPack = new BroadcastUserListPack(data);
-                this.client.getUserManager().updateFromUserList(userListPack.getUserList());
+            case SetUid:{
+                SetUidPack pack = new SetUidPack(data);
+                client.getUserManager().getCurrentUser().setUid(pack.getUid());
                 break;
             }
             case SetRoomName:{
-                SetRoomNamePack setRoomNamePack = new SetRoomNamePack(data);
-                this.client.getRoomFrame().onRoomNameUpdate(setRoomNamePack.getRoomName());
+                SetRoomNamePack pack = new SetRoomNamePack(data);
+                this.client.getRoomFrame().onRoomNameUpdate(pack.getRoomName());
+                break;
+            }
+            case BroadcastUserList: {
+                BroadcastUserListPack pack = new BroadcastUserListPack(data);
+                this.client.getUserManager().updateFromUserList(pack.getUserList());
+                break;
+            }
+            case BroadcastUserJoin:{
+                BroadcastUserJoinPack pack = new BroadcastUserJoinPack(data);
+                this.client.getUserManager().joinUser(pack.getUser());
+                break;
+            }
+            case BroadcastUserLeft:{
+                BroadcastUserLeftPack pack = new BroadcastUserLeftPack(data);
+                this.client.getUserManager().removeUser(pack.getUid());
+                break;
+            }
+            case BroadcastUserNameChanged:{
+                BroadcastUsernameChangedPack pack = new BroadcastUsernameChangedPack(data);
+                this.client.getUserManager().changeUsername(pack.getUid(),pack.getName());
                 break;
             }
             case FileUploadRequest: {
@@ -260,7 +279,7 @@ public class ClientNetworkHandler implements Runnable {
                             reason = "Cannot create file on disk.";
                         }
                     }catch (NoSuchTaskIdException e){
-                        Logger.getLogger("IMCore").log(
+                        client.getLogger().log(
                                 Level.WARNING,
                                 String.format("Client received a FileUploadRequest for {receiverTaskId=%s}, but it is not found in client.", pack.getReceiverTaskId())
                         );
@@ -285,7 +304,7 @@ public class ClientNetworkHandler implements Runnable {
                     ClientFileSendTask task = client.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
                     task.onReceiveUploadReply(pack);
                 }catch (NoSuchTaskIdException e){
-                    Logger.getLogger("IMCore").log(
+                    client.getLogger().log(
                             Level.WARNING,
                             String.format("Client received a FileUploadReplyPack for {senderTaskId=%s}, but it is not found on client.", pack.getSenderTaskId())
                     );
@@ -298,7 +317,7 @@ public class ClientNetworkHandler implements Runnable {
                     ClientFileReceiveTask task = client.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                     task.end();
                 }catch (NoSuchTaskIdException e){
-                    Logger.getLogger("IMCore").log(
+                    client.getLogger().log(
                             Level.WARNING,
                             String.format("Client received a FileUploadFinish for {receiverTaskId=%s}, but it is not found in client.", pack.getReceiverTaskId())
                     );
@@ -320,7 +339,7 @@ public class ClientNetworkHandler implements Runnable {
                         task.onEndFailed(pack.getReason());
                     }
                 }catch (NoSuchTaskIdException e){
-                    Logger.getLogger("IMCore").log(
+                    client.getLogger().log(
                             Level.WARNING,
                             String.format("Client received a FileUploadResult for {senderTaskId=%s}, but it is not found in client.", pack.getSenderTaskId())
                     );
@@ -338,7 +357,7 @@ public class ClientNetworkHandler implements Runnable {
                         this.client.showInfo(String.format("Download failed: %s", pack.getReason()));
                     }
                 }catch (NoSuchTaskIdException e){
-                    Logger.getLogger("IMCore").log(
+                    client.getLogger().log(
                             Level.WARNING,
                             String.format("Client received a FileDownloadReplyPack for {receiverTaskId=%s}, but it is not found in client.", pack.getReceiverTaskId())
                     );
@@ -355,7 +374,7 @@ public class ClientNetworkHandler implements Runnable {
                         task.end();
                     }
                 }catch (NoSuchTaskIdException e){
-                    Logger.getLogger("IMCore").log(
+                    client.getLogger().log(
                             Level.WARNING,
                             String.format("Client received a FileContent for {receiverTaskId=%s}, but it is not found in client.", pack.getReceiverTaskId())
                     );
@@ -363,7 +382,10 @@ public class ClientNetworkHandler implements Runnable {
                 break;
             }
             default: {
-                Logger.getGlobal().log(Level.WARNING, "Client was unable to handle package type: " + type);
+                client.getLogger().log(
+                        Level.WARNING,
+                        "Client was unable to handle package type: " + type
+                );
                 throw new InvalidPackageException();
             }
         }

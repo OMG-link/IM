@@ -136,9 +136,9 @@ public class Config {
         return username;
     }
 
-    public static void setUsername(String username) throws ConfigSetFailedException {
+    public static void setUsername(String username) throws InvalidUserNameException {
         if(username.length()>Config.nickMaxLength){
-            throw new ConfigSetFailedException(String.format("Your name should be no longer than %d characters.",Config.nickMaxLength));
+            throw new InvalidUserNameException();
         }
         Config.username = username;
     }

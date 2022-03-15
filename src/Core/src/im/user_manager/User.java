@@ -6,11 +6,15 @@ import im.protocol.data.InvalidPackageException;
 import java.util.UUID;
 
 public class User {
-    private String name;
-    private UUID uid;
+    protected String name;
+    protected UUID uid;
+    private UserManager userManager = null;
 
-    public User(UUID uid){
-        this("anonymous",uid);
+    /**
+     * Constructor for CurrentUser.
+     */
+    protected User(String name){
+        this(name,new UUID(0,0));
     }
 
     public User(String name,UUID uid){
@@ -29,10 +33,17 @@ public class User {
 
     public void setName(String name) {
         this.name = name;
+        if(userManager!=null){
+            userManager.onUsernameChanged(this);
+        }
     }
 
     public UUID getUid() {
         return uid;
+    }
+
+    public void setUserManager(UserManager userManager) {
+        this.userManager = userManager;
     }
 
     public ByteData encodeToBytes(){

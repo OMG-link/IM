@@ -11,6 +11,7 @@ public class Attachment {
     public final ByteData receiveBuffer;
     public boolean isVersionChecked = false;
     public boolean allowCommunication = false;
+    public boolean isUsernameSet = false;
 
     public User user;
 

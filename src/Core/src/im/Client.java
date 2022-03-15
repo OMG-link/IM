@@ -9,7 +9,7 @@ import im.protocol.data_pack.chat.TextPack;
 import im.protocol.data_pack.file_transfer.DownloadRequestPack;
 import im.protocol.data_pack.file_transfer.FileTransferType;
 import im.protocol.data_pack.system.CheckVersionPack;
-import im.protocol.data_pack.user_list.SetUserNamePack;
+import im.protocol.data_pack.user_list.SetUsernamePack;
 import im.protocol.fileTransfer.*;
 import im.file_manager.ClientFileManager;
 import im.protocol.ClientNetworkHandler;
@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Client{
+    private final Logger logger = Logger.getLogger("IMClient");
     private final ClientFactoryManager factoryManager = new ClientFactoryManager();
     private final ClientUserManager userManager = new ClientUserManager(this);
     private ClientFileManager fileManager;
@@ -90,7 +91,7 @@ public class Client{
             roomFrame.onConnectionBuilt();
             //Update name
             try{
-                getNetworkHandler().send(new SetUserNamePack(Config.getUsername()));
+                getNetworkHandler().send(new SetUsernamePack(Config.getUsername()));
             }catch (PackageTooLargeException e){
                 throw new RuntimeException(e);
             }
@@ -103,7 +104,7 @@ public class Client{
         //config
         try{
             Config.setUrl(url);
-            Config.setUsername(username);
+            getUserManager().getCurrentUser().setNameByInput(username);
             Config.saveToFile();
         }catch (ConfigSetFailedException e){
             this.showInfo(e.getMessage());
@@ -202,6 +203,10 @@ public class Client{
     }
 
     //getter and setter
+
+    public Logger getLogger(){
+        return logger;
+    }
 
     public ClientUserManager getUserManager() {
         return userManager;
