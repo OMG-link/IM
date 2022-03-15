@@ -1,5 +1,6 @@
 package PCGUI;
 
+import im.config.InvalidUserNameException;
 import im.gui.IConnectFrame;
 import im.Client;
 import im.config.Config;
@@ -12,7 +13,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
 public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback {
-    private final Client handler;
+    private final Client client;
 
     private final GridBagLayout gridBagLayout = new GridBagLayout();
     private final GridBagConstraints gridBagConstraints = new GridBagConstraints();
@@ -21,8 +22,8 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
     private JCheckBox runServerCheckBox;
     private JButton submitButton;
 
-    public ConnectFrame(Client handler){
-        this.handler = handler;
+    public ConnectFrame(Client client){
+        this.client = client;
 
         this.setTitle("Set Server");
         this.setLocationRelativeTo(null);
@@ -47,12 +48,16 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
     }
 
     public void onInputFinish(){
-        if(this.handler.setConfigAndStart(
-                this.urlInputArea.getText(),
-                this.nameInputArea.getText(),
-                this.runServerCheckBox.isSelected())
-        ){
-            this.dispose();
+        try{
+            if(this.client.setConfigAndStart(
+                    this.urlInputArea.getText(),
+                    this.nameInputArea.getText(),
+                    this.runServerCheckBox.isSelected())
+            ){
+                this.dispose();
+            }
+        }catch (InvalidUserNameException e){
+            client.showInfo("Your name should be no more than 20 characters.");
         }
     }
 

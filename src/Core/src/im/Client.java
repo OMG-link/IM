@@ -2,6 +2,7 @@ package im;
 
 import im.config.Config;
 import im.config.ConfigSetFailedException;
+import im.config.InvalidUserNameException;
 import im.factory_manager.ClientFactoryManager;
 import im.file_manager.ClientFileManager;
 import im.gui.*;
@@ -93,12 +94,14 @@ public class Client{
         }
     }
 
-    public boolean setConfigAndStart(String url,String username,boolean shouldRunLocalServer){
+    public boolean setConfigAndStart(String url,String username,boolean shouldRunLocalServer) throws InvalidUserNameException {
         //config
         try{
             Config.setUrl(url);
             getUserManager().getCurrentUser().setNameByInput(username);
             Config.saveToFile();
+        }catch (InvalidUserNameException e){
+            throw e;
         }catch (ConfigSetFailedException e){
             this.showInfo(e.getMessage());
             return false;
