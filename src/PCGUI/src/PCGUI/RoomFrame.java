@@ -171,17 +171,22 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
         updateUserList();
     }
 
+    @Override
+    public void showSystemMessage(String message) {
+        showTextMessage("System",System.currentTimeMillis(),message);
+    }
+
     private void clearMessageArea() {
         this.messageArea.clearMessageArea();
     }
 
     @Override
-    public void onMessageReceive(String sender, long stamp, String text) {
+    public void showTextMessage(String sender, long stamp, String text) {
         this.messageArea.add(new TextPanel(stamp, sender, text));
     }
 
     @Override
-    public IDownloadCallback onChatImageReceive(String sender, long stamp, UUID serverFileId) {
+    public IDownloadCallback showChatImageMessage(String sender, long stamp, UUID serverFileId) {
         var panel = new ChatImagePanel(client, sender, stamp, serverFileId);
         this.messageArea.add(panel);
         return panel.getDownloadCallback();
@@ -195,7 +200,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     }
 
     @Override
-    public void onFileUploadedReceive(String sender, long stamp, UUID uuid, String fileName, long fileSize) {
+    public void showFileUploadedMessage(String sender, long stamp, UUID uuid, String fileName, long fileSize) {
         this.messageArea.add(new FilePanel(client, sender, stamp, uuid, fileName, fileSize));
     }
 
@@ -209,13 +214,13 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     @Override
     public void onUserJoined(User user) {
         updateUserList();
-        onMessageReceive("System",System.currentTimeMillis(),String.format("%s joined the chatroom",user.getName()));
+        showSystemMessage(String.format("%s joined the chatroom",user.getName()));
     }
 
     @Override
     public void onUserLeft(User user) {
         updateUserList();
-        onMessageReceive("System",System.currentTimeMillis(),String.format("%s left the chatroom",user.getName()));
+        showSystemMessage(String.format("%s left the chatroom",user.getName()));
     }
 
     @Override

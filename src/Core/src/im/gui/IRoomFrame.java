@@ -15,8 +15,11 @@ public interface IRoomFrame {
      */
     void onConnectionBuilt();
 
-    void onMessageReceive(String sender,long stamp,String text);
+    void showSystemMessage(String message);
+    void showTextMessage(String sender, long stamp, String text);
+    void showFileUploadedMessage(String sender, long stamp, UUID uuid, String fileName, long fileSize);
 
+    //This function is not written in the traditional way, but I don't want to fix it now.
     /**
      * Called when chat image pack was received.
      * This function should create a chat image panel, and return the callback function which is called when image is downloaded.
@@ -25,9 +28,8 @@ public interface IRoomFrame {
      * @param serverFileId The id of image in the server.
      * @return Return the callback function which is called when image is downloaded.
      */
-    IDownloadCallback onChatImageReceive(String sender, long stamp, UUID serverFileId);
+    IDownloadCallback showChatImageMessage(String sender, long stamp, UUID serverFileId);
 
-    void onFileUploadedReceive(String sender, long stamp, UUID uuid, String fileName, long fileSize);
     void onRoomNameUpdate(String roomName);
     IFileTransferringPanel addFileTransferringPanel(IStringGetter fileNameGetter,long fileSize);
 

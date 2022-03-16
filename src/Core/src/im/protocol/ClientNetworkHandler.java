@@ -112,9 +112,7 @@ public class ClientNetworkHandler implements Runnable {
             if (this.isInterrupted()) return;
             //Otherwise, try auto reconnect.
             if (this.client.getRoomFrame() != null) {
-                this.client.getRoomFrame().onMessageReceive(
-                        "System",
-                        System.currentTimeMillis(),
+                this.client.getRoomFrame().showSystemMessage(
                         "Disconnected from the server, trying to reconnect."
                 );
             }
@@ -227,7 +225,7 @@ public class ClientNetworkHandler implements Runnable {
             }
             case Text: {
                 TextPack pack = new TextPack(data);
-                this.client.getRoomFrame().onMessageReceive(
+                this.client.getRoomFrame().showTextMessage(
                         pack.getSender(),
                         pack.getStamp(),
                         pack.getText()
@@ -236,13 +234,13 @@ public class ClientNetworkHandler implements Runnable {
             }
             case ChatImage: {
                 ChatImagePack pack = new ChatImagePack(data);
-                var callback = client.getRoomFrame().onChatImageReceive(pack.getSender(), pack.getStamp(), pack.getServerImageId());
+                var callback = client.getRoomFrame().showChatImageMessage(pack.getSender(), pack.getStamp(), pack.getServerImageId());
                 client.downloadFile(pack.getServerImageId().toString(), pack.getServerImageId(), FileTransferType.ChatImage, null, callback);
                 break;
             }
             case FileUploaded: {
                 FileUploadedPack pack = new FileUploadedPack(data);
-                this.client.getRoomFrame().onFileUploadedReceive(
+                this.client.getRoomFrame().showFileUploadedMessage(
                         pack.getSender(),
                         pack.getStamp(),
                         pack.getFileId(),
