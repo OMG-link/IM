@@ -171,8 +171,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
         updateUserList();
     }
 
-    @Override
-    public void clearMessageArea() {
+    private void clearMessageArea() {
         this.messageArea.clearMessageArea();
     }
 

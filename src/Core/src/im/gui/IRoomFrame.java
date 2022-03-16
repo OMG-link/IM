@@ -15,8 +15,6 @@ public interface IRoomFrame {
      */
     void onConnectionBuilt();
 
-    void clearMessageArea();
-
     void onMessageReceive(String sender,long stamp,String text);
 
     /**
