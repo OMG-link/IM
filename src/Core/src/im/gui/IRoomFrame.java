@@ -14,6 +14,7 @@ public interface IRoomFrame {
      * This function should allow user to type texts and so on.
      */
     void onConnectionBuilt();
+    void onConnectionBroke();
 
     void showSystemMessage(String message);
     void showTextMessage(String sender, long stamp, String text);

@@ -82,10 +82,16 @@ public class ClientNetworkHandler implements Runnable {
 
     public void close() {
         interrupted = true;
+        //Notice the roomFrame
+        if (this.client.getRoomFrame() != null) {
+            this.client.getRoomFrame().onConnectionBroke();
+        }
+        //Cancel pingTimer
+        if(pingTimer!=null){
+            pingTimer.cancel();
+        }
+        //Close socket
         try {
-            if(pingTimer!=null){
-                pingTimer.cancel();
-            }
             this.socket.close();
         } catch (IOException e) {
             //do nothing
@@ -110,12 +116,6 @@ public class ClientNetworkHandler implements Runnable {
         } catch (IOException e) {
             //If IOException is caused by interrupt, just return.
             if (this.isInterrupted()) return;
-            //Otherwise, try auto reconnect.
-            if (this.client.getRoomFrame() != null) {
-                this.client.getRoomFrame().showSystemMessage(
-                        "Disconnected from the server, trying to reconnect."
-                );
-            }
             this.close();
             client.runNetworkHandler();
         } catch (InvalidPackageException e) {

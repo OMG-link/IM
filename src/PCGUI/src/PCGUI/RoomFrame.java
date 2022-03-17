@@ -172,6 +172,19 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     }
 
     @Override
+    public void onConnectionBroke() {
+        //Disable Buttons
+        inputArea.setEnabled(false);
+        for(Component component: buttonPanel.getComponents()){
+            if(component instanceof JButton){
+                component.setEnabled(false);
+            }
+        }
+        //Show error
+        showSystemMessage("Disconnected from the server. (Trying to reconnect if possible.)");
+    }
+
+    @Override
     public void showSystemMessage(String message) {
         showTextMessage("System",System.currentTimeMillis(),message);
     }
