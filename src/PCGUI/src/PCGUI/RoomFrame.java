@@ -157,6 +157,12 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     }
 
     @Override
+    public void exitRoom(String reason) {
+        JOptionPane.showMessageDialog(null,reason,"Exiting room",JOptionPane.ERROR_MESSAGE);
+        System.exit(0);
+    }
+
+    @Override
     public void onConnectionBuilt() {
         //Clear message area
         clearMessageArea();

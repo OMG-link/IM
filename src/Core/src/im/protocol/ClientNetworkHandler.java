@@ -55,6 +55,14 @@ public class ClientNetworkHandler implements Runnable {
         this.close();
     }
 
+    private void exit(String reason){
+        if(client.getRoomFrame()!=null){
+            client.getRoomFrame().exitRoom(reason);
+        }else{
+            System.exit(0);
+        }
+    }
+
     public ClientNetworkHandler(Client client, String url, int port) {
         this.client = client;
         this.url = url;
@@ -71,12 +79,10 @@ public class ClientNetworkHandler implements Runnable {
             thread.start();
 
         } catch (UnknownHostException e) {
-            this.client.showInfo("Unknown host!");
-            System.exit(0);
+            this.exit("Unknown host!");
         } catch (Exception e) {
-            this.client.showInfo(e.toString());
             e.printStackTrace();
-            System.exit(0);
+            this.exit(e.toString());
         }
     }
 
@@ -120,13 +126,12 @@ public class ClientNetworkHandler implements Runnable {
             client.runNetworkHandler();
         } catch (InvalidPackageException e) {
             e.printStackTrace();
-            this.client.showInfo("Client received an invalid package. Connection has been closed.");
             this.close();
-            System.exit(0);
+            this.exit("Client received an invalid package. Connection has been closed.");
         } catch (Exception e) {
             this.client.showException(e);
             this.close();
-            System.exit(0);
+            this.exit(e.toString());
         }
     }
 

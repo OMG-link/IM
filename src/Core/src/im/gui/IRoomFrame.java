@@ -9,6 +9,8 @@ import java.util.UUID;
 
 public interface IRoomFrame {
 
+    void exitRoom(String reason);
+
     /**
      * Called when connection to the server has been built.
      * This function should allow user to type texts and so on.
