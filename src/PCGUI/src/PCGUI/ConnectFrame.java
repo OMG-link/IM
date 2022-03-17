@@ -19,6 +19,7 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
     private final GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
     private JTextArea urlInputArea,nameInputArea;
+    private JPasswordField tokenInputArea;
     private JCheckBox runServerCheckBox;
     private JButton submitButton;
 
@@ -38,6 +39,8 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
         this.makeUrlInputArea();
         this.makeDesc(0,1,"Your name: ");
         this.makeNameInputArea();
+        this.makeDesc(0,2,"Room password:");
+        this.makeTokenInputArea();
         this.makeRunServerCheckBox();
         this.makeSubmitButton();
 
@@ -52,6 +55,7 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
             if(this.client.setConfigAndStart(
                     this.urlInputArea.getText(),
                     this.nameInputArea.getText(),
+                    String.valueOf(this.tokenInputArea.getPassword()),
                     this.runServerCheckBox.isSelected())
             ){
                 this.dispose();
@@ -84,20 +88,22 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
             }
         };
 
-        this.urlInputArea.setText(Config.getUrl());
-        this.urlInputArea.setBackground(Color.LIGHT_GRAY);
-        this.urlInputArea.setFont(Config.getPreferredFont());
-        this.urlInputArea.requestFocus();
-        this.urlInputArea.setCaretPosition(this.urlInputArea.getText().length());
+        final var component = this.urlInputArea;
+
+        component.setText(Config.getUrl());
+        component.setBackground(Color.LIGHT_GRAY);
+        component.setFont(Config.getPreferredFont());
+        component.requestFocus();
+        component.setCaretPosition(component.getText().length());
 
         this.gridBagConstraints.anchor = GridBagConstraints.CENTER;
         this.gridBagConstraints.gridx = 1;
         this.gridBagConstraints.gridy = 0;
         this.gridBagConstraints.gridwidth = 2;
         this.gridBagConstraints.gridheight = 1;
-        this.gridBagLayout.setConstraints(this.urlInputArea,this.gridBagConstraints);
+        this.gridBagLayout.setConstraints(component,this.gridBagConstraints);
 
-        this.add(this.urlInputArea);
+        this.add(component);
 
     }
 
@@ -110,19 +116,51 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
             }
         };
 
-        this.nameInputArea.setText(Config.getUsername());
-        this.nameInputArea.setBackground(Color.LIGHT_GRAY);
-        this.nameInputArea.setFont(Config.getPreferredFont());
-        this.nameInputArea.setCaretPosition(this.nameInputArea.getText().length());
+        final var component = this.nameInputArea;
+
+        component.setText(Config.getUsername());
+        component.setBackground(Color.LIGHT_GRAY);
+        component.setFont(Config.getPreferredFont());
+        component.setCaretPosition(component.getText().length());
 
         this.gridBagConstraints.anchor = GridBagConstraints.CENTER;
         this.gridBagConstraints.gridx = 1;
         this.gridBagConstraints.gridy = 1;
         this.gridBagConstraints.gridwidth = 2;
         this.gridBagConstraints.gridheight = 1;
-        this.gridBagLayout.setConstraints(this.nameInputArea,this.gridBagConstraints);
+        this.gridBagLayout.setConstraints(component,this.gridBagConstraints);
 
-        this.add(this.nameInputArea);
+        this.add(component);
+
+    }
+
+    private void makeTokenInputArea(){
+        this.tokenInputArea = new JPasswordField(30){
+            @Override
+            protected void processKeyEvent(KeyEvent e){
+                if(e.getKeyCode()==KeyEvent.VK_ENTER) return;
+                super.processKeyEvent(e);
+            }
+        };
+
+        final var component = this.tokenInputArea;
+
+        System.out.println(Config.getToken());
+        component.setToolTipText("Password for the server.");
+        component.setEchoChar('*');
+        component.setText(Config.getToken());
+        component.setBackground(Color.LIGHT_GRAY);
+        component.setFont(Config.getPreferredFont());
+        component.setCaretPosition(component.getText().length());
+
+        this.gridBagConstraints.anchor = GridBagConstraints.CENTER;
+        this.gridBagConstraints.gridx = 1;
+        this.gridBagConstraints.gridy = 2;
+        this.gridBagConstraints.gridwidth = 2;
+        this.gridBagConstraints.gridheight = 1;
+        this.gridBagLayout.setConstraints(component,this.gridBagConstraints);
+
+        this.add(component);
 
     }
 
@@ -132,7 +170,7 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
 
         this.gridBagConstraints.anchor = GridBagConstraints.WEST;
         this.gridBagConstraints.gridx = 0;
-        this.gridBagConstraints.gridy = 2;
+        this.gridBagConstraints.gridy = 3;
         this.gridBagConstraints.gridwidth = 3;
         this.gridBagConstraints.gridheight = 1;
         this.gridBagLayout.setConstraints(this.runServerCheckBox,this.gridBagConstraints);
@@ -147,7 +185,7 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
 
         this.gridBagConstraints.anchor = GridBagConstraints.CENTER;
         this.gridBagConstraints.gridx = 0;
-        this.gridBagConstraints.gridy = 3;
+        this.gridBagConstraints.gridy = 4;
         this.gridBagConstraints.gridwidth = 3;
         this.gridBagConstraints.gridheight = 1;
         this.gridBagLayout.setConstraints(this.submitButton,this.gridBagConstraints);

@@ -9,7 +9,7 @@ public enum DataPackType {
     //Chat
     Text, ChatImage, FileUploaded,
     //User list
-    ClientInfo, SetUid, SetRoomName,
+    ConnectRequest, ConnectResult, SetRoomName,
     BroadcastUserList, BroadcastUserJoin, BroadcastUserLeft, BroadcastUserNameChanged,
     //File transfer
     FileUploadRequest, FileUploadReply, FileUploadFinish, FileUploadResult, FileDownloadRequest, FileDownloadReply, FileContent;

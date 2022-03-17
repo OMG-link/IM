@@ -12,10 +12,7 @@ import im.protocol.data_pack.chat.ChatImagePack;
 import im.protocol.data_pack.chat.FileUploadedPack;
 import im.protocol.data_pack.chat.TextPack;
 import im.protocol.data_pack.file_transfer.*;
-import im.protocol.data_pack.system.CheckVersionPack;
-import im.protocol.data_pack.system.CheckVersionPackV1;
-import im.protocol.data_pack.system.ClientInfoPack;
-import im.protocol.data_pack.system.PingPack;
+import im.protocol.data_pack.system.*;
 import im.protocol.data_pack.user_list.*;
 import im.protocol.fileTransfer.ClientFileReceiveTask;
 import im.protocol.fileTransfer.ClientFileSendTask;
@@ -153,9 +150,9 @@ public class ClientNetworkHandler implements Runnable {
                         expectedReceiveType = DataPackType.CheckVersion;
                         break;
                     }
-                    case ClientInfo:{
+                    case ConnectRequest:{
                         expectedSendType = DataPackType.Undefined;
-                        expectedReceiveType = DataPackType.SetUid;
+                        expectedReceiveType = DataPackType.ConnectResult;
                         break;
                     }
                 }
@@ -207,10 +204,13 @@ public class ClientNetworkHandler implements Runnable {
                         if (!Objects.equals(pack.getVersion(), Config.version)) {
                             this.client.getGUI().alertVersionMismatch(pack.getVersion(), Config.version);
                         }
-                        expectedSendType = DataPackType.ClientInfo;
+                        expectedSendType = DataPackType.ConnectRequest;
                         expectedReceiveType = DataPackType.Undefined;
 
-                        send(new ClientInfoPack(client.getUserManager().getCurrentUser().getName()));
+                        send(new ConnectRequestPack(
+                                client.getUserManager().getCurrentUser().getName(),
+                                Config.getToken()
+                        ));
                     }
                     break;
                 }catch (InvalidPackageException ignored){
@@ -255,10 +255,25 @@ public class ClientNetworkHandler implements Runnable {
                 );
                 break;
             }
-            case SetUid:{
-                SetUidPack pack = new SetUidPack(data);
-                client.getUserManager().getCurrentUser().setUid(pack.getUid());
-                onConnectionBuilt();
+            case ConnectResult:{
+                ConnectResultPack pack = new ConnectResultPack(data);
+                if(pack.isTokenAccepted()){
+                    client.getUserManager().getCurrentUser().setUid(pack.getUid());
+                    onConnectionBuilt();
+                }else{
+                    this.close();
+                    String rejectReason;
+                    switch (pack.getRejectReason()){
+                        case InvalidToken:{
+                            rejectReason = "Invalid token.";
+                            break;
+                        }
+                        default:{
+                            rejectReason = "Unknown reason.";
+                        }
+                    }
+                    exit("Connection refused: "+rejectReason);
+                }
                 break;
             }
             case SetRoomName:{

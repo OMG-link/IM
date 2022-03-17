@@ -10,6 +10,7 @@ public class Attachment {
     private final Server server;
 
     public final ByteData receiveBuffer;
+    public boolean isVersionChecked = false;
     public DataPackType expectedSendType = DataPackType.Undefined;
     public DataPackType expectedReceiveType = DataPackType.CheckVersion;
 

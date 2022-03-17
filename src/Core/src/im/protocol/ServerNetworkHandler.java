@@ -13,11 +13,11 @@ import im.protocol.data_pack.chat.ChatImagePack;
 import im.protocol.data_pack.chat.TextPack;
 import im.protocol.data_pack.file_transfer.*;
 import im.protocol.data_pack.system.CheckVersionPack;
+import im.protocol.data_pack.system.ConnectRequestPack;
+import im.protocol.data_pack.system.ConnectResultPack;
 import im.protocol.data_pack.system.PingPack;
 import im.protocol.data_pack.user_list.BroadcastUserListPack;
 import im.protocol.data_pack.user_list.SetRoomNamePack;
-import im.protocol.data_pack.user_list.SetUidPack;
-import im.protocol.data_pack.system.ClientInfoPack;
 import im.protocol.fileTransfer.NoSuchTaskIdException;
 import im.protocol.fileTransfer.ServerFileReceiveTask;
 import im.protocol.fileTransfer.ServerFileSendTask;
@@ -33,7 +33,6 @@ import java.nio.channels.SocketChannel;
 import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ServerNetworkHandler implements Runnable {
     private final Server server;
@@ -181,10 +180,12 @@ public class ServerNetworkHandler implements Runnable {
         }
 
         if(attachment.expectedReceiveType!=null){
-            if(type!=attachment.expectedReceiveType){ //兼容低版本
-                attachment.expectedSendType = DataPackType.CheckVersion;
-                attachment.expectedReceiveType = DataPackType.Undefined;
-                send(selectionKey, new CheckVersionPack());
+            if(type!=attachment.expectedReceiveType){
+                if(!attachment.isVersionChecked){ //兼容低版本
+                    attachment.expectedSendType = DataPackType.CheckVersion;
+                    attachment.expectedReceiveType = DataPackType.Undefined;
+                    send(selectionKey, new CheckVersionPack());
+                }
                 return;
             }
         }
@@ -211,16 +212,23 @@ public class ServerNetworkHandler implements Runnable {
                 broadcast(pack, true);
                 break;
             }
-            case ClientInfo: {
-                ClientInfoPack pack = new ClientInfoPack(data);
+            case ConnectRequest: {
+                ConnectRequestPack pack = new ConnectRequestPack(data);
                 if (pack.getUserName().length() > Config.nickMaxLength) return;
                 if (attachment.isUserCreated()) return;
 
-                attachment.expectedSendType = DataPackType.SetUid;
+                attachment.expectedSendType = DataPackType.ConnectResult;
                 attachment.expectedReceiveType = DataPackType.Undefined;
 
-                attachment.user = server.getUserManager().createUser(pack.getUserName());
-                send(selectionKey,new SetUidPack(attachment.user));
+                ConnectResultPack connectResultPack;
+                if(!Objects.equals(pack.getToken(), Config.getToken())){
+                    connectResultPack = new ConnectResultPack(ConnectResultPack.RejectReason.InvalidToken);
+                }else{
+                    attachment.user = server.getUserManager().createUser(pack.getUserName());
+                    connectResultPack = new ConnectResultPack(attachment.user);
+                }
+
+                send(selectionKey,connectResultPack);
                 break;
             }
             case FileUploadRequest: {
@@ -273,7 +281,7 @@ public class ServerNetworkHandler implements Runnable {
                     ServerFileReceiveTask task = server.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                     task.end();
                 } catch (NoSuchTaskIdException e) {
-                    Logger.getLogger("Server").log(Level.INFO, String.format("There is no ServerFileReceiveTask with UUID %s.", pack.getReceiverTaskId()));
+                    server.getLogger().log(Level.INFO, String.format("There is no ServerFileReceiveTask with UUID %s.", pack.getReceiverTaskId()));
                     try {
                         send(selectionKey, new UploadResultPack(pack.getSenderTaskId()));
                     } catch (PackageTooLargeException e2) {
@@ -292,7 +300,7 @@ public class ServerNetworkHandler implements Runnable {
                         task.onEndFailed(e.toString());
                     }
                 } catch (NoSuchTaskIdException e) {
-                    Logger.getLogger("Server").log(Level.INFO, String.format("There is no ServerFileReceiveTask with UUID %s.", pack.getReceiverTaskId()));
+                    server.getLogger().log(Level.INFO, String.format("There is no ServerFileReceiveTask with UUID %s.", pack.getReceiverTaskId()));
                 }
                 break;
             }
@@ -331,7 +339,7 @@ public class ServerNetworkHandler implements Runnable {
                     ServerFileSendTask task = server.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
                     task.onReceiveUploadReply(pack);
                 } catch (NoSuchTaskIdException e) {
-                    Logger.getLogger("Server").log(Level.INFO, String.format("There is no ServerFileSendTask with UUID %s.", pack.getSenderTaskId()));
+                    server.getLogger().log(Level.INFO, String.format("There is no ServerFileSendTask with UUID %s.", pack.getSenderTaskId()));
                 }
                 break;
             }
@@ -345,7 +353,7 @@ public class ServerNetworkHandler implements Runnable {
                         task.onEndFailed(pack.getReason());
                     }
                 } catch (NoSuchTaskIdException e) {
-                    Logger.getLogger("Server").log(Level.INFO, String.format("There is no ServerFileSendTask with UUID %s.", pack.getSenderTaskId()));
+                    server.getLogger().log(Level.INFO, String.format("There is no ServerFileSendTask with UUID %s.", pack.getSenderTaskId()));
                 }
                 break;
             }
@@ -359,7 +367,7 @@ public class ServerNetworkHandler implements Runnable {
                 break;
             }
             default: {
-                Logger.getGlobal().log(Level.WARNING, "Server was unable to decode package type: " + type);
+                server.getLogger().log(Level.WARNING, "Server was unable to decode package type: " + type);
                 throw new InvalidPackageException();
             }
         }
@@ -381,12 +389,20 @@ public class ServerNetworkHandler implements Runnable {
             }else{
                 switch (dataPack.getType()){
                     case CheckVersion:{
+                        attachment.isVersionChecked = true;
                         attachment.expectedSendType = DataPackType.Undefined;
-                        attachment.expectedReceiveType = DataPackType.ClientInfo;
+                        attachment.expectedReceiveType = DataPackType.ConnectRequest;
                         break;
                     }
-                    case SetUid:{
-                        isConnectionJustBuilt = true;
+                    case ConnectResult:{
+                        if(((ConnectResultPack)dataPack).isTokenAccepted()){
+                            attachment.expectedSendType = null;
+                            attachment.expectedReceiveType = null;
+                            isConnectionJustBuilt = true;
+                        }else{
+                            attachment.expectedSendType = DataPackType.Undefined;
+                            attachment.expectedReceiveType = DataPackType.Undefined;
+                        }
                         break;
                     }
                 }
@@ -408,7 +424,7 @@ public class ServerNetworkHandler implements Runnable {
         try {
             socketChannel = (SocketChannel) selectionKey.channel();
         } catch (ClassCastException e) {
-            Logger.getLogger("IMServer").log(Level.WARNING, "Cannot cast selectionKey.channel() to SocketChannel.");
+            server.getLogger().log(Level.WARNING, "Cannot cast selectionKey.channel() to SocketChannel.");
             return;
         }
 

@@ -94,11 +94,12 @@ public class Client{
         }
     }
 
-    public boolean setConfigAndStart(String url,String username,boolean shouldRunLocalServer) throws InvalidUserNameException {
+    public boolean setConfigAndStart(String url,String username,String token,boolean shouldRunLocalServer) throws InvalidUserNameException {
         //config
         try{
             Config.setUrl(url);
             getUserManager().getCurrentUser().setNameByInput(username);
+            Config.setToken(token);
             Config.saveToFile();
         }catch (InvalidUserNameException e){
             throw e;
