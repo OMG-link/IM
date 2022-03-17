@@ -1,43 +1,32 @@
-package im.protocol.data_pack.user_list;
+package im.protocol.data_pack.system;
 
 import im.protocol.data.ByteData;
 import im.protocol.data.InvalidPackageException;
 import im.protocol.data_pack.DataPack;
 import im.protocol.data_pack.DataPackType;
 
-import java.util.UUID;
-
-/**
- * Client -> Server
- * <p>
- * Change user name.
- */
-public class SetUsernamePack extends DataPack {
-    private UUID uid;
+public class ClientInfoPack extends DataPack {
     private String userName;
 
-    public SetUsernamePack(String userName){
-        super(DataPackType.SetUserName);
-        this.uid = new UUID(0,0);
+    public ClientInfoPack(String userName){
+        super(DataPackType.ClientInfo);
         this.userName = userName;
     }
 
-    public SetUsernamePack(ByteData data) throws InvalidPackageException {
-        super(DataPackType.SetUserName);
+    public ClientInfoPack(ByteData data) throws InvalidPackageException {
+        super(DataPackType.ClientInfo);
         this.decode(data);
     }
 
     @Override
     public ByteData encode(){
         return super.encode()
-                .append(ByteData.encode(uid))
                 .append(ByteData.encode(userName));
     }
 
     @Override
     public void decode(ByteData data) throws InvalidPackageException {
         super.decode(data);
-        uid = data.decodeUuid();
         userName = data.decodeString();
     }
 

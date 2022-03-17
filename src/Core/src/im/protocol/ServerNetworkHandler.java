@@ -17,7 +17,7 @@ import im.protocol.data_pack.system.PingPack;
 import im.protocol.data_pack.user_list.BroadcastUserListPack;
 import im.protocol.data_pack.user_list.SetRoomNamePack;
 import im.protocol.data_pack.user_list.SetUidPack;
-import im.protocol.data_pack.user_list.SetUsernamePack;
+import im.protocol.data_pack.system.ClientInfoPack;
 import im.protocol.fileTransfer.NoSuchTaskIdException;
 import im.protocol.fileTransfer.ServerFileReceiveTask;
 import im.protocol.fileTransfer.ServerFileSendTask;
@@ -211,8 +211,8 @@ public class ServerNetworkHandler implements Runnable {
                 broadcast(pack, true);
                 break;
             }
-            case SetUserName: {
-                SetUsernamePack pack = new SetUsernamePack(data);
+            case ClientInfo: {
+                ClientInfoPack pack = new ClientInfoPack(data);
                 if (pack.getUserName().length() > Config.nickMaxLength) return;
                 if (attachment.isUserCreated()) return;
 
@@ -382,7 +382,7 @@ public class ServerNetworkHandler implements Runnable {
                 switch (dataPack.getType()){
                     case CheckVersion:{
                         attachment.expectedSendType = DataPackType.Undefined;
-                        attachment.expectedReceiveType = DataPackType.SetUserName;
+                        attachment.expectedReceiveType = DataPackType.ClientInfo;
                         break;
                     }
                     case SetUid:{

@@ -14,6 +14,7 @@ import im.protocol.data_pack.chat.TextPack;
 import im.protocol.data_pack.file_transfer.*;
 import im.protocol.data_pack.system.CheckVersionPack;
 import im.protocol.data_pack.system.CheckVersionPackV1;
+import im.protocol.data_pack.system.ClientInfoPack;
 import im.protocol.data_pack.system.PingPack;
 import im.protocol.data_pack.user_list.*;
 import im.protocol.fileTransfer.ClientFileReceiveTask;
@@ -152,7 +153,7 @@ public class ClientNetworkHandler implements Runnable {
                         expectedReceiveType = DataPackType.CheckVersion;
                         break;
                     }
-                    case SetUserName:{
+                    case ClientInfo:{
                         expectedSendType = DataPackType.Undefined;
                         expectedReceiveType = DataPackType.SetUid;
                         break;
@@ -206,10 +207,10 @@ public class ClientNetworkHandler implements Runnable {
                         if (!Objects.equals(pack.getVersion(), Config.version)) {
                             this.client.getGUI().alertVersionMismatch(pack.getVersion(), Config.version);
                         }
-                        expectedSendType = DataPackType.SetUserName;
+                        expectedSendType = DataPackType.ClientInfo;
                         expectedReceiveType = DataPackType.Undefined;
 
-                        send(new SetUsernamePack(client.getUserManager().getCurrentUser().getName()));
+                        send(new ClientInfoPack(client.getUserManager().getCurrentUser().getName()));
                     }
                     break;
                 }catch (InvalidPackageException ignored){
