@@ -94,8 +94,22 @@ public abstract class FileManager {
         if(uuidToFileObjectMap.containsKey(fileId)){
             return uuidToFileObjectMap.get(fileId);
         }else{
-            throw new NoSuchFileIdException(String.format("No file with UUID=%s",fileId));
+            throw new NoSuchFileIdException(fileId);
         }
+    }
+
+    public void deleteFile(UUID fileId) throws NoSuchFileIdException,FileOccupiedException {
+        if(uuidToFileObjectMap.containsKey(fileId)){
+            deleteFile(uuidToFileObjectMap.get(fileId));
+        }else{
+            throw new NoSuchFileIdException(fileId);
+        }
+    }
+
+    public void deleteFile(FileObject fileObject) throws FileOccupiedException {
+        fileObject.delete();
+        filePathToUuidMap.remove(fileObject.getFile().getAbsolutePath());
+        uuidToFileObjectMap.remove(fileObject.getFileId());
     }
 
     private UUID getNewFileId() {

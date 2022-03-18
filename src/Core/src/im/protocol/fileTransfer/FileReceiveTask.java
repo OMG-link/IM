@@ -1,5 +1,6 @@
 package im.protocol.fileTransfer;
 
+import im.file_manager.NoSuchFileIdException;
 import im.protocol.data_pack.DataPack;
 import mutils.FileUtils;
 import im.file_manager.FileManager;
@@ -102,14 +103,14 @@ public abstract class FileReceiveTask {
         if (fileWriter != null) {
             try {
                 getFileWriter().close();
-                getFileWriter().getFileObject().delete();
+                getFileManager().deleteFile(receiverFileId);
             } catch (FileOccupiedException e) {
                 Logger.getLogger("IMCore").log(
                         Level.WARNING,
                         String.format("File %s is occupied and cannot be deleted.", getFileWriter().getFileObject().getFile().getAbsoluteFile()),
                         e
                 );
-            }
+            } catch (NoSuchFileIdException ignored){}
             getFileWriter().close();
         }
         //reply to sender
