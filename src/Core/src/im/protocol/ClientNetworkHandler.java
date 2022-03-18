@@ -96,7 +96,9 @@ public class ClientNetworkHandler implements Runnable {
         }
         //Close socket
         try {
-            this.socket.close();
+            if(this.socket!=null){
+                this.socket.close();
+            }
         } catch (IOException e) {
             //do nothing
         } finally {
