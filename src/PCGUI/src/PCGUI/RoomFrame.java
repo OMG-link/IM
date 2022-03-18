@@ -5,6 +5,7 @@ import im.Client;
 import im.config.Config;
 import im.gui.IFileTransferringPanel;
 import im.gui.IRoomFrame;
+import im.protocol.data_pack.system.ConnectResultPack;
 import im.protocol.fileTransfer.IDownloadCallback;
 import im.user_manager.User;
 import mutils.IStringGetter;
@@ -188,6 +189,21 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
         }
         //Show error
         showSystemMessage("Disconnected from the server. (Trying to reconnect if possible.)");
+    }
+
+    @Override
+    public void onConnectionRefused(ConnectResultPack.RejectReason reason) {
+        String rejectReason;
+        switch (reason){
+            case InvalidToken:{
+                rejectReason = "Invalid token.";
+                break;
+            }
+            default:{
+                rejectReason = "Unknown reason.";
+            }
+        }
+        exitRoom("Connection refused: "+rejectReason);
     }
 
     @Override

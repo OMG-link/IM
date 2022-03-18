@@ -1,5 +1,6 @@
 package im.gui;
 
+import im.protocol.data_pack.system.ConnectResultPack;
 import im.protocol.fileTransfer.IDownloadCallback;
 import im.user_manager.User;
 import mutils.IStringGetter;
@@ -17,6 +18,7 @@ public interface IRoomFrame {
      */
     void onConnectionBuilt();
     void onConnectionBroke();
+    void onConnectionRefused(ConnectResultPack.RejectReason reason);
 
     void showSystemMessage(String message);
     void showTextMessage(String sender, long stamp, String text);

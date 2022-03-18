@@ -262,17 +262,7 @@ public class ClientNetworkHandler implements Runnable {
                     onConnectionBuilt();
                 }else{
                     this.close();
-                    String rejectReason;
-                    switch (pack.getRejectReason()){
-                        case InvalidToken:{
-                            rejectReason = "Invalid token.";
-                            break;
-                        }
-                        default:{
-                            rejectReason = "Unknown reason.";
-                        }
-                    }
-                    exit("Connection refused: "+rejectReason);
+                    client.getRoomFrame().onConnectionRefused(pack.getRejectReason());
                 }
                 break;
             }
