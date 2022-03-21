@@ -121,7 +121,6 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
         component.setText(Config.getUsername());
         component.setBackground(Color.LIGHT_GRAY);
         component.setFont(Config.getPreferredFont());
-        component.setCaretPosition(component.getText().length());
 
         this.gridBagConstraints.anchor = GridBagConstraints.CENTER;
         this.gridBagConstraints.gridx = 1;
@@ -145,13 +144,11 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
 
         final var component = this.tokenInputArea;
 
-        System.out.println(Config.getToken());
         component.setToolTipText("Password for the server.");
         component.setEchoChar('*');
         component.setText(Config.getToken());
         component.setBackground(Color.LIGHT_GRAY);
         component.setFont(Config.getPreferredFont());
-        component.setCaretPosition(component.getText().length());
 
         this.gridBagConstraints.anchor = GridBagConstraints.CENTER;
         this.gridBagConstraints.gridx = 1;

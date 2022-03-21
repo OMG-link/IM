@@ -1,5 +1,7 @@
 package im.file_manager;
 
+import im.config.Config;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -12,6 +14,9 @@ public abstract class FileManager {
     private final Map<String, UUID> filePathToUuidMap = new HashMap<>();
     private final Map<UUID, FileObject> uuidToFileObjectMap = new HashMap<>();
 
+    /**
+     * @throws IOException When the target operation cannot be performed.
+     */
     protected static void makeFolder(File folder,boolean shouldClearFolder) throws IOException {
         if(!folder.exists()){
             makeFolder(folder.getParentFile(),false);
@@ -20,7 +25,7 @@ public abstract class FileManager {
             }
         }else{
             if(!folder.isDirectory()){
-                throw new IOException("Unable to create folder.");
+                throw new IOException("Target folder is a file.");
             }
             if(shouldClearFolder){
                 File[] files = folder.listFiles();
@@ -96,6 +101,29 @@ public abstract class FileManager {
         }else{
             throw new NoSuchFileIdException(fileId);
         }
+    }
+
+    /**
+     * <p>
+     *     Open a folder.
+     * </p>
+     * <p>
+     *     If the folder does not exist, it will automatically try to create one.
+     * </p>
+     * @param relativeFolderPath The path relative to the program root.
+     * @return The File of the folder.
+     * @throws IOException When the target folder cannot be created or the folder is a file.
+     */
+    public File openFolder(String relativeFolderPath) throws IOException {
+        String path = Config.getRuntimeDir()+relativeFolderPath;
+        File file = new File(path);
+        if(!file.exists()){
+            makeFolder(file.getAbsoluteFile(),false);
+        }
+        if(!file.isDirectory()){
+            throw new IOException("Target folder is a file.");
+        }
+        return file;
     }
 
     public void deleteFile(UUID fileId) throws NoSuchFileIdException,FileOccupiedException {

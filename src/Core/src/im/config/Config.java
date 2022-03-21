@@ -24,7 +24,7 @@ public class Config {
     public static final int recordsMaxLength = 100; //100 messages
     public static final int nickMaxLength = 20;
 
-    private static String runtimeDir = "";
+    private static String runtimeDir = toDirName(".");
     private static String cacheDir = toDirName("IMCache");
 
     private static String getConfigFileName(){

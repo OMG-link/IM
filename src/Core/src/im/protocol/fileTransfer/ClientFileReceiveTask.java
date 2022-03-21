@@ -38,7 +38,7 @@ public class ClientFileReceiveTask extends FileReceiveTask {
 
         FileObject fileObject;
         if(fileTransferType==FileTransferType.ChatFile){
-            fileObject = getFileManager().createFileRenameable(fileName);
+            fileObject = getFileManager().createFileRenameable(ClientFileManager.downloadFolder,fileName);
         }else{
             fileObject = getFileManager().createCacheFileRenameable(fileName);
         }

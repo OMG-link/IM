@@ -8,24 +8,24 @@ import java.nio.file.FileAlreadyExistsException;
 import java.util.UUID;
 
 public class ClientFileManager extends FileManager{
-
-    private static final String folderName = "Download";
+    public static final String downloadFolder = "Download";
 
     public ClientFileManager() throws IOException {
-        makeDownloadFolder();
+        clearCacheFolder();
     }
 
-    private void makeDownloadFolder() throws IOException {
-        makeFolder(new File(getFolderName()).getAbsoluteFile(),false);
+    private void clearCacheFolder() throws IOException {
         makeFolder(new File(getCacheFolderName()).getAbsoluteFile(),true);
     }
 
-    public String getFolderName(){
-        return Config.getRuntimeDir()+folderName;
+    private void makeFolder(String folderName) throws IOException {
+        File folder = new File(folderName);
+        if(folder.exists()) return;
+        makeFolder(folder.getAbsoluteFile(),false);
     }
 
     public String getCacheFolderName(){
-        return Config.getCacheDir()+folderName;
+        return Config.getCacheDir()+downloadFolder;
     }
 
     private FileObject createFile(String folder,String fileName) throws IOException {
@@ -33,7 +33,8 @@ public class ClientFileManager extends FileManager{
         return super.createFile(file);
     }
 
-    private FileObject createFileRenameable(String folder,String fileName) throws IOException {
+    public FileObject createFileRenameable(String folder,String fileName) throws IOException {
+        makeFolder(folder);
         try{
             return createFile(folder,fileName);
         }catch (FileAlreadyExistsException e){
@@ -41,17 +42,12 @@ public class ClientFileManager extends FileManager{
                 String replacedFileName = String.format("%d-%s",i,fileName);
                 try{
                     return createFile(folder,replacedFileName);
-                }catch (FileAlreadyExistsException ignored){
-                }
+                }catch (FileAlreadyExistsException ignored){}
                 if(i>10000){
                     throw new IOException("Cannot create target file.(Cannot find a proper name)");
                 }
             }
         }
-    }
-
-    public FileObject createFileRenameable(String fileName) throws IOException {
-        return createFileRenameable(getFolderName(),fileName);
     }
 
     public FileObject createCacheFileRenameable(String fileName) throws IOException {
