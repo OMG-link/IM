@@ -34,6 +34,7 @@ public class ClientFileManager extends FileManager{
     }
 
     public FileObject createFileRenameable(String folder,String fileName) throws IOException {
+        folder = Config.getRuntimeDir()+folder;
         makeFolder(folder);
         try{
             return createFile(folder,fileName);
