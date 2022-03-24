@@ -40,7 +40,7 @@ public class ClientFileReceiveTask extends FileReceiveTask {
         if(fileTransferType==FileTransferType.ChatFile){
             fileObject = getFileManager().createFileRenameable(ClientFileManager.downloadFolder,fileName);
         }else{
-            fileObject = getFileManager().createCacheFileRenameable(fileName);
+            fileObject = getFileManager().createCacheFile();
         }
         super.setReceiverFileId(fileObject.getFileId());
         super.setFileWriter(fileObject.getWriteOnlyInstance());

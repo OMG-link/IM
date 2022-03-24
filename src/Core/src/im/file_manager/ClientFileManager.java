@@ -51,8 +51,13 @@ public class ClientFileManager extends FileManager{
         }
     }
 
-    public FileObject createCacheFileRenameable(String fileName) throws IOException {
-        return createFileRenameable(getCacheFolderName(),fileName);
+    public FileObject createCacheFile() throws IOException {
+        while(true){
+            UUID uuid = UUID.randomUUID();
+            try{
+                return createFile(getCacheFolderName(),uuid.toString());
+            }catch (FileAlreadyExistsException ignored){}
+        }
     }
 
     public String getFileName(UUID fileId) throws NoSuchFileIdException {
