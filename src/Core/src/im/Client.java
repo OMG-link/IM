@@ -165,19 +165,22 @@ public class Client{
     }
 
     public void downloadFile(String fileName, UUID fileId, FileTransferType fileTransferType, IFileTransferringPanel panel, IDownloadCallback callback){
+        FileReceiveTask task;
         try{
-            FileReceiveTask task = getFactoryManager().getFileReceiveTaskFactory().create(this, fileName, fileId, fileTransferType, panel, callback);
+            task = getFactoryManager().getFileReceiveTaskFactory().create(this, fileName, fileId, fileTransferType, panel, callback);
+        }catch (IOException e){
+            panel.onTransferFailed("Cannot create file on disk.");
+            return;
+        }
+        try{
             getNetworkHandler().send(new DownloadRequestPack(
                     task.getReceiverTaskId(),
                     task.getSenderFileId(),
                     task.getReceiverFileId(),
                     fileTransferType
             ));
-        }catch (IOException e){
-            showInfo("Cannot create file on disk.");
-        }catch (PackageTooLargeException e){
-            //This should never happen!
-            showInfo("Unable to send download request.");
+        }catch (PackageTooLargeException e){ //This should never happen!
+            task.onEndFailed("Unable to send download request.");
         }
     }
 
