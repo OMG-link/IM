@@ -8,7 +8,7 @@ import java.security.InvalidParameterException;
 import java.util.Scanner;
 
 public class Config {
-    public static final String version = "1.4.0 rc3";
+    public static final String version = "1.4.0 rc4";
     public static final String compatibleVersion = "1.4.0";
 
     private static String url = "www.omg-link.com:8814";
