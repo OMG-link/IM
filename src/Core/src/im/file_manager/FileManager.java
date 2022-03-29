@@ -62,7 +62,7 @@ public abstract class FileManager {
     public FileObject createUnnamedFileInFolder(String folderName) throws IOException {
         File file;
         do{
-            file = new File(folderName+'/'+UUID.randomUUID());
+            file = new File(Config.getRuntimeDir()+folderName+'/'+UUID.randomUUID());
         }while(!file.createNewFile());
         return openFile(file);
     }
