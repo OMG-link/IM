@@ -7,7 +7,7 @@ import im.file_manager.FileOccupiedException;
 import im.file_manager.NoSuchFileIdException;
 import im.file_manager.ServerFileManager;
 import im.protocol.data_pack.file_transfer.FileTransferType;
-import im.protocol.data_pack.chat.FileUploadedPack;
+import im.protocol.data_pack.chat.ChatFilePack;
 import im.protocol.data_pack.file_transfer.UploadRequestPack;
 import im.protocol.data.PackageTooLargeException;
 
@@ -79,7 +79,7 @@ public class ServerFileReceiveTask extends FileReceiveTask {
         super.onEndSucceed();
         if (getFileTransferType() == FileTransferType.ChatFile) {
             try{
-                FileUploadedPack pack = new FileUploadedPack(sender, super.getReceiverFileId(), getFileManager().getFileName(getReceiverFileId()), super.getFileSize());
+                ChatFilePack pack = new ChatFilePack(sender, super.getReceiverFileId(), getFileManager().getFileName(getReceiverFileId()), super.getFileSize());
                 server.getNetworkHandler().broadcast(pack, true);
             }catch (NoSuchFileIdException e){
                 throw new RuntimeException(e); //This never happens.

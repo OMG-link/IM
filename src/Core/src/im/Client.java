@@ -9,7 +9,7 @@ import im.gui.*;
 import im.protocol.ClientNetworkHandler;
 import im.protocol.data.PackageTooLargeException;
 import im.protocol.data_pack.chat.ChatImagePack;
-import im.protocol.data_pack.chat.TextPack;
+import im.protocol.data_pack.chat.ChatTextPack;
 import im.protocol.data_pack.file_transfer.DownloadRequestPack;
 import im.protocol.data_pack.file_transfer.FileTransferType;
 import im.protocol.data_pack.system.CheckVersionPack;
@@ -123,10 +123,10 @@ public class Client{
 
     public boolean sendChat(String message){
         if(message.length()==0) return false;
-        TextPack textPack = new TextPack(message);
+        ChatTextPack chatTextPack = new ChatTextPack(message);
 
         try{
-            getNetworkHandler().send(textPack);
+            getNetworkHandler().send(chatTextPack);
         }catch (PackageTooLargeException e){
             showInfo("Your message is too long!");
             return false;

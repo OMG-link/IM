@@ -10,7 +10,7 @@ import im.protocol.data.PackageTooLargeException;
 import im.protocol.data_pack.DataPack;
 import im.protocol.data_pack.DataPackType;
 import im.protocol.data_pack.chat.ChatImagePack;
-import im.protocol.data_pack.chat.TextPack;
+import im.protocol.data_pack.chat.ChatTextPack;
 import im.protocol.data_pack.file_transfer.*;
 import im.protocol.data_pack.system.CheckVersionPack;
 import im.protocol.data_pack.system.ConnectRequestPack;
@@ -206,7 +206,7 @@ public class ServerNetworkHandler implements Runnable {
                 break;
             }
             case Text: {
-                TextPack pack = new TextPack(data);
+                ChatTextPack pack = new ChatTextPack(data);
                 pack.setStamp();
 
                 broadcast(pack, true);

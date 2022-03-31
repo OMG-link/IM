@@ -6,19 +6,19 @@ import im.protocol.data.InvalidPackageException;
 import im.protocol.data_pack.DataPack;
 import im.protocol.data_pack.DataPackType;
 
-public class TextPack extends DataPack {
+public class ChatTextPack extends DataPack {
     private String sender;
     private long stamp;
     private String text;
 
-    public TextPack(String text){
+    public ChatTextPack(String text){
         super(DataPackType.Text);
         this.sender = Config.getUsername();
         this.stamp = System.currentTimeMillis();
         this.text = text;
     }
 
-    public TextPack(ByteData data) throws InvalidPackageException {
+    public ChatTextPack(ByteData data) throws InvalidPackageException {
         super(DataPackType.Text);
         this.decode(data);
     }

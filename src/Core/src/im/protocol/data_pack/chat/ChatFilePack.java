@@ -7,14 +7,14 @@ import im.protocol.data_pack.DataPackType;
 
 import java.util.UUID;
 
-public class FileUploadedPack extends DataPack {
+public class ChatFilePack extends DataPack {
     private String sender;
     private long stamp;
     private UUID fileId;
     private String fileName;
     private long fileSize;
 
-    public FileUploadedPack(String sender, UUID fileId, String fileName, long fileSize){
+    public ChatFilePack(String sender, UUID fileId, String fileName, long fileSize){
         super(DataPackType.FileUploaded);
         this.sender = sender;
         this.stamp = System.currentTimeMillis();
@@ -23,7 +23,7 @@ public class FileUploadedPack extends DataPack {
         this.fileSize = fileSize;
     }
 
-    public FileUploadedPack(ByteData data) throws InvalidPackageException {
+    public ChatFilePack(ByteData data) throws InvalidPackageException {
         super(DataPackType.FileUploaded);
         this.decode(data);
     }

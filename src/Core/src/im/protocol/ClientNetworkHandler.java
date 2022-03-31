@@ -9,8 +9,8 @@ import im.protocol.data.PackageTooLargeException;
 import im.protocol.data_pack.DataPack;
 import im.protocol.data_pack.DataPackType;
 import im.protocol.data_pack.chat.ChatImagePack;
-import im.protocol.data_pack.chat.FileUploadedPack;
-import im.protocol.data_pack.chat.TextPack;
+import im.protocol.data_pack.chat.ChatFilePack;
+import im.protocol.data_pack.chat.ChatTextPack;
 import im.protocol.data_pack.file_transfer.*;
 import im.protocol.data_pack.system.*;
 import im.protocol.data_pack.user_list.*;
@@ -232,7 +232,7 @@ public class ClientNetworkHandler implements Runnable {
                 break;
             }
             case Text: {
-                TextPack pack = new TextPack(data);
+                ChatTextPack pack = new ChatTextPack(data);
                 this.client.getRoomFrame().showTextMessage(
                         pack.getSender(),
                         pack.getStamp(),
@@ -247,7 +247,7 @@ public class ClientNetworkHandler implements Runnable {
                 break;
             }
             case FileUploaded: {
-                FileUploadedPack pack = new FileUploadedPack(data);
+                ChatFilePack pack = new ChatFilePack(data);
                 this.client.getRoomFrame().showFileUploadedMessage(
                         pack.getSender(),
                         pack.getStamp(),
