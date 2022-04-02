@@ -57,7 +57,11 @@ public class ServerMessageManager {
     }
 
     public UUID getDialogId() {
-        return sqlManager.getTableUuid();
+        if(sqlManager==null){
+            return UUID.randomUUID();
+        }else{
+            return sqlManager.getTableUuid();
+        }
     }
 
     private void addDataToHistory(long serialId, ByteData data) {
