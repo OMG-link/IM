@@ -3,7 +3,7 @@
     <output-path>$PROJECT_DIR$/out/artifacts/Core</output-path>
     <root id="archive" name="IM.Core.jar">
       <element id="module-output" name="Core" />
-      <element id="library" level="project" name="xerial.sqlite.jdbc" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/sqlite-jdbc-3.36.0.3.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
