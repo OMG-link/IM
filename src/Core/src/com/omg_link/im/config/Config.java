@@ -11,19 +11,21 @@ public class Config {
     public static final String version = "1.5.0 beta";
     public static final String compatibleVersion = "1.5.0";
 
-    private static String url = "www.omg-link.com:8814";
-    private static String serverIP = "127.0.0.1";
-    private static int serverPort = 8814;
-    private static String username = String.format("User %d", Random.randomInt(1000,9999));
-    private static String token = "official";
-
-    private static String roomName = "";
-
     public static final int packageMaxLength = 10*1024*1024; //10MB
     public static final int chatTextMaxLength = 10*1024; //10KB
     public static final int nickMaxLength = 20;
     public static final int bufferedRecordNum = 100;
     public static final long fileMaxSize = 1024*1024*1024; //1GB
+
+    private static int serverPort = 8814;
+
+    private static String url = "www.omg-link.com:8814";
+    private static String serverIP = "127.0.0.1";
+    private static String username = String.format("User %d", Random.randomInt(1000,9999));
+
+    private static String token = "official";
+    private static String roomName = "";
+    private static String serverDatabasePath = "server.db";
 
     private static String runtimeDir = toDirName(".");
     private static String cacheDir = toDirName("IMCache");
@@ -45,13 +47,12 @@ public class Config {
                 String value = s.substring(pos+1);
                 try{
                     switch (name){
-                        //client
-                        case "username":{
-                            setUsername(value);
-                            break;
-                        }
                         case "url":{
                             setUrl(value);
+                            break;
+                        }
+                        case "username":{
+                            setUsername(value);
                             break;
                         }
                         case "serverIp":{
@@ -62,13 +63,16 @@ public class Config {
                             setUrl(serverIP+":"+value);
                             break;
                         }
-                        //server
                         case "token":{
                             setToken(value);
                             break;
                         }
                         case "roomName":{
                             setRoomName(value);
+                            break;
+                        }
+                        case "serverDatabasePath":{
+                            setServerDatabasePath(value);
                             break;
                         }
                     }
@@ -93,6 +97,8 @@ public class Config {
             printWriter.printf("serverIp=%s\n", getServerIP());
             printWriter.printf("port=%s\n", getServerPort());
             printWriter.printf("token=%s\n",getToken());
+            printWriter.printf("roomName=%s\n",getRoomName());
+            printWriter.printf("serverDatabasePath=%s\n",getServerDatabasePath());
             printWriter.close();
             outputStream.close();
         }catch (IOException ignored){}
@@ -200,6 +206,14 @@ public class Config {
 
     public static void setToken(String token) {
         Config.token = token;
+    }
+
+    public static void setServerDatabasePath(String serverDatabasePath) {
+        Config.serverDatabasePath = serverDatabasePath;
+    }
+
+    public static String getServerDatabasePath() {
+        return serverDatabasePath;
     }
 
 }

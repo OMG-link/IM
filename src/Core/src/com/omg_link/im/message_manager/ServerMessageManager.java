@@ -41,7 +41,7 @@ public class ServerMessageManager {
     public ServerMessageManager(Server server) {
         this.server = server;
         try {
-            sqlManager = new ServerSqlManager("test.db");
+            sqlManager = new ServerSqlManager(Config.getServerDatabasePath());
         } catch (SQLException e) {
             e.printStackTrace();
             server.getLogger().log(
