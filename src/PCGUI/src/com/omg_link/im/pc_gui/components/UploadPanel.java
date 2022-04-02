@@ -1,6 +1,6 @@
-package PCGUI.components;
+package com.omg_link.im.pc_gui.components;
 
-import PCGUI.helper.PanelUtil;
+import com.omg_link.im.pc_gui.helper.PanelUtil;
 import com.omg_link.im.file_manager.FileObject;
 import com.omg_link.im.gui.IFileTransferringPanel;
 import com.omg_link.mutils.FileUtils;

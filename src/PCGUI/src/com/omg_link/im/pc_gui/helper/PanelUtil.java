@@ -1,6 +1,6 @@
-package PCGUI.helper;
+package com.omg_link.im.pc_gui.helper;
 
-import PCGUI.components.TextArea;
+import com.omg_link.im.pc_gui.components.TextArea;
 
 import javax.swing.*;
 import java.awt.*;

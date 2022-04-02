@@ -1,4 +1,4 @@
-package PCGUI.components;
+package com.omg_link.im.pc_gui.components;
 
 import com.omg_link.im.config.Config;
 

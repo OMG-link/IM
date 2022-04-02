@@ -1,6 +1,6 @@
-package PCGUI.components;
+package com.omg_link.im.pc_gui.components;
 
-import PCGUI.RoomFrame;
+import com.omg_link.im.pc_gui.RoomFrame;
 import com.omg_link.im.Client;
 import com.omg_link.im.gui.IConfirmDialogCallback;
 import com.omg_link.im.gui.IFileTransferringPanel;

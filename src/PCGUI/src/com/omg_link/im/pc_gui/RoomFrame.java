@@ -1,10 +1,10 @@
-package PCGUI;
+package com.omg_link.im.pc_gui;
 
-import PCGUI.components.*;
 import com.omg_link.im.Client;
 import com.omg_link.im.config.Config;
 import com.omg_link.im.gui.IFileTransferringPanel;
 import com.omg_link.im.gui.IRoomFrame;
+import com.omg_link.im.pc_gui.components.*;
 import com.omg_link.im.protocol.data_pack.system.ConnectResultPack;
 import com.omg_link.im.user_manager.User;
 import com.omg_link.mutils.IStringGetter;

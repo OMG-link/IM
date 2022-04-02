@@ -1,10 +1,10 @@
-package PCGUI;
+package com.omg_link.im.pc_gui;
 
 import com.omg_link.im.config.InvalidUserNameException;
 import com.omg_link.im.gui.IConnectFrame;
 import com.omg_link.im.Client;
 import com.omg_link.im.config.Config;
-import PCGUI.components.IInputCallback;
+import com.omg_link.im.pc_gui.components.IInputCallback;
 
 import javax.swing.*;
 import java.awt.*;

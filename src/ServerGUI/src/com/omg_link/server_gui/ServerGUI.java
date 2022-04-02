@@ -1,8 +1,8 @@
-package serverGUI;
+package com.omg_link.server_gui;
 
+import com.omg_link.im.Server;
 import com.omg_link.im.gui.IServerGUI;
 import com.omg_link.im.config.Config;
-import com.omg_link.im.Server;
 
 public class ServerGUI implements IServerGUI {
 
