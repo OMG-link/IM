@@ -1,4 +1,4 @@
-package com.omg_link.server_gui;
+package com.omg_link.im.server_gui;
 
 import com.omg_link.im.Server;
 
