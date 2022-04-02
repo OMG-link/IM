@@ -1,13 +1,13 @@
 package PCGUI.components;
 
-import im.gui.IFileTransferringPanel;
 import PCGUI.helper.PanelUtil;
-import mutils.FileUtils;
-import mutils.IStringGetter;
+import com.omg_link.im.file_manager.FileObject;
+import com.omg_link.im.gui.IFileTransferringPanel;
+import com.omg_link.mutils.FileUtils;
+import com.omg_link.mutils.IStringGetter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 
 public class UploadPanel extends JPanel implements IFileTransferringPanel {
     private final JTextArea infoArea;
@@ -39,7 +39,7 @@ public class UploadPanel extends JPanel implements IFileTransferringPanel {
     }
 
     @Override
-    public void onTransferSucceed(File file) {
+    public void onTransferSucceed(FileObject fileObject) {
         this.setVisible(false);
     }
 

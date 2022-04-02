@@ -1,14 +1,13 @@
 package PCGUI;
 
 import PCGUI.components.*;
-import im.Client;
-import im.config.Config;
-import im.gui.IFileTransferringPanel;
-import im.gui.IRoomFrame;
-import im.protocol.data_pack.system.ConnectResultPack;
-import im.protocol.fileTransfer.IDownloadCallback;
-import im.user_manager.User;
-import mutils.IStringGetter;
+import com.omg_link.im.Client;
+import com.omg_link.im.config.Config;
+import com.omg_link.im.gui.IFileTransferringPanel;
+import com.omg_link.im.gui.IRoomFrame;
+import com.omg_link.im.protocol.data_pack.system.ConnectResultPack;
+import com.omg_link.im.user_manager.User;
+import com.omg_link.mutils.IStringGetter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -175,6 +174,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
             }
         }
         //Fetch data from user list
+        client.getNetworkHandler().getMessageManager().getHistory();
         updateUserList();
     }
 
@@ -208,7 +208,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
 
     @Override
     public void showSystemMessage(String message) {
-        showTextMessage("System",System.currentTimeMillis(),message);
+        showTextMessage(0,"System",System.currentTimeMillis(),message);
     }
 
     private void clearMessageArea() {
@@ -216,15 +216,20 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     }
 
     @Override
-    public void showTextMessage(String sender, long stamp, String text) {
+    public void showTextMessage(long serialId, String sender, long stamp, String text) {
         this.messageArea.add(new TextPanel(stamp, sender, text));
     }
 
     @Override
-    public IDownloadCallback showChatImageMessage(String sender, long stamp, UUID serverFileId) {
+    public IFileTransferringPanel showChatImageMessage(long serialId, String sender, long stamp, UUID serverFileId) {
         var panel = new ChatImagePanel(client, sender, stamp, serverFileId);
         this.messageArea.add(panel);
-        return panel.getDownloadCallback();
+        return panel;
+    }
+
+    @Override
+    public void showFileUploadedMessage(long serialId, String sender, long stamp, UUID uuid, String fileName, long fileSize) {
+        this.messageArea.add(new FilePanel(client, sender, stamp, uuid, fileName, fileSize));
     }
 
     @Override
@@ -232,11 +237,6 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
         if(roomName.length()>0){
             setTitle(String.format("%s | IM - Made by OMG_link",roomName));
         }
-    }
-
-    @Override
-    public void showFileUploadedMessage(String sender, long stamp, UUID uuid, String fileName, long fileSize) {
-        this.messageArea.add(new FilePanel(client, sender, stamp, uuid, fileName, fileSize));
     }
 
     @Override

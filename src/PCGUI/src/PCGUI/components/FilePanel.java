@@ -1,9 +1,10 @@
 package PCGUI.components;
 
-import im.gui.IFileTransferringPanel;
-import im.Client;
 import PCGUI.helper.PanelUtil;
-import mutils.FileUtils;
+import com.omg_link.im.Client;
+import com.omg_link.im.file_manager.FileObject;
+import com.omg_link.im.gui.IFileTransferringPanel;
+import com.omg_link.mutils.FileUtils;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -11,7 +12,6 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
-import java.io.File;
 import java.util.UUID;
 
 public class FilePanel extends JPanel implements IFileTransferringPanel {
@@ -77,7 +77,7 @@ public class FilePanel extends JPanel implements IFileTransferringPanel {
     }
 
     @Override
-    public void onTransferSucceed(File file) {
+    public void onTransferSucceed(FileObject file) {
         downloadPanel.setAfterDownload(file);
     }
 

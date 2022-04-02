@@ -1,12 +1,10 @@
 package PCGUI.components;
 
-import im.gui.IConfirmDialogCallback;
-import im.gui.IFileTransferringPanel;
-import im.Client;
 import PCGUI.RoomFrame;
-import mutils.ImageUtils;
-import im.protocol.data_pack.file_transfer.FileTransferType;
-import mutils.ImageType;
+import com.omg_link.im.Client;
+import com.omg_link.im.gui.IConfirmDialogCallback;
+import com.omg_link.im.gui.IFileTransferringPanel;
+import com.omg_link.mutils.ImageUtils;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -37,7 +35,7 @@ public class ChatInputArea extends InputArea implements DropTargetListener {
                 file.length()
         );
         try{
-            handler.uploadFile(file, FileTransferType.ChatFile,panel);
+            handler.uploadFile(file, panel);
         }catch (FileNotFoundException e){
             handler.showInfo(String.format("File %s not found.",file.getAbsolutePath()));
         }
@@ -57,7 +55,7 @@ public class ChatInputArea extends InputArea implements DropTargetListener {
                                     @Override
                                     public void onPositiveInput() {
                                         try {
-                                            handler.sendChatImage(file, ImageType.PNG);
+                                            handler.sendChatImage(file);
                                         } catch (FileNotFoundException e) {
                                             handler.showInfo("File not found.");
                                         }

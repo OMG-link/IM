@@ -1,18 +1,17 @@
 package PCGUI.components;
 
-import im.Client;
 import PCGUI.helper.PanelUtil;
-import im.file_manager.FileObject;
-import im.file_manager.NoSuchFileIdException;
-import im.protocol.data_pack.file_transfer.FileTransferType;
-import im.protocol.fileTransfer.ClientFileReceiveTask;
-import im.protocol.fileTransfer.IDownloadCallback;
+import com.omg_link.im.Client;
+import com.omg_link.im.file_manager.FileObject;
+import com.omg_link.im.gui.IFileTransferringPanel;
+import com.omg_link.im.protocol.data_pack.file_transfer.FileTransferType;
+import com.omg_link.im.protocol.file_transfer.IDownloadCallback;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.UUID;
 
-public class ChatImagePanel extends JPanel {
+public class ChatImagePanel extends JPanel implements IFileTransferringPanel {
     private final Client handler;
     private final UUID serverFileId;
 
@@ -27,43 +26,46 @@ public class ChatImagePanel extends JPanel {
     }
 
     public IDownloadCallback getDownloadCallback(){
-        return new IDownloadCallback() {
-            @Override
-            public void onSucceed(ClientFileReceiveTask task) {
-                FileObject imageFileObject;
-                try{
-                    imageFileObject = handler.getFileManager().openFile(task.getReceiverFileId());
-                }catch (NoSuchFileIdException e){
-                    throw new RuntimeException("Image file not found!",e);
-                }
-                var imagePath = imageFileObject.getFile().getAbsolutePath();
-                var icon = new ImageIcon(imagePath);
-                if(icon.getIconHeight()<=0){
-                    add(PanelUtil.makeTextArea(Color.RED,22,"[Image] Unable to resolve image."));
-                }else{
-                    add(new ImagePanel(icon));
-                }
-                revalidate();
-                repaint();
-            }
+        return null;
+    }
 
-            @Override
-            public void onFailed(ClientFileReceiveTask task,String reason) {
-                add(PanelUtil.makeTextArea(Color.RED,22,"[Image] Image download failed: "+reason));
-                add(getRetryButton());
-            }
+    @Override
+    public void setProgress(long downloadedSize) {
 
-            private JButton getRetryButton(){
-                JButton button = new JButton("RETRY");
-                button.addActionListener(e -> {
-                    handler.downloadFile(serverFileId.toString(), serverFileId, FileTransferType.ChatImage,null,getDownloadCallback());
-                    remove(2);
-                    remove(1);
-                });
-                return button;
-            }
+    }
 
-        };
+    @Override
+    public void onTransferStart() {
+
+    }
+
+    @Override
+    public void onTransferSucceed(FileObject imageFileObject) {
+        var imagePath = imageFileObject.getFile().getAbsolutePath();
+        var icon = new ImageIcon(imagePath);
+        if(icon.getIconHeight()<=0){
+            add(PanelUtil.makeTextArea(Color.RED,22,"[Image] Unable to resolve image."));
+        }else{
+            add(new ImagePanel(icon));
+        }
+        revalidate();
+        repaint();
+    }
+
+    @Override
+    public void onTransferFailed(String reason) {
+        add(PanelUtil.makeTextArea(Color.RED,22,"[Image] Image download failed: "+reason));
+        add(getRetryButton());
+    }
+
+    private JButton getRetryButton(){
+        JButton button = new JButton("RETRY");
+        button.addActionListener(e -> {
+            handler.downloadFile(serverFileId.toString(), serverFileId, FileTransferType.ChatImage,this);
+            remove(2);
+            remove(1);
+        });
+        return button;
     }
 
 }

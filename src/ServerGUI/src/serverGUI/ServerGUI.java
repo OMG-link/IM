@@ -1,8 +1,8 @@
 package serverGUI;
 
-import im.gui.IServerGUI;
-import im.config.Config;
-import im.Server;
+import com.omg_link.im.gui.IServerGUI;
+import com.omg_link.im.config.Config;
+import com.omg_link.im.Server;
 
 public class ServerGUI implements IServerGUI {
 
@@ -20,7 +20,6 @@ public class ServerGUI implements IServerGUI {
 
     public ServerGUI(){
         server = new Server(this);
-        server.start();
     }
 
     public void createGUI(){

@@ -1,6 +1,6 @@
 package serverGUI;
 
-import im.Server;
+import com.omg_link.im.Server;
 
 import javax.swing.*;
 import java.awt.*;

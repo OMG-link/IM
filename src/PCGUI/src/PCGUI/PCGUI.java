@@ -1,9 +1,9 @@
 package PCGUI;
 
-import im.Client;
-import im.config.Config;
-import im.gui.IConfirmDialogCallback;
-import im.gui.IGUI;
+import com.omg_link.im.Client;
+import com.omg_link.im.config.Config;
+import com.omg_link.im.gui.IConfirmDialogCallback;
+import com.omg_link.im.gui.IGUI;
 
 import javax.swing.*;
 import java.awt.*;

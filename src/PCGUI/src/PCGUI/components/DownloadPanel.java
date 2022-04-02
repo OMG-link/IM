@@ -1,12 +1,12 @@
 package PCGUI.components;
 
-import im.gui.IFileTransferringPanel;
-import im.Client;
-import im.protocol.data_pack.file_transfer.FileTransferType;
+import com.omg_link.im.Client;
+import com.omg_link.im.file_manager.FileObject;
+import com.omg_link.im.gui.IFileTransferringPanel;
+import com.omg_link.im.protocol.data_pack.file_transfer.FileTransferType;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -52,9 +52,10 @@ public class DownloadPanel extends JPanel{
 
     }
 
-    public void setAfterDownload(File downloadedFile){
+    public void setAfterDownload(FileObject fileObject){
         buttonPanel.removeAll();
 
+        var downloadedFile = fileObject.getFile();
         textArea.setText(String.format("File downloaded to: %s",downloadedFile.getAbsolutePath()));
 
         JButton openFileButton = new JButton("OPEN");
