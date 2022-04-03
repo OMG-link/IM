@@ -1,5 +1,13 @@
 package com.omg_link.utils;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public class FileUtils {
 
     public static String sizeToString(long size){
@@ -28,4 +36,35 @@ public class FileUtils {
         return true;
     }
 
+    /**
+     * Calculate the SHA-1 for the file.
+     * @throws FileNotFoundException When the file does not exist.
+     * @throws IOException When an I/O error occurs during reading the file.
+     */
+    public static byte[] sha1(File file) throws IOException {
+        MessageDigest messageDigest;
+        try{
+            messageDigest = MessageDigest.getInstance("SHA-1");
+        }catch (NoSuchAlgorithmException e){
+            throw new RuntimeException(e);
+        }
+        var fileInputStream = new FileInputStream(file);
+        var fileChannel = fileInputStream.getChannel();
+        var mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY,0,file.length());
+        messageDigest.update(mappedByteBuffer);
+        return messageDigest.digest();
+    }
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
