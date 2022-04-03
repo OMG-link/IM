@@ -1,9 +1,9 @@
 package com.omg_link.im.pc_gui;
 
-import com.omg_link.im.core.config.InvalidUserNameException;
-import com.omg_link.im.core.gui.IConnectFrame;
 import com.omg_link.im.core.Client;
 import com.omg_link.im.core.config.Config;
+import com.omg_link.im.core.config.ConfigSetFailedException;
+import com.omg_link.im.core.gui.IConnectFrame;
 import com.omg_link.im.pc_gui.components.IInputCallback;
 
 import javax.swing.*;
@@ -60,8 +60,21 @@ public class ConnectFrame extends JFrame implements IConnectFrame,IInputCallback
             ){
                 this.dispose();
             }
-        }catch (InvalidUserNameException e){
-            client.showInfo("Your name should be no more than 20 characters.");
+        }catch (ConfigSetFailedException e){
+            switch (e.getReason()){
+                case InvalidUrl:{
+                    client.showInfo("Invalid Url");
+                    break;
+                }
+                case InvalidPort:{
+                    client.showInfo("Invalid Port");
+                    break;
+                }
+                case UsernameTooLong:{
+                    client.showInfo(String.format("User name should be no longer than %d characters.",Config.nickMaxLength));
+                    break;
+                }
+            }
         }
     }
 

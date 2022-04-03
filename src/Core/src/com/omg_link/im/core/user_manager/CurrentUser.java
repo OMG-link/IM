@@ -1,7 +1,7 @@
 package com.omg_link.im.core.user_manager;
 
 import com.omg_link.im.core.config.Config;
-import com.omg_link.im.core.config.InvalidUserNameException;
+import com.omg_link.im.core.config.ConfigSetFailedException;
 
 import java.util.UUID;
 
@@ -13,7 +13,7 @@ public class CurrentUser extends User{
         this.clientUserManager = clientUserManager;
     }
 
-    public void setNameByInput(String name) throws InvalidUserNameException {
+    public void setNameByInput(String name) throws ConfigSetFailedException {
         Config.setUsername(name);
         super.setName(name);
     }

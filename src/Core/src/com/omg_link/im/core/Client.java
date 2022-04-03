@@ -2,7 +2,6 @@ package com.omg_link.im.core;
 
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.config.ConfigSetFailedException;
-import com.omg_link.im.core.config.InvalidUserNameException;
 import com.omg_link.im.core.factory_manager.ClientFactoryManager;
 import com.omg_link.im.core.file_manager.ClientFileManager;
 import com.omg_link.im.core.gui.*;
@@ -57,9 +56,6 @@ public class Client {
         getGUI().createRoomFrame();
     }
 
-    /**
-     * 异步实现
-     */
     public void runNetworkHandler() {
         final Client client = this;
         new Thread(() -> {
@@ -93,19 +89,12 @@ public class Client {
         }
     }
 
-    public boolean setConfigAndStart(String url, String username, String token, boolean shouldRunLocalServer) throws InvalidUserNameException {
+    public boolean setConfigAndStart(String url, String username, String token, boolean shouldRunLocalServer) throws ConfigSetFailedException {
         //config
-        try {
-            Config.setUrl(url);
-            getUserManager().getCurrentUser().setNameByInput(username);
-            Config.setToken(token);
-            Config.saveToFile();
-        } catch (InvalidUserNameException e) {
-            throw e;
-        } catch (ConfigSetFailedException e) {
-            this.showInfo(e.getMessage());
-            return false;
-        }
+        Config.setUrl(url);
+        getUserManager().getCurrentUser().setNameByInput(username);
+        Config.setToken(token);
+        Config.saveToFile();
         //server
         if (shouldRunLocalServer) {
             Config.setServerIP("127.0.0.1");

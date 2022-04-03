@@ -140,9 +140,9 @@ public class Config {
             }
             Config.url = url;
         }catch(InvalidParameterException e){
-            throw new ConfigSetFailedException("Invalid URL!");
+            throw new ConfigSetFailedException(ConfigSetFailedException.Reason.InvalidUrl);
         }catch(NumberFormatException e){
-            throw new ConfigSetFailedException("Invalid Port!");
+            throw new ConfigSetFailedException(ConfigSetFailedException.Reason.InvalidPort);
         }
     }
 
@@ -150,9 +150,9 @@ public class Config {
         return username;
     }
 
-    public static void setUsername(String username) throws InvalidUserNameException {
+    public static void setUsername(String username) throws ConfigSetFailedException {
         if(username.length()>Config.nickMaxLength){
-            throw new InvalidUserNameException();
+            throw new ConfigSetFailedException(ConfigSetFailedException.Reason.UsernameTooLong);
         }
         Config.username = username;
     }
