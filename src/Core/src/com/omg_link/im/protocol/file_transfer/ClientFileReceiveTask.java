@@ -14,7 +14,6 @@ import java.util.UUID;
 public class ClientFileReceiveTask extends FileReceiveTask {
     private final Client client;
     private final IFileTransferringPanel panel;
-    private final String fileName;
 
     //constructors
 
@@ -26,11 +25,9 @@ public class ClientFileReceiveTask extends FileReceiveTask {
             String fileName, UUID senderFileId, FileTransferType fileTransferType,
             IFileTransferringPanel panel
     ) throws IOException {
-        super(fileTransferType);
+        super(fileName, fileTransferType, receiverTaskId);
         this.client = client;
-        this.fileName = fileName;
         this.panel = panel;
-        super.setReceiverTaskId(receiverTaskId);
         super.setSenderFileId(senderFileId);
 
         FileObject fileObject;
@@ -89,12 +86,6 @@ public class ClientFileReceiveTask extends FileReceiveTask {
         if (panel != null) {
             panel.onTransferFailed(reason);
         }
-    }
-
-    //getter
-
-    public String getFileName() {
-        return fileName;
     }
 
 }

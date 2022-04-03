@@ -1,6 +1,7 @@
 package com.omg_link.mutils;
 
 public class FileUtils {
+
     public static String sizeToString(long size){
         if(size<1000L){
             return String.format("%dB",size);
@@ -14,4 +15,17 @@ public class FileUtils {
             return String.format("%.2fTB",(double)size/1e12);
         }
     }
+
+    public static boolean isFileNameLegal(String fileName){
+        char[] bannedCharSet = {
+                '/','\\',':','*','?','"','<','>','|'
+        };
+        for(Character c:bannedCharSet){
+            if(fileName.contains(c.toString())){
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

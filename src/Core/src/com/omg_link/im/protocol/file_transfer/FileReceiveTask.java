@@ -6,6 +6,7 @@ import com.omg_link.im.protocol.data_pack.DataPack;
 import com.omg_link.im.protocol.data_pack.file_transfer.FileTransferType;
 import com.omg_link.im.protocol.data_pack.file_transfer.UploadResultPack;
 import com.omg_link.mutils.FileUtils;
+import com.omg_link.mutils.IllegalFileNameException;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -15,10 +16,11 @@ import java.util.logging.Logger;
 public abstract class FileReceiveTask {
     private final FileTransferType fileTransferType;
     private UUID senderTaskId;
-    private UUID receiverTaskId;
+    private final UUID receiverTaskId;
     private UUID senderFileId;
     private UUID receiverFileId;
 
+    private final String fileName;
     private FileObject fileObject;
     private Long fileSize;
 
@@ -27,8 +29,13 @@ public abstract class FileReceiveTask {
 
     //constructors
 
-    protected FileReceiveTask(FileTransferType fileTransferType) {
+    protected FileReceiveTask(String fileName, FileTransferType fileTransferType, UUID receiverTaskId) throws IllegalFileNameException {
+        this.fileName = fileName;
         this.fileTransferType = fileTransferType;
+        this.receiverTaskId = receiverTaskId;
+        if(FileUtils.isFileNameLegal(this.fileName)){
+            throw new IllegalFileNameException();
+        }
     }
 
     //abstract
@@ -39,10 +46,6 @@ public abstract class FileReceiveTask {
     abstract void removeFromFactory();
 
     //start
-
-    protected void setReceiverTaskId(UUID receiverTaskId) {
-        this.receiverTaskId = receiverTaskId;
-    }
 
     public void setSenderTaskId(UUID senderTaskId) {
         this.senderTaskId = senderTaskId;
@@ -216,6 +219,10 @@ public abstract class FileReceiveTask {
 
     public long getTransferredSize() {
         return transferredSize;
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 
 }

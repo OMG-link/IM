@@ -10,7 +10,6 @@ import com.omg_link.im.protocol.data_pack.DataPack;
 import com.omg_link.im.protocol.data_pack.file_transfer.UploadRequestPack;
 import com.omg_link.im.user_manager.User;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.util.UUID;
@@ -18,7 +17,6 @@ import java.util.UUID;
 public class ServerFileReceiveTask extends FileReceiveTask {
     private final Server server;
     private final SelectionKey selectionKey;
-    private final String fileName;
 
     //constructor
 
@@ -29,11 +27,9 @@ public class ServerFileReceiveTask extends FileReceiveTask {
             Server server, SelectionKey selectionKey, UUID receiverTaskId,
             UploadRequestPack requestPack
     ) throws IOException {
-        super(requestPack.getFileTransferType());
+        super(requestPack.getFileName(),requestPack.getFileTransferType(), receiverTaskId);
         this.server = server;
         this.selectionKey = selectionKey;
-        this.fileName = requestPack.getFileName();
-        super.setReceiverTaskId(receiverTaskId);
 
         super.setSenderTaskId(requestPack.getSenderTaskId());
         super.setSenderFileId(requestPack.getSenderFileId());
@@ -43,7 +39,7 @@ public class ServerFileReceiveTask extends FileReceiveTask {
             fileObject.setLength(requestPack.getFileSize());
             super.setReceiverFileId(fileObject.getFileId());
             super.setFileWriter(fileObject.getWriteOnlyInstance());
-        }catch (FileNotFoundException| FileOccupiedException e){
+        }catch (FileOccupiedException e){
             throw new RuntimeException(e); //Never happens.
         }
 
@@ -82,7 +78,7 @@ public class ServerFileReceiveTask extends FileReceiveTask {
                 server.getMessageManager().broadcastChatFile(
                         user,
                         fileId,
-                        fileName,
+                        getFileName(),
                         getFileSize()
                 );
                 break;
