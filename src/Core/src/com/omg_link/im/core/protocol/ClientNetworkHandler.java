@@ -1,8 +1,8 @@
 package com.omg_link.im.core.protocol;
 
-import com.omg_link.im.core.Client;
+import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.config.Config;
-import com.omg_link.im.core.message_manager.ClientMessageManager;
+import com.omg_link.im.core.gui.IRoomFrame;
 import com.omg_link.im.core.protocol.data.ByteArrayInfo;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.protocol.data.InvalidPackageException;
@@ -26,8 +26,7 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 
 public class ClientNetworkHandler implements Runnable {
-    private final Client client;
-    private final ClientMessageManager messageManager;
+    private final ClientRoom room;
     private final String url;
     private final int port;
     private Socket socket;
@@ -36,32 +35,13 @@ public class ClientNetworkHandler implements Runnable {
 
     private Timer pingTimer;
 
-    private boolean interrupted = false;
+    private boolean stopped = false;
 
     private DataPack.Type expectedSendType = DataPack.Type.CheckVersion;
     private DataPack.Type expectedReceiveType = DataPack.Type.Undefined;
 
-    public boolean isInterrupted() {
-        return interrupted;
-    }
-
-    public void interrupt() {
-        if (interrupted) return;
-        interrupted = true;
-        this.close();
-    }
-
-    private void exit(String reason) {
-        if (client.getRoomFrame() != null) {
-            client.getRoomFrame().exitRoom(reason);
-        } else {
-            System.exit(0);
-        }
-    }
-
-    public ClientNetworkHandler(Client client, String url, int port) {
-        this.client = client;
-        this.messageManager = new ClientMessageManager(client);
+    public ClientNetworkHandler(ClientRoom room, String url, int port) {
+        this.room = room;
         this.url = url;
         this.port = port;
     }
@@ -76,18 +56,27 @@ public class ClientNetworkHandler implements Runnable {
             thread.start();
 
         } catch (UnknownHostException e) {
-            this.exit("Unknown host!");
+            room.exitRoom(IRoomFrame.ExitReason.InvalidUrl);
         } catch (Exception e) {
             e.printStackTrace();
-            this.exit(e.toString());
+            room.exitRoom(IRoomFrame.ExitReason.ClientException);
         }
     }
 
-    public void close() {
-        interrupted = true;
+    public boolean isStopped() {
+        return stopped;
+    }
+
+    /**
+     * <p>Stop network connection.</p>
+     * <p>You possibly need to call this through {@code room.exitRoom()}.</p>
+     */
+    public void stop() {
+        if (stopped) return;
+        stopped = true;
         //Notice the roomFrame
-        if (this.client.getRoomFrame() != null) {
-            this.client.getRoomFrame().onConnectionBroke();
+        if (room.getRoomFrame() != null) {
+            room.getRoomFrame().onConnectionBroke();
         }
         //Cancel pingTimer
         if (pingTimer != null) {
@@ -98,12 +87,10 @@ public class ClientNetworkHandler implements Runnable {
             if (this.socket != null) {
                 this.socket.close();
             }
-        } catch (IOException e) {
-            //do nothing
-        } finally {
-            this.outputStream = null;
-            this.inputStream = null;
+        } catch (IOException ignored) {
         }
+        this.outputStream = null;
+        this.inputStream = null;
     }
 
     @Override
@@ -119,27 +106,25 @@ public class ClientNetworkHandler implements Runnable {
                 this.onReceive(data);
             }
         } catch (IOException e) {
-            //If IOException is caused by interrupt, just return.
-            if (this.isInterrupted()) return;
-            this.close();
-            client.runNetworkHandler();
+            if (isStopped()) {
+                return; //If IOException is caused by stop(), just return.
+            }
+            room.reconnect();
         } catch (InvalidPackageException e) {
             e.printStackTrace();
-            this.close();
-            this.exit("Client received an invalid package. Connection has been closed.");
+            room.exitRoom(IRoomFrame.ExitReason.PackageDecodeError);
         } catch (Exception e) {
-            this.client.showException(e);
-            this.close();
-            this.exit(e.toString());
+            e.printStackTrace();
+            room.exitRoom(IRoomFrame.ExitReason.ClientException);
         }
     }
 
     public void send(DataPack dataPack) throws PackageTooLargeException {
-        if (isInterrupted()) return;
+        if (isStopped()) return;
 
         if (expectedSendType != null) {
             if (dataPack.getType() != expectedSendType) {
-                client.getLogger().log(
+                room.getLogger().log(
                         Level.WARNING,
                         String.format("The client wants to send package of type %s, but it is expected to send %s. This package will not be sent.", dataPack.getType(), expectedSendType)
                 );
@@ -178,16 +163,16 @@ public class ClientNetworkHandler implements Runnable {
             outputStream.write(arrayInfo.getArray(), arrayInfo.getOffset(), arrayInfo.getLength());
             outputStream.flush();
         } catch (IOException e) {
-            this.client.showInfo("Connection Error!");
-            this.close();
+            room.reconnect();
         }
+
     }
 
     private void onReceive(ByteData data) throws InvalidPackageException {
         DataPack.Type type = data.peekEnum(DataPack.Type.values());
 
         if (expectedReceiveType != null && type != expectedReceiveType) {
-            client.getLogger().log(
+            room.getLogger().log(
                     Level.WARNING,
                     String.format("The client is expecting package of type %s, but we received %s. The package will not be processed.", expectedSendType, type)
             );
@@ -197,17 +182,19 @@ public class ClientNetworkHandler implements Runnable {
         switch (type) {
             case CheckVersion: {
                 IVersionGetter versionGetter;
-                //I know it loops only once. I just need to break somewhere inside it.
+                // I know it loops only once. I just need to break somewhere inside it.
                 while (true) {
                     try {
                         versionGetter = new CheckVersionPackV2(data);
                         break;
-                    } catch (InvalidPackageException ignored) {}
+                    } catch (InvalidPackageException ignored) {
+                    }
 
                     try {
                         versionGetter = new CheckVersionPackV1(data);
                         break;
-                    } catch (InvalidPackageException ignored) {}
+                    } catch (InvalidPackageException ignored) {
+                    }
 
                     versionGetter = new IVersionGetter() {
                         @Override
@@ -224,21 +211,21 @@ public class ClientNetworkHandler implements Runnable {
                 }
 
                 if (!Objects.equals(versionGetter.getCompatibleVersion(), Config.compatibleVersion)) {
-                    this.close();
+                    this.stop(); // Didn't call room.exitRoom() because we need to exit after the dialog closed.
                     if (versionGetter.getVersion() == null) {
-                        this.client.getGUI().alertVersionUnrecognizable(Config.version);
+                        room.alertVersionUnrecognizable();
                     } else {
-                        this.client.getGUI().alertVersionIncompatible(versionGetter.getVersion(), Config.version);
+                        room.alertVersionIncompatible(versionGetter.getVersion());
                     }
                 } else {
                     if (!Objects.equals(versionGetter.getVersion(), Config.version)) {
-                        this.client.getGUI().alertVersionMismatch(versionGetter.getVersion(), Config.version);
+                        room.alertVersionMismatch(versionGetter.getVersion());
                     }
                     expectedSendType = DataPack.Type.ConnectRequest;
                     expectedReceiveType = DataPack.Type.Undefined;
 
                     send(new ConnectRequestPack(
-                            client.getUserManager().getCurrentUser().getName(),
+                            room.getUserManager().getCurrentUser().getName(),
                             Config.getToken()
                     ));
                 }
@@ -250,43 +237,54 @@ public class ClientNetworkHandler implements Runnable {
             case ChatText:
             case ChatImage:
             case ChatFile: {
-                messageManager.receive(data);
+                room.getMessageManager().receive(data);
                 break;
             }
             case ConnectResult: {
                 var pack = new ConnectResultPack(data);
                 if (pack.isTokenAccepted()) {
-                    client.getUserManager().getCurrentUser().setUid(pack.getUid());
+                    room.getUserManager().getCurrentUser().setUid(pack.getUid());
                     onConnectionBuilt();
                 } else {
-                    this.close();
-                    client.getRoomFrame().onConnectionRefused(pack.getRejectReason());
+                    this.stop();
+                    IRoomFrame.ExitReason reason;
+                    switch (pack.getRejectReason()){
+                        case InvalidToken:{
+                            reason = IRoomFrame.ExitReason.InvalidToken;
+                            break;
+                        }
+                        default:{
+                            reason = IRoomFrame.ExitReason.Unknown;
+                            break;
+                        }
+                    }
+                    room.exitRoom(reason);
                 }
                 break;
             }
             case SetRoomName: {
                 var pack = new SetRoomNamePack(data);
-                this.client.getRoomFrame().onRoomNameUpdate(pack.getRoomName());
+                room.getRoomFrame().onRoomNameUpdate(pack.getRoomName());
                 break;
             }
             case BroadcastUserList: {
                 var pack = new BroadcastUserListPack(data);
-                this.client.getUserManager().updateFromUserList(pack.getUserList());
+                room.getUserManager().updateFromUserList(pack.getUserList());
                 break;
             }
             case BroadcastUserJoin: {
                 var pack = new BroadcastUserJoinPack(data);
-                this.client.getUserManager().joinUser(pack.getUser());
+                room.getUserManager().joinUser(pack.getUser());
                 break;
             }
             case BroadcastUserLeft: {
                 var pack = new BroadcastUserLeftPack(data);
-                this.client.getUserManager().removeUser(pack.getUid());
+                room.getUserManager().removeUser(pack.getUid());
                 break;
             }
             case BroadcastUserNameChanged: {
                 var pack = new BroadcastUsernameChangedPack(data);
-                this.client.getUserManager().changeUsername(pack.getUid(), pack.getName());
+                room.getUserManager().changeUsername(pack.getUid(), pack.getName());
                 break;
             }
             case FileUploadRequest: {
@@ -298,7 +296,7 @@ public class ClientNetworkHandler implements Runnable {
                     reason = UploadReplyPack.Reason.fileTooLarge;
                 } else {
                     try {
-                        ClientFileReceiveTask task = client.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
+                        ClientFileReceiveTask task = room.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                         try {
                             task.setFileSize(pack.getFileSize());
                             ok = true;
@@ -308,7 +306,7 @@ public class ClientNetworkHandler implements Runnable {
                             reason = UploadReplyPack.Reason.remoteIOError;
                         }
                     } catch (NoSuchTaskIdException e) {
-                        client.getLogger().log(
+                        room.getLogger().log(
                                 Level.WARNING,
                                 String.format("Client received a FileUploadRequest for {receiverTaskId=%s}, but it is not found in client.", pack.getReceiverTaskId())
                         );
@@ -330,10 +328,10 @@ public class ClientNetworkHandler implements Runnable {
             case FileUploadReply: {
                 UploadReplyPack pack = new UploadReplyPack(data);
                 try {
-                    ClientFileSendTask task = client.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
+                    ClientFileSendTask task = room.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
                     task.onReceiveUploadReply(pack);
                 } catch (NoSuchTaskIdException e) {
-                    client.getLogger().log(
+                    room.getLogger().log(
                             Level.WARNING,
                             String.format("Client received a FileUploadReplyPack for {senderTaskId=%s}, but it is not found on client.", pack.getSenderTaskId())
                     );
@@ -343,10 +341,10 @@ public class ClientNetworkHandler implements Runnable {
             case FileUploadFinish: {
                 UploadFinishPack pack = new UploadFinishPack(data);
                 try {
-                    ClientFileReceiveTask task = client.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
+                    ClientFileReceiveTask task = room.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                     task.end();
                 } catch (NoSuchTaskIdException e) {
-                    client.getLogger().log(
+                    room.getLogger().log(
                             Level.WARNING,
                             String.format("Client received a FileUploadFinish for {receiverTaskId=%s}, but it is not found in client.", pack.getReceiverTaskId())
                     );
@@ -361,14 +359,14 @@ public class ClientNetworkHandler implements Runnable {
             case FileUploadResult: {
                 UploadResultPack pack = new UploadResultPack(data);
                 try {
-                    ClientFileSendTask task = client.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
+                    ClientFileSendTask task = room.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
                     if (pack.isOk()) {
                         task.onEndSucceed();
                     } else {
                         task.onEndFailed(pack.getReason());
                     }
                 } catch (NoSuchTaskIdException e) {
-                    client.getLogger().log(
+                    room.getLogger().log(
                             Level.WARNING,
                             String.format("Client received a FileUploadResult for {senderTaskId=%s}, but it is not found in client.", pack.getSenderTaskId())
                     );
@@ -378,23 +376,23 @@ public class ClientNetworkHandler implements Runnable {
             case FileDownloadReply: {
                 DownloadReplyPack pack = new DownloadReplyPack(data);
                 try {
-                    ClientFileReceiveTask task = client.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
+                    ClientFileReceiveTask task = room.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                     if (pack.isOk()) {
                         task.setSenderTaskId(pack.getSenderTaskId());
                     } else {
-                        switch (pack.getReason()){
-                            case ok:{
+                        switch (pack.getReason()) {
+                            case ok: {
                                 task.onEndFailed("??????????");
                                 break;
                             }
-                            case fileNotFound:{
+                            case fileNotFound: {
                                 task.onEndFailed("File not found on server.");
                                 break;
                             }
                         }
                     }
                 } catch (NoSuchTaskIdException e) {
-                    client.getLogger().log(
+                    room.getLogger().log(
                             Level.WARNING,
                             String.format("Client received a FileDownloadReplyPack for {receiverTaskId=%s}, but it is not found in client.", pack.getReceiverTaskId())
                     );
@@ -404,14 +402,14 @@ public class ClientNetworkHandler implements Runnable {
             case FileContent: {
                 FileContentPack pack = new FileContentPack(data);
                 try {
-                    ClientFileReceiveTask task = client.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
+                    ClientFileReceiveTask task = room.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                     try {
                         task.onDataReceived(pack.getData());
                     } catch (IOException e) {
                         task.end();
                     }
                 } catch (NoSuchTaskIdException e) {
-                    client.getLogger().log(
+                    room.getLogger().log(
                             Level.WARNING,
                             String.format("Client received a FileContent for {receiverTaskId=%s}, but it is not found in client.", pack.getReceiverTaskId())
                     );
@@ -419,7 +417,7 @@ public class ClientNetworkHandler implements Runnable {
                 break;
             }
             default: {
-                client.getLogger().log(
+                room.getLogger().log(
                         Level.WARNING,
                         "Client was unable to handle package type: " + type
                 );
@@ -436,19 +434,14 @@ public class ClientNetworkHandler implements Runnable {
         pingTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                try {
-                    client.getNetworkHandler().send(new PingPack());
-                } catch (PackageTooLargeException e) {
-                    throw new RuntimeException(e);
+                if(isStopped()){
+                    pingTimer.cancel();
+                }else{
+                    send(new PingPack());
                 }
             }
         }, 5000, 10 * 1000);
-
-        client.onConnectionBuilt();
-    }
-
-    public ClientMessageManager getMessageManager() {
-        return messageManager;
+        room.onConnectionBuilt();
     }
 
 }

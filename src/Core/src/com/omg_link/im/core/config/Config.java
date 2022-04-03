@@ -25,7 +25,7 @@ public class Config {
 
     private static String token = "official";
     private static String roomName = "";
-    private static String serverDatabasePath = "server.db";
+    private static String serverDatabasePath = "serverChatLog.db";
 
     private static String runtimeDir = toDirName(".");
     private static String cacheDir = toDirName("IMCache");

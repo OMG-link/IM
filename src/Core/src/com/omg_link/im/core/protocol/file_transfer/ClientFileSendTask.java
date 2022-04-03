@@ -1,30 +1,30 @@
 package com.omg_link.im.core.protocol.file_transfer;
 
-import com.omg_link.im.core.Client;
-import com.omg_link.im.core.gui.IFileTransferringPanel;
-import com.omg_link.im.core.protocol.data_pack.DataPack;
+import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.file_manager.FileManager;
+import com.omg_link.im.core.gui.IFileTransferringPanel;
+import com.omg_link.im.core.protocol.data.PackageTooLargeException;
+import com.omg_link.im.core.protocol.data_pack.DataPack;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.UploadRequestPack;
-import com.omg_link.im.core.protocol.data.PackageTooLargeException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.UUID;
 
 public class ClientFileSendTask extends FileSendTask {
-    private final Client client;
+    private final ClientRoom room;
     private final IFileTransferringPanel panel;
 
     //constructors
 
     public ClientFileSendTask(
-            Client client, UUID senderTaskId,
+            ClientRoom room, UUID senderTaskId,
             File file, FileTransferType fileTransferType,
             IFileTransferringPanel panel
     ) throws FileNotFoundException {
         super(fileTransferType);
-        this.client = client;
+        this.room = room;
         this.panel = panel;
         super.setSenderTaskId(senderTaskId);
 
@@ -36,18 +36,18 @@ public class ClientFileSendTask extends FileSendTask {
 
     @Override
     protected void send(DataPack dataPack) throws PackageTooLargeException {
-        this.client.getNetworkHandler().send(dataPack);
+        this.room.getNetworkHandler().send(dataPack);
     }
 
     @Override
     FileManager getFileManager() {
-        return client.getFileManager();
+        return room.getFileManager();
     }
 
     @Override
     void removeFromFactory() {
         try{
-            client.getFactoryManager().getFileSendTaskFactory().remove(this);
+            room.getFactoryManager().getFileSendTaskFactory().remove(this);
         }catch (NoSuchTaskIdException e){
             throw new RuntimeException(e);
         }

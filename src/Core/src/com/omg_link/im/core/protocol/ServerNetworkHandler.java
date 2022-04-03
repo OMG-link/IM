@@ -1,6 +1,6 @@
 package com.omg_link.im.core.protocol;
 
-import com.omg_link.im.core.Server;
+import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.file_manager.NoSuchFileIdException;
 import com.omg_link.im.core.message_manager.InvalidSerialIdException;
@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.logging.Level;
 
 public class ServerNetworkHandler implements Runnable {
-    private final Server server;
+    private final ServerRoom serverRoom;
 
     private ServerSocketChannel socketChannel;
     private Selector selector;
@@ -39,13 +39,13 @@ public class ServerNetworkHandler implements Runnable {
     private boolean isLoopingSelectionKeyList = false;
     private final Set<SelectionKey> selectionKeyList = new HashSet<>();
 
-    public ServerNetworkHandler(Server server) {
-        this.server = server;
+    public ServerNetworkHandler(ServerRoom serverRoom) {
+        this.serverRoom = serverRoom;
         this.start();
     }
 
     public void start() {
-        server.getLogger().log(
+        serverRoom.getLogger().log(
                 Level.INFO,
                 String.format("Starting server on port %d.\n", Config.getServerPort())
         );
@@ -131,7 +131,7 @@ public class ServerNetworkHandler implements Runnable {
         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) selectionKey.channel();
         SocketChannel socketChannel = serverSocketChannel.accept();
         socketChannel.configureBlocking(false);
-        SelectionKey newSelectionKey = socketChannel.register(selectionKey.selector(), SelectionKey.OP_READ, new Attachment(server));
+        SelectionKey newSelectionKey = socketChannel.register(selectionKey.selector(), SelectionKey.OP_READ, new Attachment(serverRoom));
         selectionKeyList.add(newSelectionKey);
 
     }
@@ -218,13 +218,13 @@ public class ServerNetworkHandler implements Runnable {
             case QueryHistory: {
                 var pack = new QueryHistoryPack(data);
                 try {
-                    server.getMessageManager().sendHistory(selectionKey, pack.getLastSerialId());
+                    serverRoom.getMessageManager().sendHistory(selectionKey, pack.getLastSerialId());
                 } catch (InvalidSerialIdException ignored) {
                 }
                 break;
             }
             case ChatText: {
-                server.getMessageManager().processChatTextPack(
+                serverRoom.getMessageManager().processChatTextPack(
                         selectionKey,
                         new ChatTextSendPack(data)
                 );
@@ -242,7 +242,7 @@ public class ServerNetworkHandler implements Runnable {
                 if (!Objects.equals(pack.getToken(), Config.getToken())) {
                     connectResultPack = new ConnectResultPack(ConnectResultPack.RejectReason.InvalidToken);
                 } else {
-                    attachment.user = server.getUserManager().createUser(pack.getUserName());
+                    attachment.user = serverRoom.getUserManager().createUser(pack.getUserName());
                     connectResultPack = new ConnectResultPack(attachment.user);
                 }
 
@@ -265,8 +265,8 @@ public class ServerNetworkHandler implements Runnable {
                          * it, which may causes memory limit exceed and crashes the program.
                          * Maybe we need to clear unused upload requests in later version.
                          */
-                        ServerFileReceiveTask task = server.getFactoryManager().getFileReceiveTaskFactory().create(
-                                server,
+                        ServerFileReceiveTask task = serverRoom.getFactoryManager().getFileReceiveTaskFactory().create(
+                                serverRoom,
                                 selectionKey,
                                 requestPack
                         );
@@ -295,10 +295,10 @@ public class ServerNetworkHandler implements Runnable {
             case FileUploadFinish: {
                 UploadFinishPack pack = new UploadFinishPack(data);
                 try {
-                    ServerFileReceiveTask task = server.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
+                    ServerFileReceiveTask task = serverRoom.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                     task.end();
                 } catch (NoSuchTaskIdException e) {
-                    server.getLogger().log(
+                    serverRoom.getLogger().log(
                             Level.INFO,
                             String.format("There is no ServerFileReceiveTask with UUID %s.", pack.getReceiverTaskId())
                     );
@@ -313,14 +313,14 @@ public class ServerNetworkHandler implements Runnable {
             case FileContent: {
                 FileContentPack pack = new FileContentPack(data);
                 try {
-                    ServerFileReceiveTask task = server.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
+                    ServerFileReceiveTask task = serverRoom.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                     try {
                         task.onDataReceived(pack.getData());
                     } catch (IOException e) {
                         task.onEndFailed(e.toString());
                     }
                 } catch (NoSuchTaskIdException e) {
-                    server.getLogger().log(
+                    serverRoom.getLogger().log(
                             Level.INFO,
                             String.format("There is no ServerFileReceiveTask with UUID %s.", pack.getReceiverTaskId())
                     );
@@ -333,7 +333,7 @@ public class ServerNetworkHandler implements Runnable {
                 DownloadReplyPack.Reason reason;
                 ServerFileSendTask task = null;
                 try {
-                    task = server.getFactoryManager().getFileSendTaskFactory().create(server, selectionKey, pack);
+                    task = serverRoom.getFactoryManager().getFileSendTaskFactory().create(serverRoom, selectionKey, pack);
                     ok = true;
                     reason = DownloadReplyPack.Reason.ok;
                 } catch (NoSuchFileIdException e) {
@@ -355,10 +355,10 @@ public class ServerNetworkHandler implements Runnable {
             case FileUploadReply: {
                 UploadReplyPack pack = new UploadReplyPack(data);
                 try {
-                    ServerFileSendTask task = server.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
+                    ServerFileSendTask task = serverRoom.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
                     task.onReceiveUploadReply(pack);
                 } catch (NoSuchTaskIdException e) {
-                    server.getLogger().log(
+                    serverRoom.getLogger().log(
                             Level.INFO,
                             String.format("There is no ServerFileSendTask with UUID %s.", pack.getSenderTaskId())
                     );
@@ -368,14 +368,14 @@ public class ServerNetworkHandler implements Runnable {
             case FileUploadResult: {
                 UploadResultPack pack = new UploadResultPack(data);
                 try {
-                    ServerFileSendTask task = server.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
+                    ServerFileSendTask task = serverRoom.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
                     if (pack.isOk()) {
                         task.onEndSucceed();
                     } else {
                         task.onEndFailed(pack.getReason());
                     }
                 } catch (NoSuchTaskIdException e) {
-                    server.getLogger().log(
+                    serverRoom.getLogger().log(
                             Level.INFO,
                             String.format("There is no ServerFileSendTask with UUID %s.", pack.getSenderTaskId())
                     );
@@ -387,7 +387,7 @@ public class ServerNetworkHandler implements Runnable {
                 break;
             }
             default: {
-                server.getLogger().log(Level.WARNING, "Server was unable to decode package type: " + type);
+                serverRoom.getLogger().log(Level.WARNING, "Server was unable to decode package type: " + type);
                 throw new InvalidPackageException();
             }
         }
@@ -403,7 +403,7 @@ public class ServerNetworkHandler implements Runnable {
 
         if (attachment.expectedSendType != null) {
             if (dataPack.getType() != attachment.expectedSendType) {
-                server.getLogger().log(
+                serverRoom.getLogger().log(
                         Level.WARNING,
                         String.format("Server wants to send package of type %s, but it is expected to send type %s. Package ignored.", dataPack.getType(), attachment.expectedSendType)
                 );
@@ -451,7 +451,7 @@ public class ServerNetworkHandler implements Runnable {
         try {
             socketChannel = (SocketChannel) selectionKey.channel();
         } catch (ClassCastException e) {
-            server.getLogger().log(Level.WARNING, "Cannot cast selectionKey.channel() to SocketChannel.");
+            serverRoom.getLogger().log(Level.WARNING, "Cannot cast selectionKey.channel() to SocketChannel.");
             return;
         }
 
@@ -497,7 +497,7 @@ public class ServerNetworkHandler implements Runnable {
         attachment.expectedReceiveType = null;
         try {
             send(selectionKey, new SetRoomNamePack());
-            send(selectionKey, new BroadcastUserListPack(server.getUserManager().getUserList()));
+            send(selectionKey, new BroadcastUserListPack(serverRoom.getUserManager().getUserList()));
         } catch (PackageTooLargeException e) {
             throw new RuntimeException(e);
         }

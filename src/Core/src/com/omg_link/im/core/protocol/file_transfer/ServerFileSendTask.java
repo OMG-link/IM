@@ -1,6 +1,6 @@
 package com.omg_link.im.core.protocol.file_transfer;
 
-import com.omg_link.im.core.Server;
+import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.file_manager.NoSuchFileIdException;
 import com.omg_link.im.core.file_manager.ServerFileManager;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
@@ -13,17 +13,17 @@ import java.nio.channels.SelectionKey;
 import java.util.UUID;
 
 public class ServerFileSendTask extends FileSendTask{
-    private final Server server;
+    private final ServerRoom serverRoom;
     private final SelectionKey selectionKey;
 
     //construct
 
     public ServerFileSendTask(
-            Server server, SelectionKey selectionKey, UUID senderTaskId,
+            ServerRoom serverRoom, SelectionKey selectionKey, UUID senderTaskId,
             DownloadRequestPack requestPack
     ) throws NoSuchFileIdException {
         super(requestPack.getFileTransferType());
-        this.server = server;
+        this.serverRoom = serverRoom;
         this.selectionKey = selectionKey;
         super.setSenderTaskId(senderTaskId);
 
@@ -39,19 +39,19 @@ public class ServerFileSendTask extends FileSendTask{
     //abstract
 
     @Override
-    protected void send(DataPack dataPack) throws IOException, PackageTooLargeException {
-        server.getNetworkHandler().send(selectionKey,dataPack);
+    protected void send(DataPack dataPack) throws PackageTooLargeException {
+        serverRoom.getNetworkHandler().send(selectionKey,dataPack);
     }
 
     @Override
     ServerFileManager getFileManager() {
-        return server.getFileManager();
+        return serverRoom.getFileManager();
     }
 
     @Override
     void removeFromFactory() {
         try{
-            server.getFactoryManager().getFileSendTaskFactory().remove(this);
+            serverRoom.getFactoryManager().getFileSendTaskFactory().remove(this);
         }catch (NoSuchTaskIdException e){
             throw new RuntimeException(e);
         }

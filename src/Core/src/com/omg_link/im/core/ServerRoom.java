@@ -11,7 +11,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Server {
+public class ServerRoom {
     final Logger logger = Logger.getLogger("IMServer");
     final ServerFactoryManager factoryManager = new ServerFactoryManager();
     final ServerMessageManager messageManager = new ServerMessageManager(this);
@@ -22,7 +22,7 @@ public class Server {
 
     public final UUID serverId;
 
-    public Server(IServerGUI GUI){
+    public ServerRoom(IServerGUI GUI){
         try{
             this.GUI = GUI;
             this.serverId = messageManager.getDialogId();

@@ -1,6 +1,6 @@
 package com.omg_link.im.core.message_manager;
 
-import com.omg_link.im.core.Server;
+import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.protocol.Attachment;
 import com.omg_link.im.core.protocol.data.ByteData;
@@ -32,19 +32,19 @@ public class ServerMessageManager {
 
     }
 
-    private final Server server;
+    private final ServerRoom serverRoom;
 
     private ServerSqlManager sqlManager;
 
     private final SerialIdGenerator serialIdGenerator;
 
-    public ServerMessageManager(Server server) {
-        this.server = server;
+    public ServerMessageManager(ServerRoom serverRoom) {
+        this.serverRoom = serverRoom;
         try {
             sqlManager = new ServerSqlManager(Config.getServerDatabasePath());
         } catch (SQLException e) {
             e.printStackTrace();
-            server.getLogger().log(
+            serverRoom.getLogger().log(
                     Level.WARNING,
                     "Cannot open database file. Chat history will not be logged."
             );
@@ -82,7 +82,7 @@ public class ServerMessageManager {
      * Send a data pack through the selection key.
      */
     private void send(SelectionKey selectionKey, DataPack dataPack) {
-        server.getNetworkHandler().send(selectionKey, dataPack);
+        serverRoom.getNetworkHandler().send(selectionKey, dataPack);
     }
 
     /**
@@ -91,7 +91,7 @@ public class ServerMessageManager {
      */
     private void broadcast(long serialId, DataPack pack) {
         addDataToHistory(serialId, pack.encode());
-        server.getNetworkHandler().broadcast(pack);
+        serverRoom.getNetworkHandler().broadcast(pack);
     }
 
     /**

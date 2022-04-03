@@ -36,7 +36,7 @@ public abstract class FileSendTask implements Runnable {
 
     //abstract
 
-    abstract void send(DataPack dataPack) throws IOException, PackageTooLargeException;
+    abstract void send(DataPack dataPack) throws PackageTooLargeException;
     abstract FileManager getFileManager();
     abstract void removeFromFactory();
 

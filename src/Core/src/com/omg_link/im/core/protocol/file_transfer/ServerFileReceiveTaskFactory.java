@@ -1,6 +1,6 @@
 package com.omg_link.im.core.protocol.file_transfer;
 
-import com.omg_link.im.core.Server;
+import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.UploadRequestPack;
 
 import java.io.IOException;
@@ -16,7 +16,7 @@ public class ServerFileReceiveTaskFactory {
      * @throws IOException When the file cannot be created.
      */
     public ServerFileReceiveTask create(
-            Server handler, SelectionKey selectionKey,
+            ServerRoom handler, SelectionKey selectionKey,
             UploadRequestPack requestPack
     ) throws IOException {
         UUID receiverTaskId;

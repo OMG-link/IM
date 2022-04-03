@@ -1,32 +1,27 @@
 package com.omg_link.im.pc_gui.components;
 
-import com.omg_link.im.pc_gui.helper.PanelUtil;
-import com.omg_link.im.core.Client;
+import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.file_manager.FileObject;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
-import com.omg_link.im.core.protocol.file_transfer.IDownloadCallback;
+import com.omg_link.im.pc_gui.helper.PanelUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.UUID;
 
 public class ChatImagePanel extends JPanel implements IFileTransferringPanel {
-    private final Client handler;
+    private final ClientRoom room;
     private final UUID serverFileId;
 
-    public ChatImagePanel(Client handler, String sender, long stamp, UUID serverFIleId){
+    public ChatImagePanel(ClientRoom room, String sender, long stamp, UUID serverFIleId){
         super();
 
-        this.handler = handler;
+        this.room = room;
         this.serverFileId = serverFIleId;
         this.setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
         this.add(PanelUtil.makeMessageInfo(sender,stamp));
 
-    }
-
-    public IDownloadCallback getDownloadCallback(){
-        return null;
     }
 
     @Override
@@ -61,7 +56,7 @@ public class ChatImagePanel extends JPanel implements IFileTransferringPanel {
     private JButton getRetryButton(){
         JButton button = new JButton("RETRY");
         button.addActionListener(e -> {
-            handler.downloadFile(serverFileId.toString(), serverFileId, FileTransferType.ChatImage,this);
+            room.downloadFile(serverFileId.toString(), serverFileId, FileTransferType.ChatImage,this);
             remove(2);
             remove(1);
         });

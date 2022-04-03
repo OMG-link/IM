@@ -1,9 +1,9 @@
 package com.omg_link.im.core.user_manager;
 
+import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.protocol.data_pack.user_list.BroadcastUserJoinPack;
 import com.omg_link.im.core.protocol.data_pack.user_list.BroadcastUserLeftPack;
 import com.omg_link.im.core.protocol.data_pack.user_list.BroadcastUsernameChangedPack;
-import com.omg_link.im.core.Server;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
 
 import java.util.Collection;
@@ -12,11 +12,11 @@ import java.util.Map;
 import java.util.UUID;
 
 public class ServerUserManager extends UserManager {
-    private final Server server;
+    private final ServerRoom serverRoom;
     private final Map<UUID,User> map = new HashMap<>();
 
-    public ServerUserManager(Server server){
-        this.server = server;
+    public ServerUserManager(ServerRoom serverRoom){
+        this.serverRoom = serverRoom;
     }
 
     public User createUser(String username){
@@ -40,7 +40,7 @@ public class ServerUserManager extends UserManager {
     }
 
     public void broadcast(DataPack dataPack){
-        server.getNetworkHandler().broadcast(dataPack);
+        serverRoom.getNetworkHandler().broadcast(dataPack);
     }
 
     private void onUserJoin(User user){

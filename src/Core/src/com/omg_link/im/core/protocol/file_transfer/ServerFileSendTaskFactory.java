@@ -1,6 +1,6 @@
 package com.omg_link.im.core.protocol.file_transfer;
 
-import com.omg_link.im.core.Server;
+import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.file_manager.NoSuchFileIdException;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.DownloadRequestPack;
 
@@ -16,7 +16,7 @@ public class ServerFileSendTaskFactory {
      * @throws NoSuchFileIdException When the senderFileId declared in request pack is invalid.
      */
     public ServerFileSendTask create(
-            Server handler, SelectionKey selectionKey,
+            ServerRoom handler, SelectionKey selectionKey,
             DownloadRequestPack requestPack
     ) throws NoSuchFileIdException {
         UUID senderTaskId;

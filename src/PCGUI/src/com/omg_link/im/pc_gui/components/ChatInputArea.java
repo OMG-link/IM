@@ -1,7 +1,7 @@
 package com.omg_link.im.pc_gui.components;
 
+import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.pc_gui.RoomFrame;
-import com.omg_link.im.core.Client;
 import com.omg_link.im.core.gui.IConfirmDialogCallback;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
 import com.omg_link.utils.ImageUtils;
@@ -19,25 +19,25 @@ import java.io.IOException;
 
 public class ChatInputArea extends InputArea implements DropTargetListener {
 
-    private final Client handler;
+    private final ClientRoom room;
 
     private boolean isPasteSuppressed = false;
 
     public ChatInputArea(RoomFrame roomFrame) {
         super(roomFrame);
-        handler = roomFrame.getClient();
+        room = roomFrame.getRoom();
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
     }
 
     public void uploadFile(File file) {
-        IFileTransferringPanel panel = handler.getRoomFrame().addFileTransferringPanel(
+        IFileTransferringPanel panel = room.getRoomFrame().addFileTransferringPanel(
                 file::getName,
                 file.length()
         );
         try{
-            handler.uploadFile(file, panel);
+            room.uploadFile(file, panel);
         }catch (FileNotFoundException e){
-            handler.showInfo(String.format("File %s not found.",file.getAbsolutePath()));
+            room.showMessage(String.format("File %s not found.",file.getAbsolutePath()));
         }
     }
 
@@ -49,15 +49,15 @@ public class ChatInputArea extends InputArea implements DropTargetListener {
                 for (File file : fileList) {
                     if (ImageUtils.isImageFile(file)) {
                         isPasteSuppressed = false; //The checkbox will block the key up message.
-                        handler.showCheckBox(
+                        room.showCheckbox(
                                 "Would you like to send this file as an image?",
                                 new IConfirmDialogCallback() {
                                     @Override
                                     public void onPositiveInput() {
                                         try {
-                                            handler.sendChatImage(file);
+                                            room.sendChatImage(file);
                                         } catch (FileNotFoundException e) {
-                                            handler.showInfo("File not found.");
+                                            room.showMessage("File not found.");
                                         }
                                     }
 

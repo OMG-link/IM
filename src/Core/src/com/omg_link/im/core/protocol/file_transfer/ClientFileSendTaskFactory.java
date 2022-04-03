@@ -1,7 +1,7 @@
 package com.omg_link.im.core.protocol.file_transfer;
 
+import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
-import com.omg_link.im.core.Client;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
 
 import java.io.File;
@@ -14,7 +14,7 @@ public class ClientFileSendTaskFactory {
     private final Map<UUID,ClientFileSendTask> map = new HashMap<>();
 
     public ClientFileSendTask create(
-            Client handler,
+            ClientRoom room,
             File file, FileTransferType fileTransferType,
             IFileTransferringPanel panel
     ) throws FileNotFoundException {
@@ -23,7 +23,7 @@ public class ClientFileSendTaskFactory {
             senderTaskId = UUID.randomUUID();
         }while(map.containsKey(senderTaskId));
         ClientFileSendTask task = new ClientFileSendTask(
-                handler,senderTaskId,
+                room,senderTaskId,
                 file,fileTransferType,
                 panel
         );

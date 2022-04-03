@@ -1,6 +1,6 @@
 package com.omg_link.im.core.gui;
 
-public interface IGUI {
+public interface IGui {
 
     /**
      *  此方法的实现应当调用 Active Client 的 setConnectFrame 方法。

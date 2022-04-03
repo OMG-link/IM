@@ -1,13 +1,13 @@
 package com.omg_link.im.core.protocol;
 
-import com.omg_link.im.core.Server;
+import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
 import com.omg_link.im.core.user_manager.NoSuchUidException;
 import com.omg_link.im.core.user_manager.User;
 
 public class Attachment {
-    private final Server server;
+    private final ServerRoom serverRoom;
 
     public final ByteData receiveBuffer;
     public boolean isVersionChecked = false;
@@ -17,8 +17,8 @@ public class Attachment {
 
     public User user;
 
-    public Attachment(Server server){
-        this.server = server;
+    public Attachment(ServerRoom serverRoom){
+        this.serverRoom = serverRoom;
         this.receiveBuffer = new ByteData();
         this.user = null;
     }
@@ -26,7 +26,7 @@ public class Attachment {
     public void onDisconnect(){
         try{
             if(user!=null){
-                server.getUserManager().removeUser(user);
+                serverRoom.getUserManager().removeUser(user);
             }
         }catch (NoSuchUidException e){
             throw new RuntimeException(e);

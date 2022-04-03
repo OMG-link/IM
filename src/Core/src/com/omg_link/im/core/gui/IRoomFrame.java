@@ -1,6 +1,5 @@
 package com.omg_link.im.core.gui;
 
-import com.omg_link.im.core.protocol.data_pack.system.ConnectResultPack;
 import com.omg_link.im.core.user_manager.User;
 import com.omg_link.utils.IStringGetter;
 
@@ -9,7 +8,11 @@ import java.util.UUID;
 
 public interface IRoomFrame {
 
-    void exitRoom(String reason);
+    enum ExitReason{
+        Unknown, InvalidUrl, InvalidToken, PackageDecodeError, ClientException, ConnectingToNewRoom
+    }
+
+    void exitRoom(ExitReason reason);
 
     /**
      * Called when connection to the server has been built.
@@ -17,7 +20,6 @@ public interface IRoomFrame {
      */
     void onConnectionBuilt();
     void onConnectionBroke();
-    void onConnectionRefused(ConnectResultPack.RejectReason reason);
 
     void showSystemMessage(String message);
     void showTextMessage(long serialId, String sender, long stamp, String text);

@@ -1,12 +1,11 @@
 package com.omg_link.im.pc_gui;
 
-import com.omg_link.im.core.Client;
+import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
 import com.omg_link.im.core.gui.IRoomFrame;
-import com.omg_link.im.pc_gui.components.*;
-import com.omg_link.im.core.protocol.data_pack.system.ConnectResultPack;
 import com.omg_link.im.core.user_manager.User;
+import com.omg_link.im.pc_gui.components.*;
 import com.omg_link.utils.IStringGetter;
 
 import javax.swing.*;
@@ -16,7 +15,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
-    private final Client client;
+    private final ClientRoom room;
 
     private final GridBagLayout gridBagLayout = new GridBagLayout();
     private final GridBagConstraints gridBagConstraints = new GridBagConstraints();
@@ -25,8 +24,8 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     private ChatInputArea inputArea;
     private JPanel buttonPanel;
 
-    public RoomFrame(Client client) {
-        this.client = client;
+    public RoomFrame(ClientRoom room) {
+        this.room = room;
 
         this.setTitle("IM - Made by OMG_link");
         this.setLocationRelativeTo(null);
@@ -48,7 +47,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     }
 
     public void onInputFinish() {
-        if (client.sendChat(this.inputArea.getText())) {
+        if (room.sendChat(this.inputArea.getText())) {
             this.inputArea.setText("");
         }
     }
@@ -132,19 +131,21 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
         sendButton.addActionListener((event) -> this.onInputFinish());
         component.add(sendButton);
 
-//        //Debug Button
-//        JButton debugButton = new JButton("Debug");
-//        debugButton.addActionListener((event)->{
-//            handler.getNetworkHandler().interrupt();
-//        });
-//        component.add(debugButton);
+        /*
+        //Debug Button
+        JButton debugButton = new JButton("Debug");
+        debugButton.addActionListener((event)->{
+            handler.getNetworkHandler().interrupt();
+        });
+        component.add(debugButton);
+        */
 
         appendComponent(component, 0, 5, 4, 1);
 
     }
 
     private void updateUserList(){
-        updateUserList(client.getUserManager().getUserList());
+        updateUserList(room.getUserManager().getUserList());
     }
 
     @Override
@@ -157,7 +158,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     }
 
     @Override
-    public void exitRoom(String reason) {
+    public void exitRoom(ExitReason reason) {
         JOptionPane.showMessageDialog(null,reason,"Exiting room",JOptionPane.ERROR_MESSAGE);
         System.exit(0);
     }
@@ -174,7 +175,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
             }
         }
         //Fetch data from user list
-        client.getNetworkHandler().getMessageManager().getHistory();
+        room.getMessageManager().getHistory();
         updateUserList();
     }
 
@@ -189,21 +190,6 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
         }
         //Show error
         showSystemMessage("Disconnected from the server. (Trying to reconnect if possible.)");
-    }
-
-    @Override
-    public void onConnectionRefused(ConnectResultPack.RejectReason reason) {
-        String rejectReason;
-        switch (reason){
-            case InvalidToken:{
-                rejectReason = "Invalid token.";
-                break;
-            }
-            default:{
-                rejectReason = "Unknown reason.";
-            }
-        }
-        exitRoom("Connection refused: "+rejectReason);
     }
 
     @Override
@@ -222,14 +208,14 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
 
     @Override
     public IFileTransferringPanel showChatImageMessage(long serialId, String sender, long stamp, UUID serverFileId) {
-        var panel = new ChatImagePanel(client, sender, stamp, serverFileId);
+        var panel = new ChatImagePanel(room, sender, stamp, serverFileId);
         this.messageArea.add(panel);
         return panel;
     }
 
     @Override
     public void showFileUploadedMessage(long serialId, String sender, long stamp, UUID uuid, String fileName, long fileSize) {
-        this.messageArea.add(new FilePanel(client, sender, stamp, uuid, fileName, fileSize));
+        this.messageArea.add(new FilePanel(room, sender, stamp, uuid, fileName, fileSize));
     }
 
     @Override
@@ -263,8 +249,8 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
         updateUserList();
     }
 
-    public Client getClient() {
-        return client;
+    public ClientRoom getRoom() {
+        return room;
     }
 
 }

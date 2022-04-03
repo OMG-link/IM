@@ -1,9 +1,9 @@
 package com.omg_link.im.core.protocol.file_transfer;
 
-import com.omg_link.im.core.Client;
-import com.omg_link.im.core.gui.IFileTransferringPanel;
+import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.file_manager.ClientFileManager;
 import com.omg_link.im.core.file_manager.FileObject;
+import com.omg_link.im.core.gui.IFileTransferringPanel;
 import com.omg_link.im.core.protocol.data.PackageTooLargeException;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 public class ClientFileReceiveTask extends FileReceiveTask {
-    private final Client client;
+    private final ClientRoom room;
     private final IFileTransferringPanel panel;
 
     //constructors
@@ -21,12 +21,12 @@ public class ClientFileReceiveTask extends FileReceiveTask {
      * @throws IOException When the file cannot be created.
      */
     public ClientFileReceiveTask(
-            Client client, UUID receiverTaskId,
+            ClientRoom room, UUID receiverTaskId,
             String fileName, UUID senderFileId, FileTransferType fileTransferType,
             IFileTransferringPanel panel
     ) throws IOException {
         super(fileName, fileTransferType, receiverTaskId);
-        this.client = client;
+        this.room = room;
         this.panel = panel;
         super.setSenderFileId(senderFileId);
 
@@ -51,13 +51,13 @@ public class ClientFileReceiveTask extends FileReceiveTask {
 
     @Override
     protected ClientFileManager getFileManager() {
-        return client.getFileManager();
+        return room.getFileManager();
     }
 
     @Override
     void removeFromFactory() {
         try{
-            client.getFactoryManager().getFileReceiveTaskFactory().remove(this);
+            room.getFactoryManager().getFileReceiveTaskFactory().remove(this);
         }catch (NoSuchTaskIdException e){
             throw new RuntimeException(e);
         }
@@ -65,7 +65,7 @@ public class ClientFileReceiveTask extends FileReceiveTask {
 
     @Override
     protected void send(DataPack dataPack) throws PackageTooLargeException {
-        client.getNetworkHandler().send(dataPack);
+        room.getNetworkHandler().send(dataPack);
     }
 
     //start

@@ -1,6 +1,6 @@
 package com.omg_link.im.core.message_manager;
 
-import com.omg_link.im.core.Client;
+import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.protocol.data.InvalidPackageException;
 import com.omg_link.im.core.protocol.data.PackageTooLargeException;
@@ -14,12 +14,12 @@ import java.util.UUID;
 
 public class ClientMessageManager {
 
-    private final Client client;
+    private final ClientRoom room;
     private final Map<UUID, IMessageSendCallback> uuidToCallbackMap = new HashMap<>();
     private final Map<Long,UUID> serialIdToUuidMap = new HashMap<>();
 
-    public ClientMessageManager(Client client){
-        this.client = client;
+    public ClientMessageManager(ClientRoom room){
+        this.room = room;
     }
 
     private UUID getMsgId(IMessageSendCallback callback){
@@ -46,7 +46,7 @@ public class ClientMessageManager {
     }
 
     private void send(DataPack pack) throws PackageTooLargeException {
-        client.getNetworkHandler().send(pack);
+        room.getNetworkHandler().send(pack);
     }
 
     public void receive(ByteData data) throws InvalidPackageException {
@@ -71,7 +71,7 @@ public class ClientMessageManager {
             case ChatText:{
                 var pack = new ChatTextBroadcastPack(data);
                 doCallback(pack.getSerialId(),pack.getStamp());
-                this.client.getRoomFrame().showTextMessage(
+                this.room.getRoomFrame().showTextMessage(
                         pack.getSerialId(),
                         pack.getUsername(),
                         pack.getStamp(),
@@ -81,18 +81,18 @@ public class ClientMessageManager {
             }
             case ChatImage:{
                 var pack = new ChatImageBroadcastPack(data);
-                var callback = client.getRoomFrame().showChatImageMessage(
+                var callback = room.getRoomFrame().showChatImageMessage(
                         pack.getSerialId(),
                         pack.getUsername(),
                         pack.getStamp(),
                         pack.getServerImageId()
                 );
-                client.downloadFile(pack.getServerImageId().toString(), pack.getServerImageId(), FileTransferType.ChatImage, callback);
+                room.downloadFile(pack.getServerImageId().toString(), pack.getServerImageId(), FileTransferType.ChatImage, callback);
                 break;
             }
             case ChatFile:{
                 var pack = new ChatFileBroadcastPack(data);
-                this.client.getRoomFrame().showFileUploadedMessage(
+                this.room.getRoomFrame().showFileUploadedMessage(
                         pack.getSerialId(),
                         pack.getUsername(),
                         pack.getStamp(),

@@ -1,6 +1,6 @@
 package com.omg_link.im.pc_gui.components;
 
-import com.omg_link.im.core.Client;
+import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.file_manager.FileObject;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 public class DownloadPanel extends JPanel{
-    private final Client handler;
+    private final ClientRoom room;
     private final IFileTransferringPanel transferringPanel;
     private final String fileName;
     private final UUID serverFileId;
@@ -19,9 +19,9 @@ public class DownloadPanel extends JPanel{
     private final JPanel buttonPanel = new JPanel();
     private final JTextArea textArea;
 
-    public DownloadPanel(Client handler, IFileTransferringPanel transferringPanel, String fileName, UUID serverFileId){
+    public DownloadPanel(ClientRoom room, IFileTransferringPanel transferringPanel, String fileName, UUID serverFileId){
         super();
-        this.handler = handler;
+        this.room = room;
         this.transferringPanel = transferringPanel;
         this.fileName = fileName;
         this.serverFileId = serverFileId;
@@ -43,7 +43,7 @@ public class DownloadPanel extends JPanel{
         JButton downloadButton = new JButton("DOWNLOAD");
         downloadButton.addActionListener(e -> {
             buttonPanel.removeAll();
-            handler.downloadFile(fileName, serverFileId, FileTransferType.ChatFile,transferringPanel);
+            room.downloadFile(fileName, serverFileId, FileTransferType.ChatFile,transferringPanel);
         });
         buttonPanel.add(downloadButton);
 
@@ -61,18 +61,18 @@ public class DownloadPanel extends JPanel{
         JButton openFileButton = new JButton("OPEN");
         openFileButton.addActionListener(event -> {
             if(!Desktop.isDesktopSupported()){
-                handler.showInfo("Your JVM does not support this operation.");
+                room.showMessage("Your JVM does not support this operation.");
                 return;
             }
             if(!downloadedFile.exists()){
-                handler.showInfo("File not exists, try download again.");
+                room.showMessage("File not exists, try download again.");
                 setBeforeDownload();
                 return;
             }
             try{
                 Desktop.getDesktop().open(downloadedFile);
             }catch (IOException e){
-                handler.showInfo(e.toString());
+                room.showMessage(e.toString());
                 e.printStackTrace();
             }
         });
@@ -81,11 +81,11 @@ public class DownloadPanel extends JPanel{
         JButton openInExplorerButton = new JButton("OPEN IN EXPLORER");
         openInExplorerButton.addActionListener(event -> {
             if(!Desktop.isDesktopSupported()){
-                handler.showInfo("Your JVM does not support this operation.");
+                room.showMessage("Your JVM does not support this operation.");
                 return;
             }
             if(!downloadedFile.exists()){
-                handler.showInfo("File not exists, try download again.");
+                room.showMessage("File not exists, try download again.");
                 setBeforeDownload();
                 return;
             }
@@ -96,7 +96,7 @@ public class DownloadPanel extends JPanel{
                     Desktop.getDesktop().open(downloadedFile.getParentFile());
                 }
             }catch (IOException e){
-                handler.showInfo(e.toString());
+                room.showMessage(e.toString());
                 e.printStackTrace();
             }
         });

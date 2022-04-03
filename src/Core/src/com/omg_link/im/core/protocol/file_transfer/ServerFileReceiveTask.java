@@ -1,6 +1,6 @@
 package com.omg_link.im.core.protocol.file_transfer;
 
-import com.omg_link.im.core.Server;
+import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.file_manager.FileObject;
 import com.omg_link.im.core.file_manager.FileOccupiedException;
 import com.omg_link.im.core.file_manager.ServerFileManager;
@@ -15,7 +15,7 @@ import java.nio.channels.SelectionKey;
 import java.util.UUID;
 
 public class ServerFileReceiveTask extends FileReceiveTask {
-    private final Server server;
+    private final ServerRoom serverRoom;
     private final SelectionKey selectionKey;
 
     //constructor
@@ -24,11 +24,11 @@ public class ServerFileReceiveTask extends FileReceiveTask {
      * @throws IOException - When the file cannot be created.
      */
     public ServerFileReceiveTask(
-            Server server, SelectionKey selectionKey, UUID receiverTaskId,
+            ServerRoom serverRoom, SelectionKey selectionKey, UUID receiverTaskId,
             UploadRequestPack requestPack
     ) throws IOException {
         super(requestPack.getFileName(),requestPack.getFileTransferType(), receiverTaskId);
-        this.server = server;
+        this.serverRoom = serverRoom;
         this.selectionKey = selectionKey;
 
         super.setSenderTaskId(requestPack.getSenderTaskId());
@@ -49,21 +49,21 @@ public class ServerFileReceiveTask extends FileReceiveTask {
 
     @Override
     protected ServerFileManager getFileManager() {
-        return server.getFileManager();
+        return serverRoom.getFileManager();
     }
 
     @Override
     void removeFromFactory() {
         try{
-            server.getFactoryManager().getFileReceiveTaskFactory().remove(this);
+            serverRoom.getFactoryManager().getFileReceiveTaskFactory().remove(this);
         }catch (NoSuchTaskIdException e){
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    protected void send(DataPack dataPack) throws IOException, PackageTooLargeException {
-        server.getNetworkHandler().send(selectionKey, dataPack);
+    protected void send(DataPack dataPack) throws PackageTooLargeException {
+        serverRoom.getNetworkHandler().send(selectionKey, dataPack);
     }
 
     //end
@@ -75,7 +75,7 @@ public class ServerFileReceiveTask extends FileReceiveTask {
         switch (getFileTransferType()){
             case ChatFile:{
                 UUID fileId = getReceiverFileId();
-                server.getMessageManager().broadcastChatFile(
+                serverRoom.getMessageManager().broadcastChatFile(
                         user,
                         fileId,
                         getFileName(),
@@ -84,7 +84,7 @@ public class ServerFileReceiveTask extends FileReceiveTask {
                 break;
             }
             case ChatImage:{
-                server.getMessageManager().broadcastChatImage(
+                serverRoom.getMessageManager().broadcastChatImage(
                         user,
                         getReceiverFileId()
                 );

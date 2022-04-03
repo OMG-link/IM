@@ -1,50 +1,53 @@
 package com.omg_link.im.core.user_manager;
 
-import com.omg_link.im.core.Client;
+import com.omg_link.im.core.ClientRoom;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public class ClientUserManager extends UserManager {
-    private final Client client;
+    private final ClientRoom room;
     private final Map<UUID,User> userList = new HashMap<>();
     private final CurrentUser currentUser = new CurrentUser(this);
 
-    public ClientUserManager(Client client){
-        this.client = client;
+    public ClientUserManager(ClientRoom room){
+        this.room = room;
     }
 
     public void onUserListUpdated(){
-        client.getRoomFrame().updateUserList(getUserList());
+        room.getRoomFrame().updateUserList(getUserList());
     }
 
     public void joinUser(User user){
         if(userList.containsKey(user.getUid())){
-            client.getLogger().log(
+            room.getLogger().log(
                     Level.WARNING,
                     "UUID conflict in ClientUserManager::joinUser. The old one will be replaced."
             );
         }
         user.setUserManager(this);
         userList.put(user.getUid(),user);
-        client.getRoomFrame().onUserJoined(user);
+        room.getRoomFrame().onUserJoined(user);
     }
 
     public void removeUser(UUID uid){
         if(!userList.containsKey(uid)){
-            client.getLogger().log(
+            room.getLogger().log(
                     Level.WARNING,
                     "UUID not found in ClientUserManager::removeUser. The operation will be ignored."
             );
             return;
         }
         var user = userList.remove(uid);
-        client.getRoomFrame().onUserLeft(user);
+        room.getRoomFrame().onUserLeft(user);
     }
 
     public void changeUsername(UUID uid, String name){
         if(!userList.containsKey(uid)){
-            client.getLogger().log(
+            room.getLogger().log(
                     Level.WARNING,
                     "UUID not found in ClientUserManager::changeUsername. The operation will be ignored."
             );
@@ -53,7 +56,7 @@ public class ClientUserManager extends UserManager {
         var user = userList.get(uid);
         var previousName = user.getName();
         userList.get(uid).setName(name);
-        client.getRoomFrame().onUsernameChanged(user,previousName);
+        room.getRoomFrame().onUsernameChanged(user,previousName);
     }
 
     public void updateFromUserList(Collection<User> userList){

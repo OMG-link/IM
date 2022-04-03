@@ -1,14 +1,14 @@
 package com.omg_link.im.server_gui;
 
-import com.omg_link.im.core.Server;
+import com.omg_link.im.core.ServerRoom;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class ServerFrame extends JFrame {
-    private final Server handler;
+    private final ServerRoom handler;
 
-    public ServerFrame(Server handler){
+    public ServerFrame(ServerRoom handler){
         this.handler = handler;
 
         this.setTitle("IM Server");
@@ -22,6 +22,8 @@ public class ServerFrame extends JFrame {
         this.pack();
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         this.setLocation(screenSize.width/2-this.getWidth()/2,screenSize.height/2-this.getHeight()/2);
+
+        this.setVisible(true);
 
     }
 

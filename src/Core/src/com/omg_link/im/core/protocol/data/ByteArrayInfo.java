@@ -1,9 +1,9 @@
 package com.omg_link.im.core.protocol.data;
 
 public class ByteArrayInfo {
-    byte[] array;
-    int offset;
-    int length;
+    private final byte[] array;
+    private final int offset;
+    private final int length;
 
     public ByteArrayInfo(byte[] array, int offset, int length){
         this.array = array;

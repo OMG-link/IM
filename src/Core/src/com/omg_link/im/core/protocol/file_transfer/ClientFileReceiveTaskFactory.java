@@ -1,6 +1,6 @@
 package com.omg_link.im.core.protocol.file_transfer;
 
-import com.omg_link.im.core.Client;
+import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
 
@@ -16,7 +16,7 @@ public class ClientFileReceiveTaskFactory {
      * @throws IOException When the file cannot be created.
      */
     public ClientFileReceiveTask create(
-            Client handler,
+            ClientRoom room,
             String fileName, UUID senderFileId, FileTransferType fileTransferType,
             IFileTransferringPanel panel
     ) throws IOException {
@@ -25,7 +25,7 @@ public class ClientFileReceiveTaskFactory {
             receiverTaskId = UUID.randomUUID();
         }while(map.containsKey(receiverTaskId));
         ClientFileReceiveTask task = new ClientFileReceiveTask(
-                handler,receiverTaskId,
+                room,receiverTaskId,
                 fileName,senderFileId,fileTransferType,
                 panel
         );

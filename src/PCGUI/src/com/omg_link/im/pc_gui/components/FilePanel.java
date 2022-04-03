@@ -1,7 +1,7 @@
 package com.omg_link.im.pc_gui.components;
 
+import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.pc_gui.helper.PanelUtil;
-import com.omg_link.im.core.Client;
 import com.omg_link.im.core.file_manager.FileObject;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
 import com.omg_link.utils.FileUtils;
@@ -15,14 +15,14 @@ import java.awt.*;
 import java.util.UUID;
 
 public class FilePanel extends JPanel implements IFileTransferringPanel {
-    private final Client handler;
+    private final ClientRoom room;
     private final long fileSize;
 
     private final DownloadPanel downloadPanel;
 
-    public FilePanel(Client handler, String sender, long stamp, UUID fileId, String fileName, long fileSize) {
+    public FilePanel(ClientRoom room, String sender, long stamp, UUID fileId, String fileName, long fileSize) {
         super();
-        this.handler = handler;
+        this.room = room;
         this.fileSize = fileSize;
 
         this.downloadPanel = makeDownloadPanel(fileName, fileId);
@@ -63,7 +63,7 @@ public class FilePanel extends JPanel implements IFileTransferringPanel {
     }
 
     private DownloadPanel makeDownloadPanel(String fileName, UUID fileId) {
-        return new DownloadPanel(handler, this, fileName, fileId);
+        return new DownloadPanel(room, this, fileName, fileId);
     }
 
     @Override

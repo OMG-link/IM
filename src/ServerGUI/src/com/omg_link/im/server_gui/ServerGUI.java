@@ -1,12 +1,12 @@
 package com.omg_link.im.server_gui;
 
-import com.omg_link.im.core.Server;
+import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.gui.IServerGUI;
 import com.omg_link.im.core.config.Config;
 
 public class ServerGUI implements IServerGUI {
 
-    final Server server;
+    final ServerRoom serverRoom;
 
     public static void main(String[] args) {
         try{
@@ -19,12 +19,11 @@ public class ServerGUI implements IServerGUI {
     }
 
     public ServerGUI(){
-        server = new Server(this);
+        serverRoom = new ServerRoom(this);
     }
 
     public void createGUI(){
-        ServerFrame serverFrame = new ServerFrame(server);
-        serverFrame.setVisible(true);
+        new ServerFrame(serverRoom);
     }
 
 }

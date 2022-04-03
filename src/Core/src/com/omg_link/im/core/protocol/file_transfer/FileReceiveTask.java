@@ -33,16 +33,17 @@ public abstract class FileReceiveTask {
         this.fileName = fileName;
         this.fileTransferType = fileTransferType;
         this.receiverTaskId = receiverTaskId;
-        if(FileUtils.isFileNameLegal(this.fileName)){
+        if (FileUtils.isFileNameLegal(this.fileName)) {
             throw new IllegalFileNameException();
         }
     }
 
     //abstract
 
-    abstract void send(DataPack dataPack) throws IOException, PackageTooLargeException;
+    abstract void send(DataPack dataPack) throws PackageTooLargeException;
 
     abstract FileManager getFileManager();
+
     abstract void removeFromFactory();
 
     //start
@@ -82,16 +83,11 @@ public abstract class FileReceiveTask {
         }
         //reply to sender
         if (senderTaskId != null) {
-            try {
-                send(new UploadResultPack(
-                        this,
-                        true,
-                        ""
-                ));
-            } catch (IOException ignored) {
-            } catch (PackageTooLargeException e) {
-                throw new RuntimeException(e);
-            }
+            send(new UploadResultPack(
+                    this,
+                    true,
+                    ""
+            ));
         }
         //task end
         this.removeFromFactory();
@@ -109,20 +105,16 @@ public abstract class FileReceiveTask {
                         String.format("File %s is occupied and cannot be deleted.", getFileWriter().getFileObject().getFile().getAbsoluteFile()),
                         e
                 );
-            } catch (NoSuchFileIdException ignored){}
+            } catch (NoSuchFileIdException ignored) {
+            }
         }
         //reply to sender
         if (senderTaskId != null) {
-            try {
-                send(new UploadResultPack(
-                        this,
-                        false,
-                        reason
-                ));
-            } catch (IOException ignored) {
-            } catch (PackageTooLargeException e) {
-                throw new RuntimeException(e);
-            }
+            send(new UploadResultPack(
+                    this,
+                    false,
+                    reason
+            ));
         }
         //task end
         this.removeFromFactory();
@@ -197,7 +189,7 @@ public abstract class FileReceiveTask {
     }
 
     public long getFileSize() {
-        if(fileSize==null){
+        if (fileSize == null) {
             throw new NullPointerException();
         }
         return fileSize;

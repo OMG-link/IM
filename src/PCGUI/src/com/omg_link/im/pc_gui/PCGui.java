@@ -3,7 +3,7 @@ package com.omg_link.im.pc_gui;
 import com.omg_link.im.core.Client;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.gui.IConfirmDialogCallback;
-import com.omg_link.im.core.gui.IGUI;
+import com.omg_link.im.core.gui.IGui;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,11 +11,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class PCGUI implements IGUI {
+public class PCGui implements IGui {
     public static void main(String[] args) {
         try {
             Config.updateFromFile();
-            PCGUI GUI = new PCGUI();
+            PCGui GUI = new PCGui();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -23,9 +23,13 @@ public class PCGUI implements IGUI {
 
     private final Client client;
 
-    public PCGUI() {
-        client = new Client(this);
-        client.start();
+    public PCGui() {
+        try{
+            client = new Client(this);
+            client.getGui().createConnectFrame();
+        }catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -37,7 +41,7 @@ public class PCGUI implements IGUI {
 
     @Override
     public void createRoomFrame() {
-        RoomFrame roomFrame = new RoomFrame(client);
+        RoomFrame roomFrame = new RoomFrame(client.getRoom());
         roomFrame.setVisible(true);
         client.setRoomFrame(roomFrame);
     }
@@ -74,7 +78,7 @@ public class PCGUI implements IGUI {
 
     @Override
     public void alertVersionUnrecognizable(String clientVersion) {
-        client.showCheckBox(
+        client.showCheckbox(
                 String.format("Unable to read the version of the server, and the program will end shortly.\nYour client runs on version %s\nDo you want to download a new version?", clientVersion),
                 new IConfirmDialogCallback() {
                     @Override
@@ -93,7 +97,7 @@ public class PCGUI implements IGUI {
 
     @Override
     public void alertVersionMismatch(String serverVersion, String clientVersion) {
-        client.showCheckBox(
+        client.showCheckbox(
                 String.format("The server runs on version \"%s\", while your client runs on version \"%s\".\n Do you want to download a new version?", serverVersion, clientVersion),
                 new IConfirmDialogCallback() {
                     @Override
@@ -111,7 +115,7 @@ public class PCGUI implements IGUI {
 
     @Override
     public void alertVersionIncompatible(String serverVersion, String clientVersion) {
-        client.showCheckBox(
+        client.showCheckbox(
                 String.format("The server runs on version \"%s\", while your client runs on version \"%s\".\nThe two versions are not compatible with each other.\nDo you want to download a new version?", serverVersion, clientVersion),
                 new IConfirmDialogCallback() {
                     @Override
