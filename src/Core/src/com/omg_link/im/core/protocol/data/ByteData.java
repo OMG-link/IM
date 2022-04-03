@@ -54,7 +54,7 @@ public class ByteData implements Cloneable{
         return new ByteArrayInfo(data,begin,length);
     }
 
-    public byte[] getByteArray(){
+    public byte[] getBytes(){
         byte[] result = new byte[length];
         copyBytesTo(result,length);
         return result;
@@ -255,6 +255,14 @@ public class ByteData implements Cloneable{
         return new String(buffer,StandardCharsets.UTF_8);
     }
 
+    public byte[] decodeBytes(int length) throws InvalidPackageException {
+        try{
+            return cut(length).getBytes();
+        }catch (InvalidParameterException e){
+            throw new InvalidPackageException(e);
+        }
+    }
+
     public byte[] decodeByteArray() throws InvalidPackageException {
         int length = this.decodeInt();
         this.checkLength(length);
@@ -314,7 +322,7 @@ public class ByteData implements Cloneable{
         return append(ByteData.encode(e));
     }
 
-    public ByteData appendByteArray(byte[] b){
+    public ByteData appendBytes(byte[] b){
         return append(new ByteData(b));
     }
 
@@ -357,7 +365,7 @@ public class ByteData implements Cloneable{
 
     public static ByteData encode(byte[] bytes){
         return ByteData.encode(bytes.length)
-                .appendByteArray(bytes);
+                .appendBytes(bytes);
     }
 
     public static <E extends Enum<E>> ByteData encode(E e){

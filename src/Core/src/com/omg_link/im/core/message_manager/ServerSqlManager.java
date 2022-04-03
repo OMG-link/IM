@@ -57,7 +57,7 @@ public class ServerSqlManager {
         }
         try {
             insertStatement.setLong(1, serialId);
-            insertStatement.setBytes(2, data.getByteArray());
+            insertStatement.setBytes(2, data.getBytes());
             insertStatement.executeUpdate();
             recordNum++;
         } catch (SQLException e) {
