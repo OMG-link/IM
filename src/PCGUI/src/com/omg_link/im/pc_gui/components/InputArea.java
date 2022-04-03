@@ -1,6 +1,6 @@
 package com.omg_link.im.pc_gui.components;
 
-import com.omg_link.im.config.Config;
+import com.omg_link.im.core.config.Config;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;

@@ -1,10 +1,10 @@
 package com.omg_link.im.pc_gui.components;
 
 import com.omg_link.im.pc_gui.helper.PanelUtil;
-import com.omg_link.im.Client;
-import com.omg_link.im.file_manager.FileObject;
-import com.omg_link.im.gui.IFileTransferringPanel;
-import com.omg_link.mutils.FileUtils;
+import com.omg_link.im.core.Client;
+import com.omg_link.im.core.file_manager.FileObject;
+import com.omg_link.im.core.gui.IFileTransferringPanel;
+import com.omg_link.utils.FileUtils;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;

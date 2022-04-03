@@ -1,9 +1,9 @@
 package com.omg_link.im.pc_gui;
 
-import com.omg_link.im.Client;
-import com.omg_link.im.config.Config;
-import com.omg_link.im.gui.IConfirmDialogCallback;
-import com.omg_link.im.gui.IGUI;
+import com.omg_link.im.core.Client;
+import com.omg_link.im.core.config.Config;
+import com.omg_link.im.core.gui.IConfirmDialogCallback;
+import com.omg_link.im.core.gui.IGUI;
 
 import javax.swing.*;
 import java.awt.*;

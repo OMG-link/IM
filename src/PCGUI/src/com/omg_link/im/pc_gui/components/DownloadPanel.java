@@ -1,9 +1,9 @@
 package com.omg_link.im.pc_gui.components;
 
-import com.omg_link.im.Client;
-import com.omg_link.im.file_manager.FileObject;
-import com.omg_link.im.gui.IFileTransferringPanel;
-import com.omg_link.im.protocol.data_pack.file_transfer.FileTransferType;
+import com.omg_link.im.core.Client;
+import com.omg_link.im.core.file_manager.FileObject;
+import com.omg_link.im.core.gui.IFileTransferringPanel;
+import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
 
 import javax.swing.*;
 import java.awt.*;

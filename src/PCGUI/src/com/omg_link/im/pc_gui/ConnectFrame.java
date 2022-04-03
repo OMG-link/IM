@@ -1,9 +1,9 @@
 package com.omg_link.im.pc_gui;
 
-import com.omg_link.im.config.InvalidUserNameException;
-import com.omg_link.im.gui.IConnectFrame;
-import com.omg_link.im.Client;
-import com.omg_link.im.config.Config;
+import com.omg_link.im.core.config.InvalidUserNameException;
+import com.omg_link.im.core.gui.IConnectFrame;
+import com.omg_link.im.core.Client;
+import com.omg_link.im.core.config.Config;
 import com.omg_link.im.pc_gui.components.IInputCallback;
 
 import javax.swing.*;

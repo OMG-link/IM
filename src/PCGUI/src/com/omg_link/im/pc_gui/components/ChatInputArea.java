@@ -1,10 +1,10 @@
 package com.omg_link.im.pc_gui.components;
 
 import com.omg_link.im.pc_gui.RoomFrame;
-import com.omg_link.im.Client;
-import com.omg_link.im.gui.IConfirmDialogCallback;
-import com.omg_link.im.gui.IFileTransferringPanel;
-import com.omg_link.mutils.ImageUtils;
+import com.omg_link.im.core.Client;
+import com.omg_link.im.core.gui.IConfirmDialogCallback;
+import com.omg_link.im.core.gui.IFileTransferringPanel;
+import com.omg_link.utils.ImageUtils;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
