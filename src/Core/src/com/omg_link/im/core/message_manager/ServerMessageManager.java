@@ -56,6 +56,10 @@ public class ServerMessageManager {
         }
     }
 
+    public void close(){
+        sqlManager.close();
+    }
+
     public UUID getDialogId() {
         if (sqlManager == null) {
             return UUID.randomUUID();

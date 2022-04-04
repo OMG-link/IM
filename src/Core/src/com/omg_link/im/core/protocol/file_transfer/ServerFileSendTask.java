@@ -3,12 +3,11 @@ package com.omg_link.im.core.protocol.file_transfer;
 import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.file_manager.NoSuchFileIdException;
 import com.omg_link.im.core.file_manager.ServerFileManager;
+import com.omg_link.im.core.protocol.data.PackageTooLargeException;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.DownloadRequestPack;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.UploadRequestPack;
-import com.omg_link.im.core.protocol.data.PackageTooLargeException;
 
-import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.util.UUID;
 
@@ -60,12 +59,8 @@ public class ServerFileSendTask extends FileSendTask{
     //steps
 
     @Override
-    void sendUploadRequestPack() throws IOException {
-        try{
-            send(new UploadRequestPack(this));
-        }catch (PackageTooLargeException e){
-            throw new RuntimeException(e);
-        }
+    void sendUploadRequestPack() {
+        send(new UploadRequestPack(this));
     }
 
 }

@@ -27,6 +27,7 @@ public abstract class FileSendTask implements Runnable {
     private String fileName;
 
     protected String localEndReason = null;
+    private boolean isStopped = false;
 
     //constructors
 
@@ -36,7 +37,7 @@ public abstract class FileSendTask implements Runnable {
 
     //abstract
 
-    abstract void send(DataPack dataPack) throws PackageTooLargeException;
+    abstract void send(DataPack dataPack);
     abstract FileManager getFileManager();
     abstract void removeFromFactory();
 
