@@ -51,6 +51,13 @@ public class ServerSqlManager {
         );
     }
 
+    public void close(){
+        try{
+            connection.close();
+        }catch (SQLException ignored){
+        }
+    }
+
     public void put(long serialId, ByteData data) throws InvalidRecordException {
         if (data.getLength() > Config.packageMaxLength) {
             throw new InvalidRecordException("Data too long!");

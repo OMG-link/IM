@@ -40,6 +40,11 @@ public class ServerRoom {
         }
     }
 
+    public void close(){
+        messageManager.close();
+        System.exit(0);
+    }
+
     public Logger getLogger() {
         return logger;
     }
