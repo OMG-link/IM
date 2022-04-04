@@ -15,7 +15,7 @@ public class ServerFrame extends JFrame {
 
         this.setTitle("IM Server");
         this.setLocationRelativeTo(null);
-        this.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setResizable(false);
 
         this.addWindowListener(new WindowListener() {
