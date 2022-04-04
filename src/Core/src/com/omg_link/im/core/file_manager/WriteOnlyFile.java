@@ -5,8 +5,6 @@ import com.omg_link.im.core.config.Config;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class WriteOnlyFile implements AutoCloseable {
     private final FileObject fileObject;
@@ -58,14 +56,10 @@ public class WriteOnlyFile implements AutoCloseable {
     }
 
     public void close(){
-        if(!isActive){
-            Logger.getLogger("IMCore").log(Level.WARNING,"Write only file closed twice.");
-            new Exception().printStackTrace();
-            return;
-        }
+        if(!isActive) return;
+        this.isActive = false;
         try{this.file.close();}catch (IOException ignored){}
         this.fileObject.onWriteInstanceClose();
-        this.isActive = false;
     }
 
     public FileObject getFileObject() {

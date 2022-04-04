@@ -3,8 +3,6 @@ package com.omg_link.im.core.file_manager;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ReadOnlyFile implements AutoCloseable {
     private final FileObject fileObject;
@@ -45,13 +43,10 @@ public class ReadOnlyFile implements AutoCloseable {
     }
 
     public void close(){
-        if(!isActive){
-            Logger.getGlobal().log(Level.WARNING,"Read only file closed twice.");
-            return;
-        }
+        if(!isActive) return;
+        this.isActive = false;
         try{this.file.close();}catch (IOException ignored){}
         this.fileObject.onReadInstanceClose();
-        this.isActive = false;
     }
 
     public FileObject getFileObject() {

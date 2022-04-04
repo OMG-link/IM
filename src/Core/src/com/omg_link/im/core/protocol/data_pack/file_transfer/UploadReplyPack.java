@@ -8,43 +8,42 @@ import java.util.UUID;
 
 public class UploadReplyPack extends DataPack {
 
-    public enum Reason{
-        ok, fileTooLarge, taskNotFound, remoteIOError
+    public enum State {
+        startUpload,
+        fileAlreadyExists,
+        errorFileTooLarge, errorTaskNotFound, errorRemoteIOError, errorIllegalFileName
     }
 
     private final UUID senderTaskId;
     private final UUID receiverTaskId;
     private final UUID senderFileId;
     private final UUID receiverFileId;
-    private final boolean ok;
-    private final Reason reason;
+    private final State state;
     private final FileTransferType fileTransferType;
 
     /**
      * Constructor used by client.
      */
-    public UploadReplyPack(UploadRequestPack requestPack,boolean ok,Reason reason){
+    public UploadReplyPack(UploadRequestPack requestPack, State state){
         super(Type.FileUploadReply);
         this.senderTaskId = requestPack.getSenderTaskId();
         this.receiverTaskId = requestPack.getReceiverTaskId();
         this.senderFileId = requestPack.getSenderFileId();
         this.receiverFileId = requestPack.getReceiverFileId();
-        this.ok = ok;
-        this.reason = reason;
+        this.state = state;
         this.fileTransferType = requestPack.getFileTransferType();
     }
 
     /**
      * Constructor used by server.
      */
-    public UploadReplyPack(UploadRequestPack requestPack,UUID receiverTaskId,UUID receiverFileId,boolean ok,Reason reason){
+    public UploadReplyPack(UploadRequestPack requestPack, UUID receiverTaskId, UUID receiverFileId, State state){
         super(Type.FileUploadReply);
         this.senderTaskId = requestPack.getSenderTaskId();
         this.receiverTaskId = receiverTaskId;
         this.senderFileId = requestPack.getSenderFileId();
         this.receiverFileId = receiverFileId;
-        this.ok = ok;
-        this.reason = reason;
+        this.state = state;
         this.fileTransferType = requestPack.getFileTransferType();
     }
 
@@ -55,8 +54,7 @@ public class UploadReplyPack extends DataPack {
         this.receiverTaskId = data.decodeUuid();
         this.senderFileId = data.decodeUuid();
         this.receiverFileId = data.decodeUuid();
-        this.ok = data.decodeBoolean();
-        this.reason = data.decodeEnum(Reason.values());
+        this.state = data.decodeEnum(State.values());
         this.fileTransferType = data.decodeEnum(FileTransferType.values());
     }
 
@@ -67,8 +65,7 @@ public class UploadReplyPack extends DataPack {
                 .append(receiverTaskId)
                 .append(senderFileId)
                 .append(receiverFileId)
-                .append(ok)
-                .append(reason)
+                .append(state)
                 .append(fileTransferType);
     }
 
@@ -88,12 +85,8 @@ public class UploadReplyPack extends DataPack {
         return receiverFileId;
     }
 
-    public boolean isOk() {
-        return ok;
-    }
-
-    public Reason getReason() {
-        return reason;
+    public State getState() {
+        return state;
     }
 
     public FileTransferType getFileTransferType() {

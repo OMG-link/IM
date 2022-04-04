@@ -15,7 +15,7 @@ public class ChatSendReplyPack extends DataPack {
     private final boolean ok;
     private UUID msgId;
     private long serialId;
-    private Reason reason;
+    private Reason state;
 
     /**
      * Called when send is accepted.
@@ -30,10 +30,10 @@ public class ChatSendReplyPack extends DataPack {
     /**
      * Called when send is rejected.
      */
-    public ChatSendReplyPack(Reason reason){
+    public ChatSendReplyPack(Reason state){
         super(Type.ChatSendReply);
         this.ok = false;
-        this.reason = reason;
+        this.state = state;
     }
 
     public ChatSendReplyPack(ByteData data) throws InvalidPackageException {
@@ -43,7 +43,7 @@ public class ChatSendReplyPack extends DataPack {
             this.msgId = data.decodeUuid();
             this.serialId = data.decodeLong();
         } else {
-            this.reason = data.decodeEnum(Reason.values());
+            this.state = data.decodeEnum(Reason.values());
         }
     }
 
@@ -55,7 +55,7 @@ public class ChatSendReplyPack extends DataPack {
             result.append(msgId)
                     .append(serialId);
         } else {
-            result.append(reason);
+            result.append(state);
         }
         return result;
     }
@@ -73,7 +73,7 @@ public class ChatSendReplyPack extends DataPack {
     }
 
     public Reason getReason() {
-        return reason;
+        return state;
     }
 
 }

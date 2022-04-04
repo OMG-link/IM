@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -49,11 +48,15 @@ public class FileUtils {
         }catch (NoSuchAlgorithmException e){
             throw new RuntimeException(e);
         }
-        var fileInputStream = new FileInputStream(file);
-        var fileChannel = fileInputStream.getChannel();
-        var mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY,0,file.length());
-        messageDigest.update(mappedByteBuffer);
-        return new Sha512Digest(messageDigest.digest());
+        try(var fileInputStream = new FileInputStream(file)){
+            byte[] buffer = new byte[10*1024*1024];
+            while(true){
+                int len = fileInputStream.read(buffer);
+                if(len==-1) break;
+                messageDigest.update(buffer,0,len);
+            }
+            return new Sha512Digest(messageDigest.digest());
+        }
     }
 
 }

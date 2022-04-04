@@ -13,17 +13,17 @@ import java.util.UUID;
 public class UploadResultPack extends DataPack {
     private final UUID senderTaskId, receiverTaskId;
     private final boolean ok;
-    private final String reason;
+    private final String state;
 
     /**
      * Called by FileReceiveTask.
      */
-    public UploadResultPack(FileReceiveTask task, boolean ok, String reason) {
+    public UploadResultPack(FileReceiveTask task, boolean ok, String state) {
         super(Type.FileUploadResult);
         this.senderTaskId = task.getSenderTaskId();
         this.receiverTaskId = task.getReceiverTaskId();
         this.ok = ok;
-        this.reason = reason;
+        this.state = state;
     }
 
     /**
@@ -34,7 +34,7 @@ public class UploadResultPack extends DataPack {
         this.senderTaskId = senderTaskId;
         this.receiverTaskId = new UUID(0,0);
         this.ok = false;
-        this.reason = "Task not found.";
+        this.state = "Task not found.";
     }
 
     public UploadResultPack(ByteData data) throws InvalidPackageException {
@@ -43,7 +43,7 @@ public class UploadResultPack extends DataPack {
         this.senderTaskId = data.decodeUuid();
         this.receiverTaskId = data.decodeUuid();
         this.ok = data.decodeBoolean();
-        this.reason = data.decodeString();
+        this.state = data.decodeString();
     }
 
     @Override
@@ -52,7 +52,7 @@ public class UploadResultPack extends DataPack {
                 .append(senderTaskId)
                 .append(receiverTaskId)
                 .append(ok)
-                .append(reason);
+                .append(state);
     }
 
     public UUID getSenderTaskId() {
@@ -68,7 +68,7 @@ public class UploadResultPack extends DataPack {
     }
 
     public String getReason() {
-        return reason;
+        return state;
     }
 
 }

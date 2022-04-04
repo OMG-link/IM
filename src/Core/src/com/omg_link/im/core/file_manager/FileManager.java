@@ -88,6 +88,7 @@ public abstract class FileManager {
 
     /**
      * Open a file that has already been created in FileManager.
+     *
      * @param fileId An ID used to indicate the file.
      * @return A file object which is used to operate the file.
      * @throws NoSuchFileIdException When the UUID does not exist.
@@ -101,12 +102,9 @@ public abstract class FileManager {
     }
 
     /**
-     * <p>
-     *     Open a folder.
-     * </p>
-     * <p>
-     *     If the folder does not exist, it will automatically try to create one.
-     * </p>
+     * <p>Open a folder.</p>
+     * <p>If the folder does not exist, it will automatically try to create one.</p>
+     *
      * @param relativeFolderPath The path relative to the program root.
      * @return The File of the folder.
      * @throws IOException When the target folder cannot be created or the folder is a file.

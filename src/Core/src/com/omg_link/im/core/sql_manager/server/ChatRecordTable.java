@@ -1,0 +1,96 @@
+package com.omg_link.im.core.sql_manager.server;
+
+import com.omg_link.im.core.config.Config;
+import com.omg_link.im.core.protocol.data.ByteData;
+import com.omg_link.im.core.sql_manager.*;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class ChatRecordTable extends Table {
+
+    private static final Column serialIdColumn = new Column("SerialId", "INT8", false, true);
+    private static final Column dataColumn = new Column("Data", "BLOB", false, false);
+
+    private final PreparedStatement insertStatement;
+    private final PreparedStatement queryStatement;
+
+    private long recordNum;
+
+    public ChatRecordTable(SqlManager sqlManager) throws SQLException {
+        super(sqlManager);
+        insertStatement = sqlManager.prepareStatement(
+                "INSERT INTO {tableName} VALUES (?,?)"
+                        .replace("{tableName}", getTableName())
+        );
+        queryStatement = sqlManager.prepareStatement(
+                "SELECT * FROM {tableName} WHERE {serialIdColumnName}=?"
+                        .replace("{tableName}", getTableName())
+                        .replace("{serialIdColumnName}", serialIdColumn.name)
+        );
+    }
+
+    public long getRecordNum() {
+        return recordNum;
+    }
+
+    public synchronized void addRecord(long serialId, ByteData data) throws InvalidRecordException, SQLException {
+        if (data.getLength() > Config.packageMaxLength) {
+            throw new InvalidRecordException("Data too long!");
+        }
+        if (serialId != recordNum + 1) {
+            throw new InvalidSerialIdException();
+        }
+        insertStatement.setLong(1, serialId);
+        insertStatement.setBytes(2, data.getBytes());
+        insertStatement.executeUpdate();
+        recordNum++;
+    }
+
+    public ByteData getRecord(long serialId) throws InvalidSerialIdException, SQLException {
+        if (serialId < 1 || serialId > recordNum) {
+            throw new InvalidSerialIdException();
+        }
+        queryStatement.setLong(1, serialId);
+        ResultSet resultSet = queryStatement.executeQuery();
+        if (resultSet.next()) {
+            return new ByteData(resultSet.getBytes(dataColumn.name));
+        } else {
+            throw new RuntimeException(String.format("Cannot find record with serialId=%d.", serialId));
+        }
+    }
+
+    @Override
+    public String getTableName() {
+        return "ChatRecord";
+    }
+
+    @Override
+    public Column[] getColumns() {
+        return new Column[]{serialIdColumn, dataColumn};
+    }
+
+    @Override
+    public void createTable() throws SQLException {
+        super.createTable();
+        recordNum = 0;
+    }
+
+    @Override
+    public void loadTable() throws SQLException, InvalidTableException {
+        super.loadTable();
+        try (Statement statement = sqlManager.createStatement()) {
+            ResultSet resultSet = statement.executeQuery(
+                    "SELECT COUNT(*) as rowCount FROM {tableName}"
+                            .replace("{tableName}", getTableName())
+            );
+            if (resultSet.next()) {
+                recordNum = resultSet.getLong("rowCount");
+            } else {
+                throw new SQLException("WTF?");
+            }
+        }
+    }
+}

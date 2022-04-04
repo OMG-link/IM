@@ -70,9 +70,9 @@ public class ClientRoom {
         }
     }
 
-    public void exitRoom(IRoomFrame.ExitReason reason){
+    public void exitRoom(IRoomFrame.ExitReason state){
         networkHandler.stop();
-        roomFrame.exitRoom(reason);
+        roomFrame.exitRoom(state);
         client.setRoom(null);
     }
 

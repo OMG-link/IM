@@ -13,7 +13,7 @@ public class Sha512Digest implements IEncodeable {
     private final byte[] data;
 
     public Sha512Digest(byte[] data) throws InvalidParameterException {
-        if(data.length!= byteArrayLength){
+        if(data.length != byteArrayLength){
             throw new InvalidParameterException();
         }
         this.data = data.clone();
@@ -39,6 +39,17 @@ public class Sha512Digest implements IEncodeable {
     @Override
     public int hashCode() {
         return Arrays.hashCode(data);
+    }
+
+    @Override
+    public String toString() {
+        return "Sha512Digest{" +
+                "data=" + Arrays.toString(data) +
+                '}';
+    }
+
+    public byte[] getData() {
+        return data;
     }
 
 }

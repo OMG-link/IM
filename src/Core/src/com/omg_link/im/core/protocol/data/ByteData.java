@@ -174,7 +174,7 @@ public class ByteData implements Cloneable{
     }
 
     public ByteData(byte[] data,int offset,int length){
-        this(data.length);
+        this(length);
         copyBytesFrom(data,offset,length);
     }
 

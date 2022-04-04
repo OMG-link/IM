@@ -1,12 +1,15 @@
 package com.omg_link.im.core;
 
+import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.factory_manager.ServerFactoryManager;
-import com.omg_link.im.core.gui.IServerGUI;
-import com.omg_link.im.core.user_manager.ServerUserManager;
 import com.omg_link.im.core.file_manager.ServerFileManager;
-import com.omg_link.im.core.protocol.ServerNetworkHandler;
+import com.omg_link.im.core.gui.IServerGUI;
 import com.omg_link.im.core.message_manager.ServerMessageManager;
+import com.omg_link.im.core.protocol.ServerNetworkHandler;
+import com.omg_link.im.core.sql_manager.server.ServerSqlManager;
+import com.omg_link.im.core.user_manager.ServerUserManager;
 
+import java.sql.SQLException;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,19 +17,31 @@ import java.util.logging.Logger;
 public class ServerRoom {
     final Logger logger = Logger.getLogger("IMServer");
     final ServerFactoryManager factoryManager = new ServerFactoryManager();
-    final ServerMessageManager messageManager = new ServerMessageManager(this);
-    final ServerUserManager userManager = new ServerUserManager(this);
+    final ServerMessageManager messageManager;
+    final ServerUserManager userManager = new ServerUserManager(this);;
     final ServerNetworkHandler networkHandler;
     final IServerGUI GUI;
     final ServerFileManager fileManager;
 
     public final UUID serverId;
+    ServerSqlManager sqlManager;
 
     public ServerRoom(IServerGUI GUI){
+        this.GUI = GUI;
         try{
-            this.GUI = GUI;
-            this.serverId = messageManager.getDialogId();
-            this.fileManager = new ServerFileManager(serverId);
+            try {
+                sqlManager = new ServerSqlManager(Config.getServerDatabasePath());
+            } catch (SQLException e) {
+                e.printStackTrace();
+                getLogger().log(
+                        Level.WARNING,
+                        "Cannot open database file. Chat history will not be logged."
+                );
+            }
+            this.messageManager = new ServerMessageManager(this);
+            this.serverId = sqlManager!=null?sqlManager.getDatabaseUuid():UUID.randomUUID();
+
+            this.fileManager = new ServerFileManager(this,serverId);
             this.networkHandler = new ServerNetworkHandler(this);
             if(GUI!=null){
                 GUI.createGUI();
@@ -41,7 +56,12 @@ public class ServerRoom {
     }
 
     public void close(){
-        messageManager.close();
+        closeSqlManager();
+    }
+
+    public void closeSqlManager(){
+        sqlManager.close();
+        sqlManager = null;
     }
 
     public Logger getLogger() {
@@ -66,6 +86,10 @@ public class ServerRoom {
 
     public ServerNetworkHandler getNetworkHandler() {
         return networkHandler;
+    }
+
+    public ServerSqlManager getSqlManager() {
+        return sqlManager;
     }
 
 }

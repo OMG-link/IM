@@ -60,7 +60,7 @@ public class ServerFileSendTask extends FileSendTask{
 
     @Override
     void sendUploadRequestPack() {
-        send(new UploadRequestPack(this));
+        send(new UploadRequestPack(this,getFileManager().getDigestByFileId(getSenderFileId())));
     }
 
 }

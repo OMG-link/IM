@@ -82,9 +82,9 @@ public class FilePanel extends JPanel implements IFileTransferringPanel {
     }
 
     @Override
-    public void onTransferFailed(String reason) {
+    public void onTransferFailed(String state) {
         downloadPanel.setBeforeDownload();
-        downloadPanel.setInfo("Download failed: " + reason);
+        downloadPanel.setInfo("Download failed: " + state);
     }
 
 }

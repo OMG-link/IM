@@ -14,6 +14,7 @@ import com.omg_link.im.core.protocol.data_pack.user_list.*;
 import com.omg_link.im.core.protocol.file_transfer.ClientFileReceiveTask;
 import com.omg_link.im.core.protocol.file_transfer.ClientFileSendTask;
 import com.omg_link.im.core.protocol.file_transfer.NoSuchTaskIdException;
+import com.omg_link.utils.FileUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -247,18 +248,18 @@ public class ClientNetworkHandler implements Runnable {
                     onConnectionBuilt();
                 } else {
                     this.stop();
-                    IRoomFrame.ExitReason reason;
-                    switch (pack.getRejectReason()){
-                        case InvalidToken:{
-                            reason = IRoomFrame.ExitReason.InvalidToken;
+                    IRoomFrame.ExitReason state;
+                    switch (pack.getRejectReason()) {
+                        case InvalidToken: {
+                            state = IRoomFrame.ExitReason.InvalidToken;
                             break;
                         }
-                        default:{
-                            reason = IRoomFrame.ExitReason.Unknown;
+                        default: {
+                            state = IRoomFrame.ExitReason.Unknown;
                             break;
                         }
                     }
-                    room.exitRoom(reason);
+                    room.exitRoom(state);
                 }
                 break;
             }
@@ -289,40 +290,40 @@ public class ClientNetworkHandler implements Runnable {
             }
             case FileUploadRequest: {
                 var pack = new UploadRequestPack(data);
-                boolean ok;
-                UploadReplyPack.Reason reason;
-                if (pack.getFileSize() > Config.fileMaxSize) {
-                    ok = false;
-                    reason = UploadReplyPack.Reason.fileTooLarge;
-                } else {
+                UploadReplyPack.State state;
+                while (true) { // Fake loop
+                    if (!FileUtils.isFileNameLegal(pack.getFileName())) {
+                        state = UploadReplyPack.State.errorIllegalFileName;
+                        break;
+                    }
+                    if (pack.getFileSize() > Config.fileMaxSize) {
+                        state = UploadReplyPack.State.errorFileTooLarge;
+                        break;
+                    }
                     try {
                         ClientFileReceiveTask task = room.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
                         try {
+                            state = UploadReplyPack.State.startUpload;
+                            task.setSenderSideDigest(pack.getSha512Digest());
                             task.setFileSize(pack.getFileSize());
-                            ok = true;
-                            reason = UploadReplyPack.Reason.ok;
+                            break;
                         } catch (IOException e) {
-                            ok = false;
-                            reason = UploadReplyPack.Reason.remoteIOError;
+                            state = UploadReplyPack.State.errorRemoteIOError;
+                            break;
                         }
                     } catch (NoSuchTaskIdException e) {
                         room.getLogger().log(
                                 Level.WARNING,
                                 String.format("Client received a FileUploadRequest for {receiverTaskId=%s}, but it is not found in client.", pack.getReceiverTaskId())
                         );
-                        ok = false;
-                        reason = UploadReplyPack.Reason.taskNotFound;
+                        state = UploadReplyPack.State.errorTaskNotFound;
+                        break;
                     }
                 }
-                try {
-                    this.send(new UploadReplyPack(
-                            pack,
-                            ok,
-                            reason
-                    ));
-                } catch (PackageTooLargeException e) {
-                    throw new RuntimeException(e);
-                }
+                this.send(new UploadReplyPack(
+                        pack,
+                        state
+                ));
                 break;
             }
             case FileUploadReply: {
@@ -359,12 +360,7 @@ public class ClientNetworkHandler implements Runnable {
             case FileUploadResult: {
                 UploadResultPack pack = new UploadResultPack(data);
                 try {
-                    ClientFileSendTask task = room.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
-                    if (pack.isOk()) {
-                        task.onEndSucceed();
-                    } else {
-                        task.onEndFailed(pack.getReason());
-                    }
+                    room.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId()).end(pack);
                 } catch (NoSuchTaskIdException e) {
                     room.getLogger().log(
                             Level.WARNING,
@@ -434,9 +430,9 @@ public class ClientNetworkHandler implements Runnable {
         pingTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                if(isStopped()){
+                if (isStopped()) {
                     pingTimer.cancel();
-                }else{
+                } else {
                     send(new PingPack());
                 }
             }

@@ -6,10 +6,7 @@ import com.omg_link.im.core.file_manager.FileOccupiedException;
 import com.omg_link.im.core.file_manager.ReadOnlyFile;
 import com.omg_link.im.core.protocol.data.PackageTooLargeException;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
-import com.omg_link.im.core.protocol.data_pack.file_transfer.FileContentPack;
-import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
-import com.omg_link.im.core.protocol.data_pack.file_transfer.UploadFinishPack;
-import com.omg_link.im.core.protocol.data_pack.file_transfer.UploadReplyPack;
+import com.omg_link.im.core.protocol.data_pack.file_transfer.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -103,14 +100,23 @@ public abstract class FileSendTask implements Runnable {
     abstract void sendUploadRequestPack() throws IOException ;
 
     public void onReceiveUploadReply(UploadReplyPack replyPack){
-        if(replyPack.isOk()){
-            setReceiverTaskId(replyPack.getReceiverTaskId());
-            setReceiverFileId(replyPack.getReceiverFileId());
-            Thread thread = new Thread(this,String.format("File Upload Task(%s)", getSenderTaskId()));
-            thread.start();
-        }else{
-            this.localEndReason = "Upload request was rejected: "+replyPack.getReason();
-            this.onTransferEnd();
+        switch (replyPack.getState()){
+            case startUpload:{
+                setReceiverTaskId(replyPack.getReceiverTaskId());
+                setReceiverFileId(replyPack.getReceiverFileId());
+                new Thread(this,String.format("File Upload Task(%s)", getSenderTaskId())).start();
+                break;
+            }
+            case fileAlreadyExists:{
+                setReceiverFileId(replyPack.getReceiverFileId());
+                this.onEndSucceed();
+                break;
+            }
+            default:{
+                this.localEndReason = "Upload request was rejected: "+replyPack.getState();
+                this.onTransferEnd();
+                break;
+            }
         }
     }
 
@@ -152,10 +158,19 @@ public abstract class FileSendTask implements Runnable {
         }
     }
 
-    public void onEndSucceed(){
+    public void end(UploadResultPack pack){
+        if (pack.isOk()) {
+            onEndSucceed();
+        } else {
+            onEndFailed(pack.getReason());
+        }
+    }
+
+    protected void onEndSucceed(){
         this.removeFromFactory();
     }
-    public void onEndFailed(String reason){
+
+    protected void onEndFailed(String state){
         this.removeFromFactory();
     }
 

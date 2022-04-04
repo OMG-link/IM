@@ -6,36 +6,35 @@ import com.omg_link.im.core.protocol.data_pack.DataPack;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.UploadResultPack;
 import com.omg_link.utils.FileUtils;
-import com.omg_link.utils.IllegalFileNameException;
+import com.omg_link.utils.Sha512Digest;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public abstract class FileReceiveTask {
-    private final FileTransferType fileTransferType;
-    private UUID senderTaskId;
-    private final UUID receiverTaskId;
-    private UUID senderFileId;
-    private UUID receiverFileId;
+    final FileTransferType fileTransferType;
+    UUID senderTaskId;
+    final UUID receiverTaskId;
+    UUID senderFileId;
+    UUID receiverFileId;
+    Sha512Digest senderSideDigest;
 
-    private final String fileName;
-    private FileObject fileObject;
-    private Long fileSize;
+    final String fileName;
+    FileObject fileObject;
+    Long fileSize;
 
-    private WriteOnlyFile fileWriter;
-    private long transferredSize = 0;
+    WriteOnlyFile fileWriter;
+    long transferredSize = 0;
 
     //constructors
 
-    protected FileReceiveTask(String fileName, FileTransferType fileTransferType, UUID receiverTaskId) throws IllegalFileNameException {
+    protected FileReceiveTask(String fileName, FileTransferType fileTransferType, UUID receiverTaskId) {
         this.fileName = fileName;
         this.fileTransferType = fileTransferType;
         this.receiverTaskId = receiverTaskId;
-        if (FileUtils.isFileNameLegal(this.fileName)) {
-            throw new IllegalFileNameException();
-        }
     }
 
     //abstract
@@ -60,6 +59,10 @@ public abstract class FileReceiveTask {
         this.receiverFileId = receiverFileId;
     }
 
+    public void setSenderSideDigest(Sha512Digest senderSideDigest) {
+        this.senderSideDigest = senderSideDigest;
+    }
+
     public void setFileWriter(WriteOnlyFile fileWriter) {
         this.fileWriter = fileWriter;
         this.fileObject = fileWriter.getFileObject();
@@ -76,11 +79,7 @@ public abstract class FileReceiveTask {
 
     //end
 
-    public void onEndSucceed() {
-        //close file
-        if (fileWriter != null) {
-            getFileWriter().close();
-        }
+    protected void onEndSucceed() {
         //reply to sender
         if (senderTaskId != null) {
             send(new UploadResultPack(
@@ -98,14 +97,13 @@ public abstract class FileReceiveTask {
         if (fileWriter != null) {
             try {
                 getFileWriter().close();
-                getFileManager().deleteFile(receiverFileId);
+                getFileWriter().getFileObject().delete();
             } catch (FileOccupiedException e) {
                 Logger.getLogger("IMCore").log(
                         Level.WARNING,
                         String.format("File %s is occupied and cannot be deleted.", getFileWriter().getFileObject().getFile().getAbsoluteFile()),
                         e
                 );
-            } catch (NoSuchFileIdException ignored) {
             }
         }
         //reply to sender
@@ -126,8 +124,18 @@ public abstract class FileReceiveTask {
      */
     public void end() {
         if (getFileWriter() != null) {
+            getFileWriter().close();
             if (transferredSize == this.getFileSize()) {
-                this.onEndSucceed();
+                try{
+                    Sha512Digest receiverSideDigest = getFileWriter().getFileObject().getSha512Digest();
+                    if(!Objects.equals(receiverSideDigest,senderSideDigest)){
+                        this.onEndFailed("Wrong digest.");
+                    }else{
+                        this.onEndSucceed();
+                    }
+                }catch (IOException e){
+                    this.onEndFailed("Cannot calculate file digest.");
+                }
             } else {
                 this.onEndFailed(String.format(
                         "Actual received size does not match the request.(%s/%s)",

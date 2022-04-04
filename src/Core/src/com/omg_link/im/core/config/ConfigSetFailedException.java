@@ -5,15 +5,15 @@ public class ConfigSetFailedException extends Throwable{
         InvalidUrl,InvalidPort,UsernameTooLong
     }
 
-    private final Reason reason;
+    private final Reason state;
 
-    public ConfigSetFailedException(Reason reason){
-        super(reason.toString());
-        this.reason = reason;
+    public ConfigSetFailedException(Reason state){
+        super(state.toString());
+        this.state = state;
     }
 
     public Reason getReason() {
-        return reason;
+        return state;
     }
 
 }

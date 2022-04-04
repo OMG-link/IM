@@ -75,7 +75,7 @@ public class ClientFileSendTask extends FileSendTask {
     //end
 
     @Override
-    public void onEndSucceed() {
+    protected void onEndSucceed() {
         if (panel != null) {
             panel.onTransferSucceed(getFileObject());
         }
@@ -83,14 +83,14 @@ public class ClientFileSendTask extends FileSendTask {
     }
 
     @Override
-    public void onEndFailed(String reason) {
-        if (localEndReason != null) { //use local end reason if exists
-            reason = localEndReason;
+    protected void onEndFailed(String state) {
+        if (localEndReason != null) { //use local end state if exists
+            state = localEndReason;
         }
         if (panel != null) {
-            panel.onTransferFailed(reason);
+            panel.onTransferFailed(state);
         }
-        super.onEndFailed(reason);
+        super.onEndFailed(state);
     }
 
     //functions

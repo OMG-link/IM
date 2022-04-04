@@ -3,7 +3,6 @@ package com.omg_link.im.core.protocol;
 import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.file_manager.NoSuchFileIdException;
-import com.omg_link.im.core.message_manager.InvalidSerialIdException;
 import com.omg_link.im.core.protocol.data.ByteArrayInfo;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.protocol.data.InvalidPackageException;
@@ -18,6 +17,8 @@ import com.omg_link.im.core.protocol.data_pack.user_list.SetRoomNamePack;
 import com.omg_link.im.core.protocol.file_transfer.NoSuchTaskIdException;
 import com.omg_link.im.core.protocol.file_transfer.ServerFileReceiveTask;
 import com.omg_link.im.core.protocol.file_transfer.ServerFileSendTask;
+import com.omg_link.im.core.sql_manager.InvalidSerialIdException;
+import com.omg_link.utils.FileUtils;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -250,15 +251,27 @@ public class ServerNetworkHandler implements Runnable {
                 break;
             }
             case FileUploadRequest: {
-                UploadRequestPack requestPack = new UploadRequestPack(data);
-                boolean ok;
-                UploadReplyPack.Reason reason;
+                UploadRequestPack pack = new UploadRequestPack(data);
+                UploadReplyPack.State state;
                 UUID receiverTaskId = new UUID(0, 0);
                 UUID receiverFileId = new UUID(0, 0);
-                if (requestPack.getFileSize() > Config.fileMaxSize) {
-                    ok = false;
-                    reason = UploadReplyPack.Reason.fileTooLarge;
-                } else {
+                while (true) { // Fake loop
+                    if (!FileUtils.isFileNameLegal(pack.getFileName())) {
+                        state = UploadReplyPack.State.errorIllegalFileName;
+                        break;
+                    }
+                    if (pack.getFileSize() > Config.fileMaxSize) {
+                        state = UploadReplyPack.State.errorFileTooLarge;
+                        break;
+                    }
+                    if (serverRoom.getFileManager().isFileUploaded(pack.getSha512Digest())) {
+                        state = UploadReplyPack.State.fileAlreadyExists;
+                        receiverFileId = serverRoom.getFileManager().getFileIdByDigest(pack.getSha512Digest());
+                        serverRoom.getMessageManager().onFileUploaded(
+                                attachment.user, receiverFileId, pack.getFileName(), pack.getFileSize(), pack.getFileTransferType()
+                        );
+                        break;
+                    }
                     try {
                         /*
                          * Here is a hidden danger that the client may create lots of upload requests without finishing
@@ -268,28 +281,23 @@ public class ServerNetworkHandler implements Runnable {
                         ServerFileReceiveTask task = serverRoom.getFactoryManager().getFileReceiveTaskFactory().create(
                                 serverRoom,
                                 selectionKey,
-                                requestPack
+                                pack
                         );
                         receiverTaskId = task.getReceiverTaskId();
                         receiverFileId = task.getReceiverFileId();
-                        ok = true;
-                        reason = UploadReplyPack.Reason.ok;
+                        state = UploadReplyPack.State.startUpload;
+                        break;
                     } catch (IOException e) {
-                        ok = false;
-                        reason = UploadReplyPack.Reason.remoteIOError;
+                        state = UploadReplyPack.State.errorRemoteIOError;
+                        break;
                     }
                 }
-                try {
-                    this.send(selectionKey, new UploadReplyPack(
-                            requestPack,
-                            receiverTaskId,
-                            receiverFileId,
-                            ok,
-                            reason
-                    ));
-                } catch (PackageTooLargeException e) {
-                    throw new RuntimeException(e);
-                }
+                this.send(selectionKey, new UploadReplyPack(
+                        pack,
+                        receiverTaskId,
+                        receiverFileId,
+                        state
+                ));
                 break;
             }
             case FileUploadFinish: {
@@ -330,21 +338,21 @@ public class ServerNetworkHandler implements Runnable {
             case FileDownloadRequest: {
                 DownloadRequestPack pack = new DownloadRequestPack(data);
                 boolean ok;
-                DownloadReplyPack.Reason reason;
+                DownloadReplyPack.Reason state;
                 ServerFileSendTask task = null;
                 try {
                     task = serverRoom.getFactoryManager().getFileSendTaskFactory().create(serverRoom, selectionKey, pack);
                     ok = true;
-                    reason = DownloadReplyPack.Reason.ok;
+                    state = DownloadReplyPack.Reason.ok;
                 } catch (NoSuchFileIdException e) {
                     ok = false;
-                    reason = DownloadReplyPack.Reason.fileNotFound;
+                    state = DownloadReplyPack.Reason.fileNotFound;
                 }
                 this.send(selectionKey, new DownloadReplyPack(
                         pack,
                         task == null ? new UUID(0, 0) : task.getSenderTaskId(),
                         ok,
-                        reason
+                        state
                 ));
                 if (ok) { //UploadRequestPack should be sent after DownloadReplyPack
                     assert task != null;
@@ -368,12 +376,7 @@ public class ServerNetworkHandler implements Runnable {
             case FileUploadResult: {
                 UploadResultPack pack = new UploadResultPack(data);
                 try {
-                    ServerFileSendTask task = serverRoom.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
-                    if (pack.isOk()) {
-                        task.onEndSucceed();
-                    } else {
-                        task.onEndFailed(pack.getReason());
-                    }
+                    serverRoom.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId()).end(pack);
                 } catch (NoSuchTaskIdException e) {
                     serverRoom.getLogger().log(
                             Level.INFO,

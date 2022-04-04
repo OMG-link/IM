@@ -14,17 +14,17 @@ public class DownloadReplyPack extends DataPack {
 
     private final UUID senderTaskId,receiverTaskId,senderFileId,receiverFileId;
     private final boolean ok;
-    private final Reason reason;
+    private final Reason state;
     private final FileTransferType fileTransferType;
 
-    public DownloadReplyPack(DownloadRequestPack requestPack,UUID senderTaskId,boolean ok,Reason reason){
+    public DownloadReplyPack(DownloadRequestPack requestPack,UUID senderTaskId,boolean ok,Reason state){
         super(Type.FileDownloadReply);
         this.senderTaskId = senderTaskId;
         this.receiverTaskId = requestPack.getReceiverTaskId();
         this.senderFileId = requestPack.getSenderFileId();
         this.receiverFileId = requestPack.getReceiverFileId();
         this.ok = ok;
-        this.reason = reason;
+        this.state = state;
         this.fileTransferType = requestPack.getFileTransferType();
     }
 
@@ -36,7 +36,7 @@ public class DownloadReplyPack extends DataPack {
         this.senderFileId = data.decodeUuid();
         this.receiverFileId = data.decodeUuid();
         this.ok = data.decodeBoolean();
-        this.reason = data.decodeEnum(Reason.values());
+        this.state = data.decodeEnum(Reason.values());
         this.fileTransferType = data.decodeEnum(FileTransferType.values());
     }
 
@@ -48,7 +48,7 @@ public class DownloadReplyPack extends DataPack {
                 .append(senderFileId)
                 .append(receiverFileId)
                 .append(ok)
-                .append(reason)
+                .append(state)
                 .append(fileTransferType);
     }
 
@@ -73,7 +73,7 @@ public class DownloadReplyPack extends DataPack {
     }
 
     public Reason getReason() {
-        return reason;
+        return state;
     }
 
     public FileTransferType getFileTransferType() {

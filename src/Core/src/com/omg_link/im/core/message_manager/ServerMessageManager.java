@@ -6,12 +6,15 @@ import com.omg_link.im.core.protocol.Attachment;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
 import com.omg_link.im.core.protocol.data_pack.chat.*;
+import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
+import com.omg_link.im.core.sql_manager.InvalidRecordException;
+import com.omg_link.im.core.sql_manager.InvalidSerialIdException;
+import com.omg_link.im.core.sql_manager.server.ServerSqlManager;
 import com.omg_link.im.core.user_manager.User;
 
 import java.nio.channels.SelectionKey;
 import java.sql.SQLException;
 import java.util.UUID;
-import java.util.logging.Level;
 
 public class ServerMessageManager {
 
@@ -33,53 +36,46 @@ public class ServerMessageManager {
     }
 
     private final ServerRoom serverRoom;
-
-    private ServerSqlManager sqlManager;
-
     private final SerialIdGenerator serialIdGenerator;
 
     public ServerMessageManager(ServerRoom serverRoom) {
         this.serverRoom = serverRoom;
-        try {
-            sqlManager = new ServerSqlManager(Config.getServerDatabasePath());
-        } catch (SQLException e) {
-            e.printStackTrace();
-            serverRoom.getLogger().log(
-                    Level.WARNING,
-                    "Cannot open database file. Chat history will not be logged."
-            );
-        }
+
+        var sqlManager = getSqlManager();
         if (sqlManager != null) {
-            serialIdGenerator = new SerialIdGenerator(sqlManager.getRecordNum());
+            serialIdGenerator = new SerialIdGenerator(sqlManager.getChatRecordNum());
         } else {
             serialIdGenerator = new SerialIdGenerator(0);
         }
     }
 
-    public void close(){
-        sqlManager.close();
-    }
-
-    public UUID getDialogId() {
-        if (sqlManager == null) {
-            return UUID.randomUUID();
-        } else {
-            return sqlManager.getTableUuid();
-        }
+    private ServerSqlManager getSqlManager(){
+        return serverRoom.getSqlManager();
     }
 
     private void addDataToHistory(long serialId, ByteData data) {
+        var sqlManager = getSqlManager();
         if (sqlManager == null) return;
         try {
-            sqlManager.put(serialId, data);
+            sqlManager.addChatRecord(serialId, data);
         } catch (InvalidRecordException ignored) {
+        } catch (SQLException e) {
+            e.printStackTrace();
+            serverRoom.closeSqlManager();
         }
     }
 
     private ByteData getDataFromHistory(long serialId) throws InvalidSerialIdException {
         if (serialId < 1 || serialId > serialIdGenerator.getLastId()) return null;
+        var sqlManager = getSqlManager();
         if (sqlManager == null) return null;
-        return sqlManager.get(serialId);
+        try{
+            return sqlManager.getChatRecord(serialId);
+        }catch (SQLException e){
+            e.printStackTrace();
+            serverRoom.closeSqlManager();
+            return null;
+        }
     }
 
     /**
@@ -101,8 +97,8 @@ public class ServerMessageManager {
     /**
      * Reject a send request.
      */
-    private void rejectSendRequest(SelectionKey selectionKey, ChatSendReplyPack.Reason reason) {
-        send(selectionKey, new ChatSendReplyPack(reason));
+    private void rejectSendRequest(SelectionKey selectionKey, ChatSendReplyPack.Reason state) {
+        send(selectionKey, new ChatSendReplyPack(state));
     }
 
     /**
@@ -173,7 +169,7 @@ public class ServerMessageManager {
     /**
      * Broadcast a ChatImagePack
      */
-    public void broadcastChatImage(User user, UUID imageId) {
+    protected void broadcastChatImage(User user, UUID imageId) {
         var serialId = serialIdGenerator.getNewId();
         var pack = new ChatImageBroadcastPack(
                 serialId,
@@ -186,7 +182,7 @@ public class ServerMessageManager {
     /**
      * Broadcast a ChatFilePack
      */
-    public void broadcastChatFile(User user, UUID fileId, String fileName, long fileSize) {
+    protected void broadcastChatFile(User user, UUID fileId, String fileName, long fileSize) {
         var serialId = serialIdGenerator.getNewId();
         var pack = new ChatFileBroadcastPack(
                 serialId,
@@ -196,6 +192,27 @@ public class ServerMessageManager {
                 fileSize
         );
         broadcast(serialId, pack);
+    }
+
+    public void onFileUploaded(User user, UUID fileId, String fileName, long fileSize, FileTransferType fileTransferType){
+        switch (fileTransferType){
+            case ChatFile:{
+                serverRoom.getMessageManager().broadcastChatFile(
+                        user,
+                        fileId,
+                        fileName,
+                        fileSize
+                );
+                break;
+            }
+            case ChatImage:{
+                serverRoom.getMessageManager().broadcastChatImage(
+                        user,
+                        fileId
+                );
+                break;
+            }
+        }
     }
 
 }

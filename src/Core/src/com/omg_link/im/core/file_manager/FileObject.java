@@ -1,6 +1,8 @@
 package com.omg_link.im.core.file_manager;
 
 import com.omg_link.im.core.config.Config;
+import com.omg_link.utils.FileUtils;
+import com.omg_link.utils.Sha512Digest;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -82,6 +84,15 @@ public class FileObject {
         if (this.readInstanceCount > 0 || this.writeInstanceCount > 0)
             throw new FileOccupiedException();
         return new WriteOnlyFile(this);
+    }
+
+    /**
+     * Get SHA-512 digest for the file.
+     * @return SHA-512 digest.
+     * @throws IOException When an I/O error occurs when reading the file.
+     */
+    public Sha512Digest getSha512Digest() throws IOException {
+        return FileUtils.sha512(file);
     }
 
 }

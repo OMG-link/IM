@@ -48,8 +48,8 @@ public class ChatImagePanel extends JPanel implements IFileTransferringPanel {
     }
 
     @Override
-    public void onTransferFailed(String reason) {
-        add(PanelUtil.makeTextArea(Color.RED,22,"[Image] Image download failed: "+reason));
+    public void onTransferFailed(String state) {
+        add(PanelUtil.makeTextArea(Color.RED,22,"[Image] Image download failed: "+state));
         add(getRetryButton());
     }
 

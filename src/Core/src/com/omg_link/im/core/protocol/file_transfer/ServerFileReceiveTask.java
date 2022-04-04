@@ -8,7 +8,6 @@ import com.omg_link.im.core.protocol.Attachment;
 import com.omg_link.im.core.protocol.data.PackageTooLargeException;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.UploadRequestPack;
-import com.omg_link.im.core.user_manager.User;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
@@ -33,6 +32,7 @@ public class ServerFileReceiveTask extends FileReceiveTask {
 
         super.setSenderTaskId(requestPack.getSenderTaskId());
         super.setSenderFileId(requestPack.getSenderFileId());
+        super.setSenderSideDigest(requestPack.getSha512Digest());
 
         try{
             FileObject fileObject = getFileManager().createFile();
@@ -71,26 +71,11 @@ public class ServerFileReceiveTask extends FileReceiveTask {
     @Override
     public void onEndSucceed() {
         super.onEndSucceed();
-        User user = ((Attachment)selectionKey.attachment()).user;
-        switch (getFileTransferType()){
-            case ChatFile:{
-                UUID fileId = getReceiverFileId();
-                serverRoom.getMessageManager().broadcastChatFile(
-                        user,
-                        fileId,
-                        getFileName(),
-                        getFileSize()
-                );
-                break;
-            }
-            case ChatImage:{
-                serverRoom.getMessageManager().broadcastChatImage(
-                        user,
-                        getReceiverFileId()
-                );
-                break;
-            }
-        }
+        getFileManager().addDigestMapping(senderSideDigest,receiverFileId);
+        serverRoom.getMessageManager().onFileUploaded(
+                ((Attachment)selectionKey.attachment()).user,
+                getReceiverFileId(), getFileName(), getFileSize(), getFileTransferType()
+        );
     }
 
 }
