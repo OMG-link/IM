@@ -27,7 +27,7 @@ public class ChatHistoryPack extends DataPack {
         ByteData data = super.encode();
         data.append(packs.size());
         for(ByteData pData:packs){
-            data.append(pData.getBytes());
+            data.appendByteArray(pData.getBytes());
         }
         return data;
     }

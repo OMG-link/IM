@@ -34,7 +34,7 @@ public class FileContentPack extends DataPack {
         return super.encode()
                 .append(offset)
                 .append(receiverTaskId)
-                .append(data);
+                .appendByteArray(data);
     }
 
     public long getOffset() {

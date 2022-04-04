@@ -255,14 +255,6 @@ public class ByteData implements Cloneable{
         return new String(buffer,StandardCharsets.UTF_8);
     }
 
-    public byte[] decodeBytes(int length) throws InvalidPackageException {
-        try{
-            return cut(length).getBytes();
-        }catch (InvalidParameterException e){
-            throw new InvalidPackageException(e);
-        }
-    }
-
     public byte[] decodeByteArray() throws InvalidPackageException {
         int length = this.decodeInt();
         this.checkLength(length);
@@ -270,6 +262,14 @@ public class ByteData implements Cloneable{
         this.copyBytesTo(buffer,length);
         this.remove(length);
         return buffer;
+    }
+
+    public byte[] decodeBytes(int length) throws InvalidPackageException {
+        try{
+            return cut(length).getBytes();
+        }catch (InvalidParameterException e){
+            throw new InvalidPackageException(e);
+        }
     }
 
     public <E extends Enum<E>> E peekEnum(E[] values) throws InvalidPackageException{
@@ -310,8 +310,12 @@ public class ByteData implements Cloneable{
         return append(ByteData.encode(s));
     }
 
-    public ByteData append(byte[] b){
-        return append(ByteData.encode(b));
+    public ByteData appendByteArray(byte[] b){
+        return append(ByteData.encodeByteArray(b));
+    }
+
+    public ByteData appendBytes(byte[] b){
+        return append(ByteData.encodeBytes(b));
     }
 
     public <E extends Enum<E>> ByteData append(E e){
@@ -320,10 +324,6 @@ public class ByteData implements Cloneable{
 
     public ByteData append(IEncodeable e){
         return append(ByteData.encode(e));
-    }
-
-    public ByteData appendBytes(byte[] b){
-        return append(new ByteData(b));
     }
 
     //encoders
@@ -360,12 +360,16 @@ public class ByteData implements Cloneable{
 
     public static ByteData encode(String s) {
         byte[] byteString = s.getBytes(StandardCharsets.UTF_8);
-        return encode(byteString);
+        return encodeByteArray(byteString);
     }
 
-    public static ByteData encode(byte[] bytes){
+    public static ByteData encodeByteArray(byte[] bytes){
         return ByteData.encode(bytes.length)
                 .appendBytes(bytes);
+    }
+
+    public static ByteData encodeBytes(byte[] bytes){
+        return new ByteData(bytes);
     }
 
     public static <E extends Enum<E>> ByteData encode(E e){
