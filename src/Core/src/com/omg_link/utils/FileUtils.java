@@ -37,14 +37,15 @@ public class FileUtils {
     }
 
     /**
-     * Calculate the SHA-1 for the file.
+     * Calculate the SHA-512 for the file.
+     * @return SHA-512 Digest
      * @throws FileNotFoundException When the file does not exist.
      * @throws IOException When an I/O error occurs during reading the file.
      */
-    public static byte[] sha1(File file) throws IOException {
+    public static Sha512Digest sha512(File file) throws IOException {
         MessageDigest messageDigest;
         try{
-            messageDigest = MessageDigest.getInstance("SHA-1");
+            messageDigest = MessageDigest.getInstance("SHA-512");
         }catch (NoSuchAlgorithmException e){
             throw new RuntimeException(e);
         }
@@ -52,7 +53,7 @@ public class FileUtils {
         var fileChannel = fileInputStream.getChannel();
         var mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY,0,file.length());
         messageDigest.update(mappedByteBuffer);
-        return messageDigest.digest();
+        return new Sha512Digest(messageDigest.digest());
     }
 
 }
