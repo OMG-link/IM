@@ -2,6 +2,7 @@ package com.omg_link.im.core.file_manager;
 
 import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.config.Config;
+import com.omg_link.utils.FileUtils;
 import com.omg_link.utils.Sha512Digest;
 
 import java.io.File;
@@ -17,33 +18,40 @@ public class ServerFileManager extends FileManager {
     private final ServerRoom serverRoom;
 
     private final String folderName;
-    private final Map<Sha512Digest,UUID> digestToUuidMap;
-    private final Map<UUID,Sha512Digest> uuidToDigestMap = new HashMap<>();
+    private final Map<Sha512Digest, UUID> digestToUuidMap;
+    private final Map<UUID, Sha512Digest> uuidToDigestMap = new HashMap<>();
 
-    public ServerFileManager(ServerRoom serverRoom,UUID serverId) throws IOException {
+    private boolean enableSql;
+
+    public ServerFileManager(ServerRoom serverRoom, UUID serverId, boolean enableSql) throws IOException {
         this.serverRoom = serverRoom;
         this.folderName = "UploadedFiles/" + serverId;
+        this.enableSql = enableSql;
 
         var sqlManager = serverRoom.getSqlManager();
-        if(sqlManager==null){
+        if (sqlManager == null) {
             this.digestToUuidMap = new HashMap<>();
-        }else{
-            Map<Sha512Digest,UUID> map;
-            try{
+        } else {
+            Map<Sha512Digest, UUID> map;
+            try {
                 map = sqlManager.getFileDigestMapping();
-            }catch (SQLException e){
+            } catch (SQLException e) {
                 e.printStackTrace();
-                serverRoom.closeSqlManager();
+                disableSql();
                 map = new HashMap<>();
             }
             this.digestToUuidMap = map;
-            for(var pair:map.entrySet()){
-                uuidToDigestMap.put(pair.getValue(),pair.getKey());
+            for (var pair : map.entrySet()) {
+                uuidToDigestMap.put(pair.getValue(), pair.getKey());
             }
         }
 
-        makeFolder(new File(getFolderName()).getAbsoluteFile());
+        FileUtils.makeFolder(getFolderName());
 
+    }
+
+    public void disableSql() {
+        enableSql = false;
     }
 
     private String getFolderName() {
@@ -74,10 +82,10 @@ public class ServerFileManager extends FileManager {
      */
     @Override
     public FileObject openFile(UUID fileId) throws NoSuchFileIdException {
-        try{
+        try {
             var file = new File(getFolderName() + '/' + fileId);
-            return super.openFile(file,fileId);
-        }catch (FileNotFoundException e){
+            return super.openFile(file, fileId);
+        } catch (FileNotFoundException e) {
             throw new NoSuchFileIdException();
         }
     }
@@ -88,7 +96,7 @@ public class ServerFileManager extends FileManager {
      * @param digest The digest of the file.
      * @return True if the file has already been uploaded.
      */
-    public boolean isFileUploaded(Sha512Digest digest){
+    public boolean isFileUploaded(Sha512Digest digest) {
         return digestToUuidMap.containsKey(digest);
     }
 
@@ -98,24 +106,21 @@ public class ServerFileManager extends FileManager {
      * @param digest The digest of the target file.
      * @return If the digest matches a file, return the file ID of it. Otherwise, return null.
      */
-    public UUID getFileIdByDigest(Sha512Digest digest){
+    public UUID getFileIdByDigest(Sha512Digest digest) {
         return digestToUuidMap.get(digest);
     }
 
-    public Sha512Digest getDigestByFileId(UUID fileId){
+    public Sha512Digest getDigestByFileId(UUID fileId) {
         return uuidToDigestMap.get(fileId);
     }
 
-    public void addDigestMapping(Sha512Digest digest, UUID fileId){
-        digestToUuidMap.put(digest,fileId);
-        uuidToDigestMap.put(fileId,digest);
-        var sqlManager = serverRoom.getSqlManager();
-        if(sqlManager!=null){
-            try{
-                sqlManager.setFileDigestMapping(digest,fileId);
-            }catch (SQLException e){
-                serverRoom.closeSqlManager();
-            }
+    public void addDigestMapping(Sha512Digest digest, UUID fileId) {
+        digestToUuidMap.put(digest, fileId);
+        uuidToDigestMap.put(fileId, digest);
+        try {
+            serverRoom.getSqlManager().setFileDigestMapping(digest, fileId);
+        } catch (SQLException e) {
+            disableSql();
         }
     }
 

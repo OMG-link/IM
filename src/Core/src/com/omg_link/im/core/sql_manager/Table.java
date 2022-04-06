@@ -23,6 +23,10 @@ public abstract class Table {
 
     }
 
+    public static String encodeString(String s){
+        return '\''+s.replace("'","''")+'\'';
+    }
+
     protected final SqlManager sqlManager;
 
     /**
@@ -47,13 +51,17 @@ public abstract class Table {
 
     public abstract Column[] getColumns();
 
+    public boolean isCreated() throws SQLException {
+        return sqlManager.isTableCreated(getTableName());
+    }
+
     /**
      * <p>Create a table.</p>
      * <p>If the table already exists, it will delete the old one.</p>
      * @throws SQLException If an SQL error occurs when creating the table.
      */
     public void createTable() throws SQLException {
-        if(sqlManager.isTableCreated(getTableName())){
+        if(isCreated()){
             sqlManager.deleteTable(getTableName());
         }
         try(Statement statement = sqlManager.createStatement()){
@@ -103,7 +111,7 @@ public abstract class Table {
                 }else{
                     sqlBuilder.append(',');
                 }
-                sqlBuilder.append(String.format("'%s'",value.replace("'","''")));
+                sqlBuilder.append(value);
             }
             if(isFirstColumn){
                 sqlBuilder.append("()");

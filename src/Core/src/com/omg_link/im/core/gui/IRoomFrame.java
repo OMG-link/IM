@@ -23,7 +23,7 @@ public interface IRoomFrame {
 
     void showSystemMessage(String message);
     void showTextMessage(long serialId, String sender, long stamp, String text);
-    void showFileUploadedMessage(long serialId, String sender, long stamp, UUID uuid, String fileName, long fileSize);
+    IFileTransferringPanel showFileUploadedMessage(long serialId, String sender, long stamp, UUID uuid, String fileName, long fileSize);
 
     //This function is not written in the traditional way, but I don't want to fix it now.
     /**

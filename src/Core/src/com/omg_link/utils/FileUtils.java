@@ -35,6 +35,30 @@ public class FileUtils {
         return true;
     }
 
+    public static void makeFolder(String folder) throws IOException {
+        makeFolder(new File(folder));
+    }
+
+    /**
+     * @throws IOException When the target operation cannot be performed.
+     */
+    public static void makeFolder(File folder) throws IOException {
+        if(!folder.isAbsolute()){
+            makeFolder(folder.getAbsoluteFile());
+            return;
+        }
+        if(!folder.exists()){
+            makeFolder(folder.getParentFile());
+            if(!folder.mkdir()){
+                throw new IOException("Unable to create folder.");
+            }
+        }else{
+            if(!folder.isDirectory()){
+                throw new IOException("Target folder is a file.");
+            }
+        }
+    }
+
     /**
      * Calculate the SHA-512 for the file.
      * @return SHA-512 Digest

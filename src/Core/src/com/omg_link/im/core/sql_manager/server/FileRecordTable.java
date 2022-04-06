@@ -59,9 +59,4 @@ public class FileRecordTable extends Table {
         return new Column[]{sha512Column,fileIdColumn};
     }
 
-    @Override
-    public void createTable() throws SQLException {
-        super.createTable();
-    }
-
 }

@@ -38,10 +38,12 @@ public class ServerRoom {
                         "Cannot open database file. Chat history will not be logged."
                 );
             }
-            this.messageManager = new ServerMessageManager(this);
-            this.serverId = sqlManager!=null?sqlManager.getDatabaseUuid():UUID.randomUUID();
+            boolean isSqlEnabled = sqlManager!=null;
 
-            this.fileManager = new ServerFileManager(this,serverId);
+            this.messageManager = new ServerMessageManager(this,isSqlEnabled);
+            this.serverId = isSqlEnabled?sqlManager.getDatabaseUuid():UUID.randomUUID();
+
+            this.fileManager = new ServerFileManager(this,serverId,isSqlEnabled);
             this.networkHandler = new ServerNetworkHandler(this);
             if(GUI!=null){
                 GUI.createGUI();
@@ -59,7 +61,9 @@ public class ServerRoom {
         closeSqlManager();
     }
 
-    public void closeSqlManager(){
+    private void closeSqlManager(){
+        messageManager.disableSql();
+        fileManager.disableSql();
         sqlManager.close();
         sqlManager = null;
     }

@@ -34,7 +34,7 @@ public class ClientFileReceiveTask extends FileReceiveTask {
         if(fileTransferType==FileTransferType.ChatFile){
             fileObject = getFileManager().createFileRenameable(ClientFileManager.downloadFolder,fileName);
         }else{
-            fileObject = getFileManager().createCacheFile();
+            fileObject = getFileManager().createCacheFile(ClientFileManager.downloadFolder);
         }
         super.setReceiverFileId(fileObject.getFileId());
         super.setFileWriter(fileObject.getWriteOnlyInstance());
@@ -75,6 +75,9 @@ public class ClientFileReceiveTask extends FileReceiveTask {
     @Override
     public void onEndSucceed() {
         super.onEndSucceed();
+        if (getFileTransferType()==FileTransferType.ChatImage){
+            getFileManager().addMapping(senderFileId,super.getFileObject().getFile());
+        }
         if (panel != null) {
             panel.onTransferSucceed(super.getFileObject());
         }

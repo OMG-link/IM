@@ -3,12 +3,11 @@ package com.omg_link.im.core.protocol.data_pack.system;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.protocol.data.InvalidPackageException;
-import com.omg_link.im.core.protocol.data_pack.DataPack;
 
 /**
  * The older version of CheckVersionPack.
  */
-public class CheckVersionPackV1 extends DataPack implements IVersionGetter {
+public class CheckVersionPackV1 extends CheckVersionPack {
     private final String version;
 
     public CheckVersionPackV1(){

@@ -182,22 +182,22 @@ public class ClientNetworkHandler implements Runnable {
 
         switch (type) {
             case CheckVersion: {
-                IVersionGetter versionGetter;
+                CheckVersionPack pack;
                 // I know it loops only once. I just need to break somewhere inside it.
                 while (true) {
                     try {
-                        versionGetter = new CheckVersionPackV2(data);
+                        pack = new CheckVersionPackV2(data);
                         break;
                     } catch (InvalidPackageException ignored) {
                     }
 
                     try {
-                        versionGetter = new CheckVersionPackV1(data);
+                        pack = new CheckVersionPackV1(data);
                         break;
                     } catch (InvalidPackageException ignored) {
                     }
 
-                    versionGetter = new IVersionGetter() {
+                    pack = new CheckVersionPack(DataPack.Type.CheckVersion) {
                         @Override
                         public String getVersion() {
                             return null;
@@ -211,16 +211,16 @@ public class ClientNetworkHandler implements Runnable {
                     break;
                 }
 
-                if (!Objects.equals(versionGetter.getCompatibleVersion(), Config.compatibleVersion)) {
+                if (!Objects.equals(pack.getCompatibleVersion(), Config.compatibleVersion)) {
                     this.stop(); // Didn't call room.exitRoom() because we need to exit after the dialog closed.
-                    if (versionGetter.getVersion() == null) {
+                    if (pack.getVersion() == null) {
                         room.alertVersionUnrecognizable();
                     } else {
-                        room.alertVersionIncompatible(versionGetter.getVersion());
+                        room.alertVersionIncompatible(pack.getVersion());
                     }
                 } else {
-                    if (!Objects.equals(versionGetter.getVersion(), Config.version)) {
-                        room.alertVersionMismatch(versionGetter.getVersion());
+                    if (!Objects.equals(pack.getVersion(), Config.version)) {
+                        room.alertVersionMismatch(pack.getVersion());
                     }
                     expectedSendType = DataPack.Type.ConnectRequest;
                     expectedReceiveType = DataPack.Type.Undefined;
@@ -246,6 +246,7 @@ public class ClientNetworkHandler implements Runnable {
                 if (pack.isTokenAccepted()) {
                     room.getUserManager().getCurrentUser().setUid(pack.getUid());
                     onConnectionBuilt();
+                    room.setServerId(pack.getServerId(),pack.getLastMessageSerialId());
                 } else {
                     this.stop();
                     IRoomFrame.ExitReason state;

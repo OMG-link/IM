@@ -244,7 +244,7 @@ public class ServerNetworkHandler implements Runnable {
                     connectResultPack = new ConnectResultPack(ConnectResultPack.RejectReason.InvalidToken);
                 } else {
                     attachment.user = serverRoom.getUserManager().createUser(pack.getUserName());
-                    connectResultPack = new ConnectResultPack(attachment.user);
+                    connectResultPack = new ConnectResultPack(attachment.user,serverRoom.serverId,serverRoom.getMessageManager().getLastSerialId());
                 }
 
                 send(selectionKey, connectResultPack);

@@ -16,6 +16,7 @@ public class Config {
     public static final int nickMaxLength = 20;
     public static final int bufferedRecordNum = 100;
     public static final long fileMaxSize = 1024*1024*1024; //1GB
+    public static final int recordsPerPage = 15;
 
     private static int serverPort = 8814;
 

@@ -1,4 +1,4 @@
-package com.omg_link.im.core.sql_manager.server;
+package com.omg_link.im.core.sql_manager.client;
 
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.sql_manager.InvalidTableException;
@@ -12,17 +12,30 @@ import java.util.UUID;
 
 class BasicInfoTable extends Table {
 
-    private static final Column databaseUuidColumn = new Column("DatabaseUuid","CHAR(36)",false,false);
-    private static final Column serverVersionColumn = new Column("ServerVersion","TEXT",false,false);
+    private static final Column serverIdColumn = new Column("ServerId","CHAR(36)",false,false);
+    private static final Column dbVersionColumn = new Column("DBVersion","TEXT",false,false);
 
-    private UUID databaseUuid;
+    private UUID serverId;
 
-    public BasicInfoTable(SqlManager sqlManager) throws SQLException {
+    public BasicInfoTable(SqlManager sqlManager,UUID serverId) throws SQLException {
         super(sqlManager);
+        this.setServerId(serverId);
     }
 
-    public UUID getDatabaseUuid() {
-        return databaseUuid;
+    public UUID getServerId() {
+        return serverId;
+    }
+
+    private void setServerId(UUID serverId) throws SQLException {
+        this.serverId = serverId;
+        try(Statement statement = sqlManager.createStatement()){
+            statement.executeUpdate(
+                    "UPDATE {tableName} set {serverIdColumn}='{serverId}'"
+                            .replace("{tableName}",getTableName())
+                            .replace("{serverIdColumn}",serverIdColumn.name)
+                            .replace("{serverId}",serverId.toString())
+            );
+        }
     }
 
     @Override
@@ -33,16 +46,16 @@ class BasicInfoTable extends Table {
     @Override
     public Column[] getColumns() {
         return new Column[]{
-                databaseUuidColumn, serverVersionColumn
+                serverIdColumn, dbVersionColumn
         };
     }
 
     @Override
     public void createTable() throws SQLException {
         super.createTable();
-        databaseUuid = UUID.randomUUID();
+        serverId = new UUID(0,0);
         insertRecord(new String[]{
-                encodeString(databaseUuid.toString()),
+                encodeString(serverId.toString()),
                 encodeString(Config.compatibleVersion)
         });
     }
@@ -54,19 +67,19 @@ class BasicInfoTable extends Table {
             String sql = "SELECT * FROM " + getTableName();
             ResultSet resultSet = statement.executeQuery(sql);
             if(resultSet.next()){
-                String sDataBaseUuid,sServerVersion;
+                String sServerId,sDBVersion;
                 try{
-                    sDataBaseUuid = resultSet.getString(databaseUuidColumn.name);
-                    sServerVersion = resultSet.getString(serverVersionColumn.name);
+                    sServerId = resultSet.getString(serverIdColumn.name);
+                    sDBVersion = resultSet.getString(dbVersionColumn.name);
                 }catch (SQLException e){
                     throw new InvalidTableException();
                 }
-                databaseUuid = UUID.fromString(sDataBaseUuid);
-                if(!Config.compatibleVersion.equals(sServerVersion)){
+                serverId = UUID.fromString(sServerId);
+                if(!Config.compatibleVersion.equals(sDBVersion)){
                     throw new SQLException(String.format(
                             "The server is running at version %s, while the database is written in version %s.\nFor safety reasons, the database will not be used.",
-                            serverVersionColumn.name,
-                            sServerVersion
+                            dbVersionColumn.name,
+                            sDBVersion
                     ));
                 }
             }else{

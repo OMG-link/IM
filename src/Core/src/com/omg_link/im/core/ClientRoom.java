@@ -16,11 +16,13 @@ import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
 import com.omg_link.im.core.protocol.data_pack.system.CheckVersionPackV2;
 import com.omg_link.im.core.protocol.file_transfer.FileReceiveTask;
 import com.omg_link.im.core.protocol.file_transfer.FileSendTask;
+import com.omg_link.im.core.sql_manager.client.ClientSqlManager;
 import com.omg_link.im.core.user_manager.ClientUserManager;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,10 +30,14 @@ import java.util.logging.Logger;
 public class ClientRoom {
 
     private final Client client;
-    private final ClientMessageManager messageManager = new ClientMessageManager(this);
     private final ClientFactoryManager factoryManager = new ClientFactoryManager();
     private final ClientUserManager userManager = new ClientUserManager(this);
     private ClientNetworkHandler networkHandler;
+
+    private UUID serverId;
+    private ClientSqlManager sqlManager;
+    private ClientMessageManager messageManager;
+    private ClientFileManager fileManager;
 
     private IRoomFrame roomFrame = null;
     private boolean isConnectionBuilt = false;
@@ -123,6 +129,13 @@ public class ClientRoom {
     }
 
     public void downloadFile(String fileName, UUID fileId, FileTransferType fileTransferType, IFileTransferringPanel panel) {
+        if(fileTransferType==FileTransferType.ChatImage&&fileManager.isFileDownloaded(fileId)){
+            try {
+                panel.onTransferSucceed(getFileManager().openFileByServerFileId(fileId));
+                return;
+            } catch (FileNotFoundException ignored) { //吊人搞我
+            }
+        }
         FileReceiveTask task;
         try {
             task = getFactoryManager().getFileReceiveTaskFactory().create(this, fileName, fileId, fileTransferType, panel);
@@ -199,7 +212,7 @@ public class ClientRoom {
     }
 
     public ClientFileManager getFileManager(){
-        return client.getFileManager();
+        return fileManager;
     }
 
     public ClientMessageManager getMessageManager() {
@@ -212,6 +225,38 @@ public class ClientRoom {
 
     public ClientUserManager getUserManager() {
         return userManager;
+    }
+
+    public ClientSqlManager getSqlManager() {
+        return sqlManager;
+    }
+
+    //setter
+
+    public void setServerId(UUID serverId,long lastMessageSerialId){
+        this.serverId = serverId;
+        try{
+            this.sqlManager = new ClientSqlManager(
+                    "{cache}/chatLog.db"
+                            .replace("{cache}", ClientFileManager.getCacheFolderName(serverId))
+                            .replace("{serverId}",serverId.toString())
+                    , serverId
+            );
+        }catch (SQLException e){
+            e.printStackTrace();
+            this.sqlManager = null;
+        }
+        boolean isSqlEnabled = sqlManager!=null;
+
+        this.fileManager = new ClientFileManager(this,serverId,isSqlEnabled);
+        this.messageManager = new ClientMessageManager(this,lastMessageSerialId,isSqlEnabled);
+    }
+
+    public void closeSqlManager(){
+        if(sqlManager!=null){
+            sqlManager.close();
+            this.sqlManager = null;
+        }
     }
 
 }

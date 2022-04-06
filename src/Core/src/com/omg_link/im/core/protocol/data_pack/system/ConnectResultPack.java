@@ -18,8 +18,14 @@ public class ConnectResultPack extends DataPack {
     }
 
     private final boolean isTokenAccepted;
-    private RejectReason rejectReason;
-    private UUID uid;
+
+    //accepted
+    UUID uid;
+    UUID serverId;
+    long lastMessageSerialId;
+
+    //rejected
+    RejectReason rejectReason;
 
     /**
      * Called when client is rejected.
@@ -33,10 +39,12 @@ public class ConnectResultPack extends DataPack {
     /**
      * Called when client is accepted.
      */
-    public ConnectResultPack(User user){
+    public ConnectResultPack(User user, UUID serverId,long lastMessageSerialId){
         super(Type.ConnectResult);
         this.isTokenAccepted = true;
         this.uid = user.getUid();
+        this.serverId = serverId;
+        this.lastMessageSerialId = lastMessageSerialId;
     }
 
     public ConnectResultPack(ByteData data) throws InvalidPackageException {
@@ -44,6 +52,8 @@ public class ConnectResultPack extends DataPack {
         this.isTokenAccepted = data.decodeBoolean();
         if(isTokenAccepted()){
             this.uid = data.decodeUuid();
+            this.serverId = data.decodeUuid();
+            this.lastMessageSerialId = data.decodeLong();
         }else{
             this.rejectReason = data.decodeEnum(RejectReason.values());
         }
@@ -54,7 +64,9 @@ public class ConnectResultPack extends DataPack {
         var data = super.encode()
                 .append(isTokenAccepted);
         if(isTokenAccepted()){
-            data.append(uid);
+            data.append(uid)
+                    .append(serverId)
+                    .append(lastMessageSerialId);
         }else{
             data.append(rejectReason);
         }
@@ -67,6 +79,14 @@ public class ConnectResultPack extends DataPack {
 
     public UUID getUid() {
         return uid;
+    }
+
+    public UUID getServerId() {
+        return serverId;
+    }
+
+    public long getLastMessageSerialId() {
+        return lastMessageSerialId;
     }
 
     public RejectReason getRejectReason() {

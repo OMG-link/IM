@@ -5,7 +5,7 @@ import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.protocol.data.InvalidPackageException;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
 
-public class CheckVersionPackV2 extends DataPack implements IVersionGetter {
+public class CheckVersionPackV2 extends CheckVersionPack {
     private final String version;
     private final String compatibleVersion;
 

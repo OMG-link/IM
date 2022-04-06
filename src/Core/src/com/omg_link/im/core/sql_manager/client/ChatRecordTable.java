@@ -1,4 +1,4 @@
-package com.omg_link.im.core.sql_manager.server;
+package com.omg_link.im.core.sql_manager.client;
 
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.protocol.data.ByteData;
@@ -17,7 +17,7 @@ public class ChatRecordTable extends Table {
     private final PreparedStatement insertStatement;
     private final PreparedStatement queryStatement;
 
-    private long recordNum;
+    private long lastMessageId;
 
     public ChatRecordTable(SqlManager sqlManager) throws SQLException {
         super(sqlManager);
@@ -32,33 +32,27 @@ public class ChatRecordTable extends Table {
         );
     }
 
-    public long getRecordNum() {
-        return recordNum;
+    public long getLastMessageId() {
+        return lastMessageId;
     }
 
-    public synchronized void addRecord(long serialId, ByteData data) throws InvalidRecordException, InvalidSerialIdException, SQLException {
+    public synchronized void addRecord(long serialId, ByteData data) throws InvalidRecordException, SQLException {
         if (data.getLength() > Config.packageMaxLength) {
             throw new InvalidRecordException("Data too long!");
-        }
-        if (serialId != recordNum + 1) {
-            throw new InvalidSerialIdException();
         }
         insertStatement.setLong(1, serialId);
         insertStatement.setBytes(2, data.getBytes());
         insertStatement.executeUpdate();
-        recordNum++;
+        lastMessageId = Math.max(lastMessageId,serialId);
     }
 
     public ByteData getRecord(long serialId) throws InvalidSerialIdException, SQLException {
-        if (serialId < 1 || serialId > recordNum) {
-            throw new InvalidSerialIdException();
-        }
         queryStatement.setLong(1, serialId);
         ResultSet resultSet = queryStatement.executeQuery();
         if (resultSet.next()) {
             return new ByteData(resultSet.getBytes(dataColumn.name));
         } else {
-            throw new RuntimeException(String.format("Cannot find record with serialId=%d.", serialId));
+            throw new InvalidSerialIdException();
         }
     }
 
@@ -75,7 +69,7 @@ public class ChatRecordTable extends Table {
     @Override
     public void createTable() throws SQLException {
         super.createTable();
-        recordNum = 0;
+        lastMessageId = 0;
     }
 
     @Override
@@ -83,11 +77,12 @@ public class ChatRecordTable extends Table {
         super.loadTable();
         try (Statement statement = sqlManager.createStatement()) {
             ResultSet resultSet = statement.executeQuery(
-                    "SELECT COUNT(*) as rowCount FROM {tableName}"
+                    "SELECT MAX({SerialIdColumn}) as lastMessageId FROM {tableName}"
+                            .replace("{SerialIdColumn}", serialIdColumn.name)
                             .replace("{tableName}", getTableName())
             );
             if (resultSet.next()) {
-                recordNum = resultSet.getLong("rowCount");
+                lastMessageId = resultSet.getLong("lastMessageId");
             } else {
                 throw new SQLException("WTF?");
             }

@@ -38,8 +38,11 @@ public class ServerMessageManager {
     private final ServerRoom serverRoom;
     private final SerialIdGenerator serialIdGenerator;
 
-    public ServerMessageManager(ServerRoom serverRoom) {
+    private boolean enableSql;
+
+    public ServerMessageManager(ServerRoom serverRoom, boolean enableSql) {
         this.serverRoom = serverRoom;
+        this.enableSql = enableSql;
 
         var sqlManager = getSqlManager();
         if (sqlManager != null) {
@@ -49,31 +52,37 @@ public class ServerMessageManager {
         }
     }
 
+    public void disableSql(){
+        enableSql = false;
+    }
+
+    public long getLastSerialId(){
+        return serialIdGenerator.getLastId();
+    }
+
     private ServerSqlManager getSqlManager(){
         return serverRoom.getSqlManager();
     }
 
     private void addDataToHistory(long serialId, ByteData data) {
-        var sqlManager = getSqlManager();
-        if (sqlManager == null) return;
+        if(!enableSql) return;
         try {
-            sqlManager.addChatRecord(serialId, data);
-        } catch (InvalidRecordException ignored) {
+            getSqlManager().addChatRecord(serialId, data);
+        } catch (InvalidRecordException|InvalidSerialIdException ignored) {
         } catch (SQLException e) {
             e.printStackTrace();
-            serverRoom.closeSqlManager();
+            disableSql();
         }
     }
 
     private ByteData getDataFromHistory(long serialId) throws InvalidSerialIdException {
+        if(!enableSql) return null;
         if (serialId < 1 || serialId > serialIdGenerator.getLastId()) return null;
-        var sqlManager = getSqlManager();
-        if (sqlManager == null) return null;
         try{
-            return sqlManager.getChatRecord(serialId);
+            return getSqlManager().getChatRecord(serialId);
         }catch (SQLException e){
             e.printStackTrace();
-            serverRoom.closeSqlManager();
+            disableSql();
             return null;
         }
     }
@@ -131,7 +140,7 @@ public class ServerMessageManager {
             lastSerialId = serialIdGenerator.getLastId();
         }
         var pack = new ChatHistoryPack();
-        for (int i = 15 - 1; i >= 0; i--) {
+        for (int i = Config.recordsPerPage - 1; i >= 0; i--) {
             ByteData data = getDataFromHistory(lastSerialId - i);
             if (data != null) {
                 pack.addPack(data);

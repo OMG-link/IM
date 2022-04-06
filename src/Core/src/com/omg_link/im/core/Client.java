@@ -1,18 +1,15 @@
 package com.omg_link.im.core;
 
 import com.omg_link.im.core.config.ConfigSetFailedException;
-import com.omg_link.im.core.file_manager.ClientFileManager;
 import com.omg_link.im.core.gui.IConfirmDialogCallback;
 import com.omg_link.im.core.gui.IConnectFrame;
 import com.omg_link.im.core.gui.IGui;
 import com.omg_link.im.core.gui.IRoomFrame;
 
-import java.io.IOException;
 import java.util.logging.Logger;
 
 public class Client {
     private final Logger logger = Logger.getLogger("IMClient");
-    private final ClientFileManager fileManager;
 
     private final IGui gui;
 
@@ -21,11 +18,9 @@ public class Client {
 
     /**
      * Create a client.
-     * @throws IOException When the file manager cannot be created.
      */
-    public Client(IGui gui) throws IOException {
+    public Client(IGui gui) {
         this.gui = gui;
-        this.fileManager = new ClientFileManager();
     }
 
     /**
@@ -90,10 +85,6 @@ public class Client {
 
     public ClientRoom getRoom() {
         return room;
-    }
-
-    public ClientFileManager getFileManager() {
-        return fileManager;
     }
 
     public IGui getGui() {

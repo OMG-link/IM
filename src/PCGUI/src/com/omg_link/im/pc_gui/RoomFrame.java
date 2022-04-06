@@ -175,7 +175,6 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
             }
         }
         //Fetch data from user list
-        room.getMessageManager().getHistory();
         updateUserList();
     }
 
@@ -214,8 +213,10 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     }
 
     @Override
-    public void showFileUploadedMessage(long serialId, String sender, long stamp, UUID uuid, String fileName, long fileSize) {
-        this.messageArea.add(new FilePanel(room, sender, stamp, uuid, fileName, fileSize));
+    public IFileTransferringPanel showFileUploadedMessage(long serialId, String sender, long stamp, UUID uuid, String fileName, long fileSize) {
+        var panel = new FilePanel(room, sender, stamp, uuid, fileName, fileSize);
+        this.messageArea.add(panel);
+        return panel;
     }
 
     @Override

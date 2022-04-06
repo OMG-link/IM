@@ -1,8 +1,6 @@
 package com.omg_link.im.core.sql_manager;
 
-import java.security.InvalidParameterException;
-
-public class InvalidSerialIdException extends InvalidParameterException {
+public class InvalidSerialIdException extends Exception {
     public InvalidSerialIdException(){
         super();
     }

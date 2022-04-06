@@ -1,6 +1,7 @@
 package com.omg_link.im.core.file_manager;
 
 import com.omg_link.im.core.config.Config;
+import com.omg_link.utils.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,22 +14,6 @@ import java.util.UUID;
 public abstract class FileManager {
     private final Map<String, UUID> filePathToUuidMap = new HashMap<>();
     private final Map<UUID, FileObject> uuidToFileObjectMap = new HashMap<>();
-
-    /**
-     * @throws IOException When the target operation cannot be performed.
-     */
-    protected static void makeFolder(File folder) throws IOException {
-        if(!folder.exists()){
-            makeFolder(folder.getParentFile());
-            if(!folder.mkdir()){
-                throw new IOException("Unable to create folder.");
-            }
-        }else{
-            if(!folder.isDirectory()){
-                throw new IOException("Target folder is a file.");
-            }
-        }
-    }
 
     /**
      * Create a file.
@@ -113,7 +98,7 @@ public abstract class FileManager {
         String path = Config.getRuntimeDir()+relativeFolderPath;
         File file = new File(path);
         if(!file.exists()){
-            makeFolder(file.getAbsoluteFile());
+            FileUtils.makeFolder(file);
         }
         if(!file.isDirectory()){
             throw new IOException("Target folder is a file.");

@@ -1,5 +1,9 @@
 package com.omg_link.im.core.sql_manager;
 
+import com.omg_link.utils.FileUtils;
+
+import java.io.File;
+import java.io.IOException;
 import java.sql.*;
 
 public abstract class SqlManager {
@@ -12,6 +16,11 @@ public abstract class SqlManager {
             throw new SQLException(e);
         }
         // Make connection
+        try{
+            FileUtils.makeFolder(new File(fileName).getAbsoluteFile().getParentFile());
+        }catch (IOException e){
+            throw new RuntimeException(e);
+        }
         connection = DriverManager.getConnection("jdbc:sqlite:" + fileName);
     }
 
@@ -34,7 +43,7 @@ public abstract class SqlManager {
      * Check whether the table has been created.
      */
     public boolean isTableCreated(String tableName) throws SQLException {
-        try(Statement statement = connection.createStatement()){
+        try(Statement statement = createStatement()){
             String sql = "PRAGMA table_info("+tableName+")";
             ResultSet resultSet = statement.executeQuery(sql);
             return resultSet.next();
@@ -47,7 +56,7 @@ public abstract class SqlManager {
      */
     public void deleteTable(String tableName) throws SQLException {
         if(!isTableCreated(tableName)) return;
-        try(Statement statement = connection.createStatement()){
+        try(Statement statement = createStatement()){
             String sql = "DROP TABLE "+tableName;
             statement.executeUpdate(sql);
         }
