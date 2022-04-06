@@ -131,6 +131,13 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
         sendButton.addActionListener((event) -> this.onInputFinish());
         component.add(sendButton);
 
+        //Get history Button
+        JButton showMoreHistoryButton = new JButton("load More History");
+        showMoreHistoryButton.addActionListener((event)->{
+            room.getMessageManager().showMoreHistory();
+        });
+        component.add(showMoreHistoryButton);
+
         /*
         //Debug Button
         JButton debugButton = new JButton("Debug");
