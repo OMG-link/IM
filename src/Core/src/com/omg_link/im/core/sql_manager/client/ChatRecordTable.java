@@ -15,7 +15,6 @@ public class ChatRecordTable extends Table {
     private static final Column dataColumn = new Column("Data", "BLOB", false, false);
 
     private final PreparedStatement insertStatement;
-    private final PreparedStatement queryStatement;
 
     private long lastMessageId;
 
@@ -24,11 +23,6 @@ public class ChatRecordTable extends Table {
         insertStatement = sqlManager.prepareStatement(
                 "INSERT INTO {tableName} VALUES (?,?)"
                         .replace("{tableName}", getTableName())
-        );
-        queryStatement = sqlManager.prepareStatement(
-                "SELECT * FROM {tableName} WHERE {serialIdColumnName}=?"
-                        .replace("{tableName}", getTableName())
-                        .replace("{serialIdColumnName}", serialIdColumn.name)
         );
     }
 
@@ -47,12 +41,18 @@ public class ChatRecordTable extends Table {
     }
 
     public ByteData getRecord(long serialId) throws InvalidSerialIdException, SQLException {
-        queryStatement.setLong(1, serialId);
-        try(Cursor cursor = queryStatement.executeQuery()){
-            if (cursor.next()) {
-                return new ByteData(cursor.getBytes(dataColumn.name));
-            } else {
-                throw new InvalidSerialIdException();
+        try(Statement statement = sqlManager.createStatement()){
+            try(Cursor cursor = statement.executeQuery(
+                    "SELECT * FROM {tableName} WHERE {serialIdColumnName}={serialId}"
+                            .replace("{tableName}", getTableName())
+                            .replace("{serialIdColumnName}", serialIdColumn.name)
+                            .replace("{serialId}",String.valueOf(serialId))
+            )){
+                if (cursor.next()) {
+                    return new ByteData(cursor.getBytes(dataColumn.name));
+                } else {
+                    throw new InvalidSerialIdException();
+                }
             }
         }
     }
