@@ -1,8 +1,8 @@
-package com.omg_link.sqlite_bridge;
+package com.omg_link.sqlite_bridge.xerial;
 
 import java.sql.SQLException;
 
-public class PreparedStatement extends com.omg_link.im.core.sql_manager.components.PreparedStatement {
+public class PreparedStatement extends com.omg_link.sqlite_bridge.PreparedStatement {
 
     private final java.sql.PreparedStatement statement;
 

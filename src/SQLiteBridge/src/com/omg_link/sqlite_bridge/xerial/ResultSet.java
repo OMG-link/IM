@@ -1,8 +1,8 @@
-package com.omg_link.sqlite_bridge;
+package com.omg_link.sqlite_bridge.xerial;
 
 import java.sql.SQLException;
 
-public class ResultSet extends com.omg_link.im.core.sql_manager.components.ResultSet {
+public class ResultSet extends com.omg_link.sqlite_bridge.ResultSet {
 
     private final java.sql.ResultSet resultSet;
 

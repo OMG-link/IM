@@ -3,9 +3,9 @@ package com.omg_link.im.core.sql_manager.client;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.sql_manager.*;
-import com.omg_link.im.core.sql_manager.components.PreparedStatement;
-import com.omg_link.im.core.sql_manager.components.ResultSet;
-import com.omg_link.im.core.sql_manager.components.Statement;
+import com.omg_link.sqlite_bridge.PreparedStatement;
+import com.omg_link.sqlite_bridge.ResultSet;
+import com.omg_link.sqlite_bridge.Statement;
 
 import java.sql.SQLException;
 

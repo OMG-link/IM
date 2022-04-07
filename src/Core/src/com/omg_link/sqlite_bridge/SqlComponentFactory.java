@@ -1,4 +1,4 @@
-package com.omg_link.im.core.sql_manager.components;
+package com.omg_link.sqlite_bridge;
 
 import java.sql.SQLException;
 

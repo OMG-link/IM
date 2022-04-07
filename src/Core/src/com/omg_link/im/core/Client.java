@@ -3,7 +3,7 @@ package com.omg_link.im.core;
 import com.omg_link.im.core.config.ConfigSetFailedException;
 import com.omg_link.im.core.file_manager.ClientFileManager;
 import com.omg_link.im.core.gui.*;
-import com.omg_link.im.core.sql_manager.components.SqlComponentFactory;
+import com.omg_link.sqlite_bridge.SqlComponentFactory;
 
 import java.util.logging.Logger;
 

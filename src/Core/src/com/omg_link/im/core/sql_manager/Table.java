@@ -1,7 +1,7 @@
 package com.omg_link.im.core.sql_manager;
 
-import com.omg_link.im.core.sql_manager.components.ResultSet;
-import com.omg_link.im.core.sql_manager.components.Statement;
+import com.omg_link.sqlite_bridge.ResultSet;
+import com.omg_link.sqlite_bridge.Statement;
 
 import java.security.InvalidParameterException;
 import java.sql.SQLException;

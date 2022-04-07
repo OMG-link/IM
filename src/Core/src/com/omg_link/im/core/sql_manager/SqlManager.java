@@ -1,6 +1,6 @@
 package com.omg_link.im.core.sql_manager;
 
-import com.omg_link.im.core.sql_manager.components.*;
+import com.omg_link.sqlite_bridge.*;
 import com.omg_link.utils.FileUtils;
 
 import java.io.File;

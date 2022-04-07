@@ -1,6 +1,6 @@
 package com.omg_link.im.core.sql_manager.client;
 
-import com.omg_link.im.core.sql_manager.components.SqlComponentFactory;
+import com.omg_link.sqlite_bridge.SqlComponentFactory;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.sql_manager.InvalidRecordException;
 import com.omg_link.im.core.sql_manager.InvalidSerialIdException;

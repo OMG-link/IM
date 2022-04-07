@@ -4,7 +4,7 @@ import com.omg_link.im.core.Client;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.gui.IConfirmDialogCallback;
 import com.omg_link.im.core.gui.IGui;
-import com.omg_link.sqlite_bridge.SqlComponentFactory;
+import com.omg_link.sqlite_bridge.xerial.SqlComponentFactory;
 
 import javax.swing.*;
 import java.awt.*;

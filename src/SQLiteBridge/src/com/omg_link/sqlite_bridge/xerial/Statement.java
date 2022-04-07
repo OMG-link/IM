@@ -1,8 +1,8 @@
-package com.omg_link.sqlite_bridge;
+package com.omg_link.sqlite_bridge.xerial;
 
 import java.sql.SQLException;
 
-public class Statement extends com.omg_link.im.core.sql_manager.components.Statement {
+public class Statement extends com.omg_link.sqlite_bridge.Statement {
 
     private final java.sql.Statement statement;
 

@@ -2,9 +2,9 @@ package com.omg_link.im.core.sql_manager.server;
 
 import com.omg_link.im.core.sql_manager.SqlManager;
 import com.omg_link.im.core.sql_manager.Table;
-import com.omg_link.im.core.sql_manager.components.PreparedStatement;
-import com.omg_link.im.core.sql_manager.components.ResultSet;
-import com.omg_link.im.core.sql_manager.components.Statement;
+import com.omg_link.sqlite_bridge.PreparedStatement;
+import com.omg_link.sqlite_bridge.ResultSet;
+import com.omg_link.sqlite_bridge.Statement;
 import com.omg_link.utils.Sha512Digest;
 
 import java.sql.SQLException;

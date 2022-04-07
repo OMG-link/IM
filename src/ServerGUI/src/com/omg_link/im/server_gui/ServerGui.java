@@ -3,7 +3,7 @@ package com.omg_link.im.server_gui;
 import com.omg_link.im.core.ServerRoom;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.gui.IServerGui;
-import com.omg_link.sqlite_bridge.SqlComponentFactory;
+import com.omg_link.sqlite_bridge.xerial.SqlComponentFactory;
 
 public class ServerGui implements IServerGui {
 

@@ -4,8 +4,8 @@ import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.sql_manager.InvalidTableException;
 import com.omg_link.im.core.sql_manager.SqlManager;
 import com.omg_link.im.core.sql_manager.Table;
-import com.omg_link.im.core.sql_manager.components.ResultSet;
-import com.omg_link.im.core.sql_manager.components.Statement;
+import com.omg_link.sqlite_bridge.ResultSet;
+import com.omg_link.sqlite_bridge.Statement;
 
 import java.sql.SQLException;
 import java.util.UUID;
