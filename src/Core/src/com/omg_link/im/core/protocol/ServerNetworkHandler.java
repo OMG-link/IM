@@ -19,6 +19,7 @@ import com.omg_link.im.core.protocol.file_transfer.ServerFileReceiveTask;
 import com.omg_link.im.core.protocol.file_transfer.ServerFileSendTask;
 import com.omg_link.im.core.sql_manager.InvalidSerialIdException;
 import com.omg_link.utils.FileUtils;
+import com.omg_link.utils.SocketClosedException;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -103,6 +104,8 @@ public class ServerNetworkHandler implements Runnable {
                     if (selectionKey.isReadable()) {
                         this.handleRead(selectionKey);
                     }
+                } catch (SocketClosedException e) {
+                    disconnect(selectionKey);
                 } catch (IOException | InvalidPackageException e) {
                     e.printStackTrace();
                     disconnect(selectionKey);
@@ -147,7 +150,7 @@ public class ServerNetworkHandler implements Runnable {
         ByteBuffer byteBuffer = ByteBuffer.allocate(10 * 1024); //10KB
 
         int length = socketChannel.read(byteBuffer);
-        if (length == -1) throw new IOException("Connection Closed.");
+        if (length == -1) throw new SocketClosedException();
         byteBuffer.flip();
         tData.setLength(byteBuffer.limit());
 
@@ -244,7 +247,7 @@ public class ServerNetworkHandler implements Runnable {
                     connectResultPack = new ConnectResultPack(ConnectResultPack.RejectReason.InvalidToken);
                 } else {
                     attachment.user = serverRoom.getUserManager().createUser(pack.getUserName());
-                    connectResultPack = new ConnectResultPack(attachment.user,serverRoom.serverId,serverRoom.getMessageManager().getLastSerialId());
+                    connectResultPack = new ConnectResultPack(attachment.user, serverRoom.serverId, serverRoom.getMessageManager().getLastSerialId());
                 }
 
                 send(selectionKey, connectResultPack);
