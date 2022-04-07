@@ -55,7 +55,7 @@ public class ServerFileManager extends FileManager {
     }
 
     private String getFolderName() {
-        return Config.getCacheDir() + folderName;
+        return Config.getCacheDir() + '/' + folderName;
     }
 
     /**

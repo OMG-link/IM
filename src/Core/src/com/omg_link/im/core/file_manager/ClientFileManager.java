@@ -63,7 +63,7 @@ public class ClientFileManager extends FileManager{
     }
 
     public FileObject createFileRenameable(String folder,String fileName) throws IOException {
-        folder = Config.getRuntimeDir()+folder;
+        folder = Config.getRuntimeDir()+'/'+folder;
         try{
             return createFile(folder,fileName);
         }catch (FileAlreadyExistsException e){
@@ -149,7 +149,7 @@ public class ClientFileManager extends FileManager{
     }
 
     public static String getCacheFolderName(UUID serverId){
-        return "{cache}/{serverId}/"
+        return "{cache}/{serverId}"
                 .replace("{cache}",Config.getCacheDir())
                 .replace("{serverId}",serverId.toString());
     }

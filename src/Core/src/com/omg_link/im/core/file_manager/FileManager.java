@@ -41,7 +41,7 @@ public abstract class FileManager {
         UUID fileId;
         do {
             fileId = getNewFileId();
-            file = new File(Config.getRuntimeDir() + folderName + '/' + fileId);
+            file = new File(Config.getRuntimeDir()+ '/' + folderName + '/' + fileId);
         } while (!file.createNewFile());
         return openFile(file,fileId);
     }
@@ -95,7 +95,7 @@ public abstract class FileManager {
      * @throws IOException When the target folder cannot be created or the folder is a file.
      */
     public File openFolder(String relativeFolderPath) throws IOException {
-        String path = Config.getRuntimeDir()+relativeFolderPath;
+        String path = Config.getRuntimeDir()+'/'+relativeFolderPath;
         File file = new File(path);
         if(!file.exists()){
             FileUtils.makeFolder(file);

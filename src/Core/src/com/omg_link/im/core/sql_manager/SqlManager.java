@@ -10,11 +10,6 @@ public abstract class SqlManager {
     protected final Connection connection;
 
     public SqlManager(String fileName) throws SQLException {
-        try {
-            Class.forName("org.sqlite.JDBC");
-        } catch (ClassNotFoundException e) {
-            throw new SQLException(e);
-        }
         // Make connection
         try{
             FileUtils.makeFolder(new File(fileName).getAbsoluteFile().getParentFile());

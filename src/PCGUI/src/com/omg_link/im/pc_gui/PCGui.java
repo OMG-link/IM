@@ -25,6 +25,7 @@ public class PCGui implements IGui {
 
     public PCGui() {
         try{
+            Class.forName("org.sqlite.JDBC");
             client = new Client(this);
             client.getGui().createConnectFrame();
         }catch (Exception e){

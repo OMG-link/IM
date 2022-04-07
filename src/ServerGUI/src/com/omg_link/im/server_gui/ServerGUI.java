@@ -10,6 +10,7 @@ public class ServerGUI implements IServerGUI {
 
     public static void main(String[] args) {
         try{
+            Class.forName("org.sqlite.JDBC");
             Config.updateFromFile();
             new ServerGUI();
         }catch(Exception e){
