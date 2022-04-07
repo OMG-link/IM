@@ -3,11 +3,11 @@ package com.omg_link.im.core.sql_manager.server;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.sql_manager.*;
+import com.omg_link.im.core.sql_manager.components.PreparedStatement;
+import com.omg_link.im.core.sql_manager.components.ResultSet;
+import com.omg_link.im.core.sql_manager.components.Statement;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public class ChatRecordTable extends Table {
 

@@ -237,6 +237,7 @@ public class ClientRoom {
         this.serverId = serverId;
         try {
             this.sqlManager = new ClientSqlManager(
+                    client.getGui().getSqlComponentFactory(),
                     "{cache}/chatLog.db"
                             .replace("{cache}", ClientFileManager.getCacheFolderName(serverId))
                             .replace("{serverId}", serverId.toString())

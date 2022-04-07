@@ -4,6 +4,7 @@ import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.sql_manager.InvalidRecordException;
 import com.omg_link.im.core.sql_manager.InvalidSerialIdException;
 import com.omg_link.im.core.sql_manager.SqlManager;
+import com.omg_link.im.core.sql_manager.components.SqlComponentFactory;
 import com.omg_link.utils.Sha512Digest;
 
 import java.sql.SQLException;
@@ -16,8 +17,8 @@ public class ServerSqlManager extends SqlManager {
     private final ChatRecordTable chatRecordTable;
     private final FileRecordTable fileRecordTable;
 
-    public ServerSqlManager(String fileName) throws SQLException {
-        super(fileName);
+    public ServerSqlManager(SqlComponentFactory factory, String fileName) throws SQLException {
+        super(factory,fileName);
         basicInfoTable = new BasicInfoTable(this);
         chatRecordTable = new ChatRecordTable(this);
         fileRecordTable = new FileRecordTable(this);

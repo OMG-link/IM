@@ -2,12 +2,12 @@ package com.omg_link.im.core.sql_manager.client;
 
 import com.omg_link.im.core.sql_manager.SqlManager;
 import com.omg_link.im.core.sql_manager.Table;
+import com.omg_link.im.core.sql_manager.components.PreparedStatement;
+import com.omg_link.im.core.sql_manager.components.ResultSet;
+import com.omg_link.im.core.sql_manager.components.Statement;
 
 import java.io.File;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;

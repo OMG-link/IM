@@ -1,22 +1,23 @@
 package com.omg_link.im.core.sql_manager;
 
+import com.omg_link.im.core.sql_manager.components.*;
 import com.omg_link.utils.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.*;
+import java.sql.SQLException;
 
 public abstract class SqlManager {
     protected final Connection connection;
 
-    public SqlManager(String fileName) throws SQLException {
+    public SqlManager(SqlComponentFactory factory, String fileName) throws SQLException {
         // Make connection
         try{
             FileUtils.makeFolder(new File(fileName).getAbsoluteFile().getParentFile());
         }catch (IOException e){
             throw new RuntimeException(e);
         }
-        connection = DriverManager.getConnection("jdbc:sqlite:" + fileName);
+        connection = factory.createConnection(fileName);
     }
 
     public void close(){

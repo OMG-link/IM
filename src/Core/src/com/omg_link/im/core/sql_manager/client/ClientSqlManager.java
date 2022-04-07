@@ -1,5 +1,6 @@
 package com.omg_link.im.core.sql_manager.client;
 
+import com.omg_link.im.core.sql_manager.components.SqlComponentFactory;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.sql_manager.InvalidRecordException;
 import com.omg_link.im.core.sql_manager.InvalidSerialIdException;
@@ -16,8 +17,8 @@ public class ClientSqlManager extends SqlManager {
     private final ChatRecordTable chatRecordTable;
     private final FileRecordTable fileRecordTable;
 
-    public ClientSqlManager(String fileName,UUID serverId) throws SQLException {
-        super(fileName);
+    public ClientSqlManager(SqlComponentFactory factory, String fileName, UUID serverId) throws SQLException {
+        super(factory,fileName);
         this.basicInfoTable = new BasicInfoTable(this,serverId);
         this.chatRecordTable = new ChatRecordTable(this);
         this.fileRecordTable = new FileRecordTable(this);

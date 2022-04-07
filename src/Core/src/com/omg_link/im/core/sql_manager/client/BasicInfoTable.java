@@ -4,10 +4,10 @@ import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.sql_manager.InvalidTableException;
 import com.omg_link.im.core.sql_manager.SqlManager;
 import com.omg_link.im.core.sql_manager.Table;
+import com.omg_link.im.core.sql_manager.components.ResultSet;
+import com.omg_link.im.core.sql_manager.components.Statement;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.UUID;
 
 class BasicInfoTable extends Table {

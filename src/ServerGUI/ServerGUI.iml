@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="Core" exported="" />
+    <orderEntry type="module" module-name="SQLiteBridge" exported="" />
   </component>
 </module>

@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/src/Core/Core.iml" filepath="$PROJECT_DIR$/src/Core/Core.iml" />
       <module fileurl="file://$PROJECT_DIR$/src/PCGUI/PCGUI.iml" filepath="$PROJECT_DIR$/src/PCGUI/PCGUI.iml" />
+      <module fileurl="file://$PROJECT_DIR$/src/SQLiteBridge/SQLiteBridge.iml" filepath="$PROJECT_DIR$/src/SQLiteBridge/SQLiteBridge.iml" />
       <module fileurl="file://$PROJECT_DIR$/src/ServerGUI/ServerGUI.iml" filepath="$PROJECT_DIR$/src/ServerGUI/ServerGUI.iml" />
     </modules>
   </component>

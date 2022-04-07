@@ -2,10 +2,8 @@ package com.omg_link.im.core;
 
 import com.omg_link.im.core.config.ConfigSetFailedException;
 import com.omg_link.im.core.file_manager.ClientFileManager;
-import com.omg_link.im.core.gui.IConfirmDialogCallback;
-import com.omg_link.im.core.gui.IConnectFrame;
-import com.omg_link.im.core.gui.IGui;
-import com.omg_link.im.core.gui.IRoomFrame;
+import com.omg_link.im.core.gui.*;
+import com.omg_link.im.core.sql_manager.components.SqlComponentFactory;
 
 import java.util.logging.Logger;
 
@@ -40,7 +38,17 @@ public class Client {
      */
     public void runLocalServer(){
         if(isLocalServerRunning()) return;
-        serverRoom = new ServerRoom(null);
+        serverRoom = new ServerRoom(new IServerGui() {
+            @Override
+            public void createGUI() {
+                //do nothing
+            }
+
+            @Override
+            public SqlComponentFactory getSqlComponentFactory() {
+                return gui.getSqlComponentFactory();
+            }
+        });
     }
 
     /**

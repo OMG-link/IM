@@ -3,7 +3,7 @@ package com.omg_link.im.core;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.factory_manager.ServerFactoryManager;
 import com.omg_link.im.core.file_manager.ServerFileManager;
-import com.omg_link.im.core.gui.IServerGUI;
+import com.omg_link.im.core.gui.IServerGui;
 import com.omg_link.im.core.message_manager.ServerMessageManager;
 import com.omg_link.im.core.protocol.ServerNetworkHandler;
 import com.omg_link.im.core.sql_manager.server.ServerSqlManager;
@@ -20,17 +20,17 @@ public class ServerRoom {
     final ServerMessageManager messageManager;
     final ServerUserManager userManager = new ServerUserManager(this);;
     final ServerNetworkHandler networkHandler;
-    final IServerGUI GUI;
+    final IServerGui gui;
     final ServerFileManager fileManager;
 
     public final UUID serverId;
     ServerSqlManager sqlManager;
 
-    public ServerRoom(IServerGUI GUI){
-        this.GUI = GUI;
+    public ServerRoom(IServerGui gui){
+        this.gui = gui;
         try{
             try {
-                sqlManager = new ServerSqlManager(Config.getServerDatabasePath());
+                sqlManager = new ServerSqlManager(gui.getSqlComponentFactory(),Config.getServerDatabasePath());
             } catch (SQLException e) {
                 e.printStackTrace();
                 getLogger().log(
@@ -45,9 +45,7 @@ public class ServerRoom {
 
             this.fileManager = new ServerFileManager(this,serverId,isSqlEnabled);
             this.networkHandler = new ServerNetworkHandler(this);
-            if(GUI!=null){
-                GUI.createGUI();
-            }
+            gui.createGUI();
         }catch (Exception e){
             logger.log(
                     Level.SEVERE,

@@ -4,6 +4,7 @@ import com.omg_link.im.core.Client;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.gui.IConfirmDialogCallback;
 import com.omg_link.im.core.gui.IGui;
+import com.omg_link.sqlite_bridge.SqlComponentFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,8 +15,9 @@ import java.net.URISyntaxException;
 public class PCGui implements IGui {
     public static void main(String[] args) {
         try {
+            Class.forName("org.sqlite.JDBC");
             Config.updateFromFile();
-            PCGui GUI = new PCGui();
+            new PCGui();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -132,4 +134,10 @@ public class PCGui implements IGui {
                 }
         );
     }
+
+    @Override
+    public SqlComponentFactory getSqlComponentFactory() {
+        return new SqlComponentFactory();
+    }
+
 }

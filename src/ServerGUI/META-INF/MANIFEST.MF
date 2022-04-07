@@ -1,2 +1,2 @@
 Manifest-Version: 1.0
-Main-Class: com.omg_link.im.server_gui.ServerGUI
+Main-Class: com.omg_link.im.server_gui.ServerGui

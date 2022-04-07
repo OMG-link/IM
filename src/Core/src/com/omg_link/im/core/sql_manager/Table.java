@@ -1,9 +1,10 @@
 package com.omg_link.im.core.sql_manager;
 
+import com.omg_link.im.core.sql_manager.components.ResultSet;
+import com.omg_link.im.core.sql_manager.components.Statement;
+
 import java.security.InvalidParameterException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Objects;
 
 public abstract class Table {
