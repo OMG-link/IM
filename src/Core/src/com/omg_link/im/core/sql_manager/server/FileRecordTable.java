@@ -47,7 +47,7 @@ public class FileRecordTable extends Table {
     public void setMapping(Sha512Digest digest,UUID fileId) throws SQLException {
         insertStatement.setBytes(1,digest.getData());
         insertStatement.setString(2,fileId.toString());
-        insertStatement.executeUpdate();
+        insertStatement.executeInsert();
     }
 
     @Override

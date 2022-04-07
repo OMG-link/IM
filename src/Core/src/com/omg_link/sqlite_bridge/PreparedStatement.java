@@ -8,7 +8,8 @@ public abstract class PreparedStatement {
     public abstract void setBytes(int index,byte[] value) throws SQLException;
     public abstract void setString(int index,String value) throws SQLException;
 
-    public abstract void executeUpdate() throws SQLException;
+    public abstract void executeInsert() throws SQLException;
+    public abstract void executeUpdateDelete() throws SQLException;
     public abstract Cursor executeQuery() throws SQLException;
 
 }

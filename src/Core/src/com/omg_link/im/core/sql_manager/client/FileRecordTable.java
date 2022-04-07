@@ -53,12 +53,12 @@ public class FileRecordTable extends Table {
     public void addMapping(UUID fileId, File file) throws SQLException {
         insertStatement.setString(1, fileId.toString());
         insertStatement.setString(2, file.getAbsolutePath());
-        insertStatement.executeUpdate();
+        insertStatement.executeInsert();
     }
 
     public void removeMapping(UUID fileId) throws SQLException {
         removeStatement.setString(1,fileId.toString());
-        removeStatement.executeUpdate();
+        removeStatement.executeUpdateDelete();
     }
 
     @Override

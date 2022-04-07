@@ -26,7 +26,12 @@ public class PreparedStatement extends com.omg_link.sqlite_bridge.PreparedStatem
     }
 
     @Override
-    public void executeUpdate() throws SQLException {
+    public void executeInsert() throws SQLException {
+        statement.executeUpdate();
+    }
+
+    @Override
+    public void executeUpdateDelete() throws SQLException {
         statement.executeUpdate();
     }
 

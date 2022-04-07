@@ -45,7 +45,7 @@ public class ChatRecordTable extends Table {
         }
         insertStatement.setLong(1, serialId);
         insertStatement.setBytes(2, data.getBytes());
-        insertStatement.executeUpdate();
+        insertStatement.executeInsert();
         recordNum++;
     }
 
