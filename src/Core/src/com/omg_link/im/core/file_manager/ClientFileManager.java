@@ -16,12 +16,18 @@ import java.util.UUID;
 public class ClientFileManager extends FileManager{
     public static final String downloadFolder = "Download";
 
-    private final ClientRoom room;
-    private final String cacheFolder;
+    private ClientRoom room;
+    private String cacheFolder;
 
     private boolean enableSql;
 
-    public ClientFileManager(ClientRoom room,UUID serverId,boolean enableSql) {
+    public ClientFileManager() {
+        this.cacheFolder = "{cache}/"
+                .replace("{cache}",Config.getCacheDir());
+        this.enableSql = false;
+    }
+
+    public void setToRoom(ClientRoom room, UUID serverId, boolean enableSql){
         this.room = room;
         this.cacheFolder = "{cache}/{serverId}/"
                 .replace("{cache}",Config.getCacheDir())
@@ -30,7 +36,7 @@ public class ClientFileManager extends FileManager{
 
         if(enableSql){
             try{
-                this.fileIdToPathMap = room.getSqlManager().getFileMapping();
+                this.fileIdToPathMap = this.room.getSqlManager().getFileMapping();
             }catch (SQLException e){
                 e.printStackTrace();
                 disableSql();
@@ -39,6 +45,7 @@ public class ClientFileManager extends FileManager{
         if(!enableSql){
             this.fileIdToPathMap = new HashMap<>();
         }
+
     }
 
     public void disableSql(){

@@ -37,7 +37,6 @@ public class ClientRoom {
     private UUID serverId;
     private ClientSqlManager sqlManager;
     private ClientMessageManager messageManager;
-    private ClientFileManager fileManager;
 
     private IRoomFrame roomFrame = null;
     private boolean isConnectionBuilt = false;
@@ -50,6 +49,7 @@ public class ClientRoom {
 
     /**
      * <p>Save the config and connect to server.</p>
+     *
      * @throws ConfigSetFailedException When config is saved failed.
      */
     public void saveConfigAndConnect(String url, String username, String token) throws ConfigSetFailedException {
@@ -59,24 +59,24 @@ public class ClientRoom {
         Config.setToken(token);
         Config.saveToFile();
         // connect
-        new Thread(()->{
-            var remoteServerIp = client.isLocalServerRunning()?"127.0.0.1":Config.getServerIP();
+        new Thread(() -> {
+            var remoteServerIp = client.isLocalServerRunning() ? "127.0.0.1" : Config.getServerIP();
             networkHandler = new ClientNetworkHandler(this, remoteServerIp, Config.getServerPort());
             networkHandler.connect();
             getNetworkHandler().send(new CheckVersionPackV2());
         }).start();
     }
 
-    public void reconnect(){
+    public void reconnect() {
         networkHandler.stop();
         try {
-            saveConfigAndConnect(Config.getUrl(),Config.getUsername(), Config.getToken());
+            saveConfigAndConnect(Config.getUrl(), Config.getUsername(), Config.getToken());
         } catch (ConfigSetFailedException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void exitRoom(IRoomFrame.ExitReason state){
+    public void exitRoom(IRoomFrame.ExitReason state) {
         networkHandler.stop();
         roomFrame.exitRoom(state);
         client.setRoom(null);
@@ -87,7 +87,7 @@ public class ClientRoom {
      */
     public void onConnectionBuilt() {
         isConnectionBuilt = true;
-        if(roomFrame!=null){
+        if (roomFrame != null) {
             roomFrame.onConnectionBuilt();
         }
     }
@@ -111,7 +111,7 @@ public class ClientRoom {
     }
 
     public void sendChatImage(File image) throws FileNotFoundException {
-        sendChatImage(image,null);
+        sendChatImage(image, null);
     }
 
     public void sendChatImage(File image, IFileTransferringPanel panel) throws FileNotFoundException {
@@ -129,7 +129,7 @@ public class ClientRoom {
     }
 
     public void downloadFile(String fileName, UUID fileId, FileTransferType fileTransferType, IFileTransferringPanel panel) {
-        if(fileTransferType==FileTransferType.ChatImage&&fileManager.isFileDownloaded(fileId)){
+        if (fileTransferType == FileTransferType.ChatImage && getFileManager().isFileDownloaded(fileId)) {
             try {
                 panel.onTransferSucceed(getFileManager().openFileByServerFileId(fileId));
                 return;
@@ -157,26 +157,26 @@ public class ClientRoom {
 
     // show info
 
-    public void showMessage(String message){
+    public void showMessage(String message) {
         client.showMessage(message);
     }
 
-    public void showCheckbox(String message, IConfirmDialogCallback callback){
-        client.showCheckbox(message,callback);
+    public void showCheckbox(String message, IConfirmDialogCallback callback) {
+        client.showCheckbox(message, callback);
     }
 
     // version error
 
-    public void alertVersionUnrecognizable(){
+    public void alertVersionUnrecognizable() {
         client.getGui().alertVersionUnrecognizable(Config.version);
     }
 
-    public void alertVersionIncompatible(String remoteVersion){
-        client.getGui().alertVersionIncompatible(remoteVersion,Config.version);
+    public void alertVersionIncompatible(String remoteVersion) {
+        client.getGui().alertVersionIncompatible(remoteVersion, Config.version);
     }
 
-    public void alertVersionMismatch(String remoteVersion){
-        client.getGui().alertVersionMismatch(remoteVersion,Config.version);
+    public void alertVersionMismatch(String remoteVersion) {
+        client.getGui().alertVersionMismatch(remoteVersion, Config.version);
     }
 
     // getter
@@ -194,7 +194,7 @@ public class ClientRoom {
     }
 
     public void setRoomFrame(IRoomFrame roomFrame) {
-        if(this.roomFrame!=null){
+        if (this.roomFrame != null) {
             client.getLogger().log(
                     Level.WARNING,
                     "Room frame set more than once! The latter operation will be ignored."
@@ -202,7 +202,7 @@ public class ClientRoom {
             return;
         }
         this.roomFrame = roomFrame;
-        if(isConnectionBuilt){
+        if (isConnectionBuilt) {
             onConnectionBuilt();
         }
     }
@@ -211,8 +211,8 @@ public class ClientRoom {
         return factoryManager;
     }
 
-    public ClientFileManager getFileManager(){
-        return fileManager;
+    public ClientFileManager getFileManager() {
+        return client.getFileManager();
     }
 
     public ClientMessageManager getMessageManager() {
@@ -233,27 +233,27 @@ public class ClientRoom {
 
     //setter
 
-    public void setServerId(UUID serverId,long lastMessageSerialId){
+    public void setServerId(UUID serverId, long lastMessageSerialId) {
         this.serverId = serverId;
-        try{
+        try {
             this.sqlManager = new ClientSqlManager(
                     "{cache}/chatLog.db"
                             .replace("{cache}", ClientFileManager.getCacheFolderName(serverId))
-                            .replace("{serverId}",serverId.toString())
+                            .replace("{serverId}", serverId.toString())
                     , serverId
             );
-        }catch (SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
             this.sqlManager = null;
         }
-        boolean isSqlEnabled = sqlManager!=null;
+        boolean isSqlEnabled = sqlManager != null;
 
-        this.fileManager = new ClientFileManager(this,serverId,isSqlEnabled);
-        this.messageManager = new ClientMessageManager(this,lastMessageSerialId,isSqlEnabled);
+        getFileManager().setToRoom(this, serverId, isSqlEnabled);
+        this.messageManager = new ClientMessageManager(this, lastMessageSerialId, isSqlEnabled);
     }
 
-    public void closeSqlManager(){
-        if(sqlManager!=null){
+    public void closeSqlManager() {
+        if (sqlManager != null) {
             sqlManager.close();
             this.sqlManager = null;
         }

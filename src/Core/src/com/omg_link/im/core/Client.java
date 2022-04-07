@@ -1,6 +1,7 @@
 package com.omg_link.im.core;
 
 import com.omg_link.im.core.config.ConfigSetFailedException;
+import com.omg_link.im.core.file_manager.ClientFileManager;
 import com.omg_link.im.core.gui.IConfirmDialogCallback;
 import com.omg_link.im.core.gui.IConnectFrame;
 import com.omg_link.im.core.gui.IGui;
@@ -10,6 +11,7 @@ import java.util.logging.Logger;
 
 public class Client {
     private final Logger logger = Logger.getLogger("IMClient");
+    private final ClientFileManager fileManager;
 
     private final IGui gui;
 
@@ -21,6 +23,7 @@ public class Client {
      */
     public Client(IGui gui) {
         this.gui = gui;
+        this.fileManager = new ClientFileManager();
     }
 
     /**
@@ -77,6 +80,10 @@ public class Client {
 
     public Logger getLogger() {
         return logger;
+    }
+
+    public ClientFileManager getFileManager() {
+        return fileManager;
     }
 
     public void setRoom(ClientRoom room) {
