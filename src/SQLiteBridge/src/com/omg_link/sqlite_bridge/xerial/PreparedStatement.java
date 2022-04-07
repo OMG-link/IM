@@ -31,7 +31,7 @@ public class PreparedStatement extends com.omg_link.sqlite_bridge.PreparedStatem
     }
 
     @Override
-    public ResultSet executeQuery() throws SQLException {
-        return new ResultSet(statement.executeQuery());
+    public Cursor executeQuery() throws SQLException {
+        return new Cursor(statement.executeQuery());
     }
 }

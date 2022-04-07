@@ -1,6 +1,6 @@
 package com.omg_link.im.core.sql_manager;
 
-import com.omg_link.sqlite_bridge.ResultSet;
+import com.omg_link.sqlite_bridge.Cursor;
 import com.omg_link.sqlite_bridge.Statement;
 
 import java.security.InvalidParameterException;
@@ -130,16 +130,17 @@ public abstract class Table {
      */
     public void loadTable() throws SQLException, InvalidTableException {
         try(Statement statement = sqlManager.createStatement()){
-            ResultSet resultSet = statement.executeQuery(
+            try(Cursor cursor = statement.executeQuery(
                     "PRAGMA table_info({tableName})"
                             .replace("{tableName}",getTableName())
-            );
-            for(Column column:getColumns()){
-                if(!resultSet.next()){
-                    throw new InvalidTableException();
-                }
-                if(!Objects.equals(resultSet.getString("name"), column.name)){
-                    throw new InvalidTableException();
+            )){
+                for(Column column:getColumns()){
+                    if(!cursor.next()){
+                        throw new InvalidTableException();
+                    }
+                    if(!Objects.equals(cursor.getString("name"), column.name)){
+                        throw new InvalidTableException();
+                    }
                 }
             }
         }

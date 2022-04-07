@@ -4,7 +4,7 @@ import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.sql_manager.*;
 import com.omg_link.sqlite_bridge.PreparedStatement;
-import com.omg_link.sqlite_bridge.ResultSet;
+import com.omg_link.sqlite_bridge.Cursor;
 import com.omg_link.sqlite_bridge.Statement;
 
 import java.sql.SQLException;
@@ -48,11 +48,12 @@ public class ChatRecordTable extends Table {
 
     public ByteData getRecord(long serialId) throws InvalidSerialIdException, SQLException {
         queryStatement.setLong(1, serialId);
-        ResultSet resultSet = queryStatement.executeQuery();
-        if (resultSet.next()) {
-            return new ByteData(resultSet.getBytes(dataColumn.name));
-        } else {
-            throw new InvalidSerialIdException();
+        try(Cursor cursor = queryStatement.executeQuery()){
+            if (cursor.next()) {
+                return new ByteData(cursor.getBytes(dataColumn.name));
+            } else {
+                throw new InvalidSerialIdException();
+            }
         }
     }
 
@@ -76,15 +77,16 @@ public class ChatRecordTable extends Table {
     public void loadTable() throws SQLException, InvalidTableException {
         super.loadTable();
         try (Statement statement = sqlManager.createStatement()) {
-            ResultSet resultSet = statement.executeQuery(
+            try(Cursor cursor = statement.executeQuery(
                     "SELECT MAX({SerialIdColumn}) as lastMessageId FROM {tableName}"
                             .replace("{SerialIdColumn}", serialIdColumn.name)
                             .replace("{tableName}", getTableName())
-            );
-            if (resultSet.next()) {
-                lastMessageId = resultSet.getLong("lastMessageId");
-            } else {
-                throw new SQLException("WTF?");
+            )){
+                if (cursor.next()) {
+                    lastMessageId = cursor.getLong("lastMessageId");
+                } else {
+                    throw new SQLException("WTF?");
+                }
             }
         }
     }

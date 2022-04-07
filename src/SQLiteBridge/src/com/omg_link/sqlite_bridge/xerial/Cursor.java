@@ -2,17 +2,21 @@ package com.omg_link.sqlite_bridge.xerial;
 
 import java.sql.SQLException;
 
-public class ResultSet extends com.omg_link.sqlite_bridge.ResultSet {
+public class Cursor extends com.omg_link.sqlite_bridge.Cursor {
 
     private final java.sql.ResultSet resultSet;
 
-    public ResultSet(java.sql.ResultSet resultSet){
+    public Cursor(java.sql.ResultSet resultSet){
         this.resultSet = resultSet;
     }
 
     @Override
     public boolean next() throws SQLException {
         return resultSet.next();
+    }
+
+    @Override
+    public void close() {
     }
 
     @Override

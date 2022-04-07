@@ -4,7 +4,7 @@ import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.sql_manager.InvalidTableException;
 import com.omg_link.im.core.sql_manager.SqlManager;
 import com.omg_link.im.core.sql_manager.Table;
-import com.omg_link.sqlite_bridge.ResultSet;
+import com.omg_link.sqlite_bridge.Cursor;
 import com.omg_link.sqlite_bridge.Statement;
 
 import java.sql.SQLException;
@@ -65,25 +65,26 @@ class BasicInfoTable extends Table {
         super.loadTable();
         try(Statement statement = sqlManager.createStatement()){
             String sql = "SELECT * FROM " + getTableName();
-            ResultSet resultSet = statement.executeQuery(sql);
-            if(resultSet.next()){
-                String sServerId,sDBVersion;
-                try{
-                    sServerId = resultSet.getString(serverIdColumn.name);
-                    sDBVersion = resultSet.getString(dbVersionColumn.name);
-                }catch (SQLException e){
-                    throw new InvalidTableException();
+            try(Cursor cursor = statement.executeQuery(sql)){
+                if(cursor.next()){
+                    String sServerId,sDBVersion;
+                    try{
+                        sServerId = cursor.getString(serverIdColumn.name);
+                        sDBVersion = cursor.getString(dbVersionColumn.name);
+                    }catch (SQLException e){
+                        throw new InvalidTableException();
+                    }
+                    serverId = UUID.fromString(sServerId);
+                    if(!Config.compatibleVersion.equals(sDBVersion)){
+                        throw new SQLException(String.format(
+                                "The server is running at version %s, while the database is written in version %s.\nFor safety reasons, the database will not be used.",
+                                dbVersionColumn.name,
+                                sDBVersion
+                        ));
+                    }
+                }else{
+                    throw new InvalidTableException(); //There is something wrong with the table
                 }
-                serverId = UUID.fromString(sServerId);
-                if(!Config.compatibleVersion.equals(sDBVersion)){
-                    throw new SQLException(String.format(
-                            "The server is running at version %s, while the database is written in version %s.\nFor safety reasons, the database will not be used.",
-                            dbVersionColumn.name,
-                            sDBVersion
-                    ));
-                }
-            }else{
-                throw new InvalidTableException(); //There is something wrong with the table
             }
         }
     }

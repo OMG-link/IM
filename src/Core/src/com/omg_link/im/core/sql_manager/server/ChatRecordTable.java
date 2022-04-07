@@ -4,7 +4,7 @@ import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.sql_manager.*;
 import com.omg_link.sqlite_bridge.PreparedStatement;
-import com.omg_link.sqlite_bridge.ResultSet;
+import com.omg_link.sqlite_bridge.Cursor;
 import com.omg_link.sqlite_bridge.Statement;
 
 import java.sql.SQLException;
@@ -54,11 +54,12 @@ public class ChatRecordTable extends Table {
             throw new InvalidSerialIdException();
         }
         queryStatement.setLong(1, serialId);
-        ResultSet resultSet = queryStatement.executeQuery();
-        if (resultSet.next()) {
-            return new ByteData(resultSet.getBytes(dataColumn.name));
-        } else {
-            throw new RuntimeException(String.format("Cannot find record with serialId=%d.", serialId));
+        try(Cursor cursor = queryStatement.executeQuery()){
+            if (cursor.next()) {
+                return new ByteData(cursor.getBytes(dataColumn.name));
+            } else {
+                throw new RuntimeException(String.format("Cannot find record with serialId=%d.", serialId));
+            }
         }
     }
 
@@ -82,14 +83,15 @@ public class ChatRecordTable extends Table {
     public void loadTable() throws SQLException, InvalidTableException {
         super.loadTable();
         try (Statement statement = sqlManager.createStatement()) {
-            ResultSet resultSet = statement.executeQuery(
+            try(Cursor cursor = statement.executeQuery(
                     "SELECT COUNT(*) as rowCount FROM {tableName}"
                             .replace("{tableName}", getTableName())
-            );
-            if (resultSet.next()) {
-                recordNum = resultSet.getLong("rowCount");
-            } else {
-                throw new SQLException("WTF?");
+            )){
+                if (cursor.next()) {
+                    recordNum = cursor.getLong("rowCount");
+                } else {
+                    throw new SQLException("WTF?");
+                }
             }
         }
     }

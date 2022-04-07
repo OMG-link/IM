@@ -3,7 +3,7 @@ package com.omg_link.im.core.sql_manager.client;
 import com.omg_link.im.core.sql_manager.SqlManager;
 import com.omg_link.im.core.sql_manager.Table;
 import com.omg_link.sqlite_bridge.PreparedStatement;
-import com.omg_link.sqlite_bridge.ResultSet;
+import com.omg_link.sqlite_bridge.Cursor;
 import com.omg_link.sqlite_bridge.Statement;
 
 import java.io.File;
@@ -36,14 +36,15 @@ public class FileRecordTable extends Table {
     public Map<UUID, File> getMapping() throws SQLException {
         Map<UUID, File> map = new HashMap<>();
         try (Statement statement = sqlManager.createStatement()) {
-            ResultSet resultSet = statement.executeQuery(
+            try(Cursor cursor = statement.executeQuery(
                     "SELECT * FROM {tableName}"
                             .replace("{tableName}", getTableName())
-            );
-            while (resultSet.next()) {
-                var fileId = UUID.fromString(resultSet.getString(fileIdColumn.name));
-                var file = new File(resultSet.getString(filePathColumn.name));
-                map.put(fileId, file);
+            )){
+                while (cursor.next()) {
+                    var fileId = UUID.fromString(cursor.getString(fileIdColumn.name));
+                    var file = new File(cursor.getString(filePathColumn.name));
+                    map.put(fileId, file);
+                }
             }
         }
         return map;

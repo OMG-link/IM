@@ -11,8 +11,8 @@ public class Statement extends com.omg_link.sqlite_bridge.Statement {
     }
 
     @Override
-    public ResultSet executeQuery(String sql) throws SQLException {
-        return new ResultSet(statement.executeQuery(sql));
+    public Cursor executeQuery(String sql) throws SQLException {
+        return new Cursor(statement.executeQuery(sql));
     }
 
     @Override

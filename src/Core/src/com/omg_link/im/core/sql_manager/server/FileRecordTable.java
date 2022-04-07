@@ -3,7 +3,7 @@ package com.omg_link.im.core.sql_manager.server;
 import com.omg_link.im.core.sql_manager.SqlManager;
 import com.omg_link.im.core.sql_manager.Table;
 import com.omg_link.sqlite_bridge.PreparedStatement;
-import com.omg_link.sqlite_bridge.ResultSet;
+import com.omg_link.sqlite_bridge.Cursor;
 import com.omg_link.sqlite_bridge.Statement;
 import com.omg_link.utils.Sha512Digest;
 
@@ -30,14 +30,15 @@ public class FileRecordTable extends Table {
     public Map<Sha512Digest, UUID> getMapping() throws SQLException {
         Map<Sha512Digest, UUID> map = new HashMap<>();
         try(Statement statement = sqlManager.createStatement()){
-            ResultSet resultSet = statement.executeQuery(
+            try(Cursor cursor = statement.executeQuery(
                     "SELECT * FROM {tableName}"
                             .replace("{tableName}",getTableName())
-            );
-            while(resultSet.next()){
-                var sha512Digest = new Sha512Digest(resultSet.getBytes(sha512Column.name));
-                var fileId = UUID.fromString(resultSet.getString(fileIdColumn.name));
-                map.put(sha512Digest,fileId);
+            )){
+                while(cursor.next()){
+                    var sha512Digest = new Sha512Digest(cursor.getBytes(sha512Column.name));
+                    var fileId = UUID.fromString(cursor.getString(fileIdColumn.name));
+                    map.put(sha512Digest,fileId);
+                }
             }
         }
         return map;

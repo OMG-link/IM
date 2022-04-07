@@ -41,8 +41,9 @@ public abstract class SqlManager {
     public boolean isTableCreated(String tableName) throws SQLException {
         try(Statement statement = createStatement()){
             String sql = "PRAGMA table_info("+tableName+")";
-            ResultSet resultSet = statement.executeQuery(sql);
-            return resultSet.next();
+            try(Cursor cursor = statement.executeQuery(sql)){
+                return cursor.next();
+            }
         }
     }
 
