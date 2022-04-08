@@ -2,6 +2,8 @@ package com.omg_link.im.core.file_manager;
 
 import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.config.Config;
+import com.omg_link.im.core.gui.IFileTransferringPanel;
+import com.omg_link.im.core.protocol.file_transfer.NoSuchTaskIdException;
 import com.omg_link.utils.FileUtils;
 
 import java.io.File;
@@ -145,6 +147,36 @@ public class ClientFileManager extends FileManager{
                 e.printStackTrace();
                 disableSql();
             }
+        }
+    }
+
+    private final Map<UUID,UUID> fileIdToTaskIdMap = new HashMap<>();
+
+    public void addDownloadingFile(UUID fileId,UUID taskId){
+        fileIdToTaskIdMap.put(fileId,taskId);
+    }
+
+    public void removeDownloadingFile(UUID fileId){
+        fileIdToTaskIdMap.remove(fileId);
+    }
+
+    public boolean isFileDownloading(UUID fileId){
+        return fileIdToTaskIdMap.containsKey(fileId);
+    }
+
+    /**
+     * Add an extra download panel for the file download task.
+     * @param fileId File ID of the target file.
+     * @param panel Panel to add.
+     * @throws NoSuchFileIdException When the file is not being downloaded.
+     * @throws NoSuchTaskIdException When FileReceiveTaskFactory failed to find the corresponding task. (Maybe caused by thread unsafe call.)
+     */
+    public void addFileDownloadCallback(UUID fileId, IFileTransferringPanel panel) throws NoSuchFileIdException,NoSuchTaskIdException {
+        if(fileIdToTaskIdMap.containsKey(fileId)){
+            var taskId = fileIdToTaskIdMap.get(fileId);
+            room.getFactoryManager().getFileReceiveTaskFactory().addPanelForTask(taskId,panel);
+        }else{
+            throw new NoSuchFileIdException();
         }
     }
 

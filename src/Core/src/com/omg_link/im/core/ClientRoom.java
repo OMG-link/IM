@@ -4,6 +4,7 @@ import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.config.ConfigSetFailedException;
 import com.omg_link.im.core.factory_manager.ClientFactoryManager;
 import com.omg_link.im.core.file_manager.ClientFileManager;
+import com.omg_link.im.core.file_manager.NoSuchFileIdException;
 import com.omg_link.im.core.gui.IConfirmDialogCallback;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
 import com.omg_link.im.core.gui.IRoomFrame;
@@ -16,6 +17,7 @@ import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
 import com.omg_link.im.core.protocol.data_pack.system.CheckVersionPackV2;
 import com.omg_link.im.core.protocol.file_transfer.FileReceiveTask;
 import com.omg_link.im.core.protocol.file_transfer.FileSendTask;
+import com.omg_link.im.core.protocol.file_transfer.NoSuchTaskIdException;
 import com.omg_link.im.core.sql_manager.client.ClientSqlManager;
 import com.omg_link.im.core.user_manager.ClientUserManager;
 
@@ -128,12 +130,22 @@ public class ClientRoom {
         return task;
     }
 
+    // Maybe this function should be moved into ClientFileManager?
     public void downloadFile(String fileName, UUID fileId, FileTransferType fileTransferType, IFileTransferringPanel panel) {
-        if (fileTransferType == FileTransferType.ChatImage && getFileManager().isFileDownloaded(fileId)) {
-            try {
-                panel.onTransferSucceed(getFileManager().openFileByServerFileId(fileId));
-                return;
-            } catch (FileNotFoundException ignored) { //吊人搞我
+        if (fileTransferType == FileTransferType.ChatImage) {
+            if (getFileManager().isFileDownloaded(fileId)) {
+                try {
+                    panel.onTransferSucceed(getFileManager().openFileByServerFileId(fileId));
+                    return;
+                } catch (FileNotFoundException ignored) { //吊人搞我
+                }
+            } else if (getFileManager().isFileDownloading(fileId)) {
+                try {
+                    getFileManager().addFileDownloadCallback(fileId, panel);
+                    return;
+                } catch (NoSuchFileIdException | NoSuchTaskIdException e) { //吊人搞我
+                    throw new RuntimeException(e);
+                }
             }
         }
         FileReceiveTask task;
@@ -143,16 +155,12 @@ public class ClientRoom {
             panel.onTransferFailed("Cannot create file on disk.");
             return;
         }
-        try {
-            getNetworkHandler().send(new DownloadRequestPack(
-                    task.getReceiverTaskId(),
-                    task.getSenderFileId(),
-                    task.getReceiverFileId(),
-                    fileTransferType
-            ));
-        } catch (PackageTooLargeException e) { //This should never happen!
-            task.onEndFailed("Unable to send download request.");
-        }
+        getNetworkHandler().send(new DownloadRequestPack(
+                task.getReceiverTaskId(),
+                task.getSenderFileId(),
+                task.getReceiverFileId(),
+                fileTransferType
+        ));
     }
 
     // show info

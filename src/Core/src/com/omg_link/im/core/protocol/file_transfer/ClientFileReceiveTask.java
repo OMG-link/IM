@@ -9,11 +9,13 @@ import com.omg_link.im.core.protocol.data_pack.DataPack;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.UUID;
 
 public class ClientFileReceiveTask extends FileReceiveTask {
     private final ClientRoom room;
-    private final IFileTransferringPanel panel;
+    private final Collection<IFileTransferringPanel> panels = new ArrayList<>();
 
     //constructors
 
@@ -27,7 +29,6 @@ public class ClientFileReceiveTask extends FileReceiveTask {
     ) throws IOException {
         super(fileName, fileTransferType, receiverTaskId);
         this.room = room;
-        this.panel = panel;
         super.setSenderFileId(senderFileId);
 
         FileObject fileObject;
@@ -39,14 +40,27 @@ public class ClientFileReceiveTask extends FileReceiveTask {
         super.setReceiverFileId(fileObject.getFileId());
         super.setFileWriter(fileObject.getWriteOnlyInstance());
 
+        addPanel(panel);
+
+        if(fileTransferType==FileTransferType.ChatImage){
+            room.getFileManager().addDownloadingFile(senderFileId,receiverTaskId);
+        }
+
+    }
+
+    public void addPanel(IFileTransferringPanel panel){
+        if(panel!=null){
+            panels.add(panel);
+        }
     }
 
     //abstract
 
     @Override
     protected void onTransferProgressChange(long downloadedSize) {
-        if (getFileTransferType() != FileTransferType.ChatFile) return;
-        panel.setProgress(downloadedSize);
+        for(var panel:panels){
+            panel.setProgress(downloadedSize);
+        }
     }
 
     @Override
@@ -68,9 +82,16 @@ public class ClientFileReceiveTask extends FileReceiveTask {
         room.getNetworkHandler().send(dataPack);
     }
 
-    //start
-
     //end
+
+
+    @Override
+    public void end() {
+        super.end();
+        if(getFileTransferType()==FileTransferType.ChatImage){
+            getFileManager().removeDownloadingFile(senderFileId);
+        }
+    }
 
     @Override
     public void onEndSucceed() {
@@ -78,7 +99,7 @@ public class ClientFileReceiveTask extends FileReceiveTask {
         if (getFileTransferType()==FileTransferType.ChatImage){
             getFileManager().addMapping(senderFileId,super.getFileObject().getFile());
         }
-        if (panel != null) {
+        for(var panel:panels) {
             panel.onTransferSucceed(super.getFileObject());
         }
     }
@@ -86,7 +107,7 @@ public class ClientFileReceiveTask extends FileReceiveTask {
     @Override
     public void onEndFailed(String reason) {
         super.onEndFailed(reason);
-        if (panel != null) {
+        for(var panel:panels) {
             panel.onTransferFailed(reason);
         }
     }

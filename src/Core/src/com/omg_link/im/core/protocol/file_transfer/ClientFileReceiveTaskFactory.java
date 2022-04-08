@@ -33,6 +33,13 @@ public class ClientFileReceiveTaskFactory {
         return task;
     }
 
+    public void addPanelForTask(UUID receiverTaskId,IFileTransferringPanel panel) throws NoSuchTaskIdException {
+        if(!map.containsKey(receiverTaskId)){
+            throw new NoSuchTaskIdException();
+        }
+        map.get(receiverTaskId).addPanel(panel);
+    }
+
     public ClientFileReceiveTask find(UUID receiverTaskId) throws NoSuchTaskIdException {
         if(!map.containsKey(receiverTaskId)){
             throw new NoSuchTaskIdException();
