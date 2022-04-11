@@ -4,6 +4,7 @@ import com.omg_link.utils.Random;
 
 import java.awt.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
 import java.util.Scanner;
 
@@ -40,7 +41,7 @@ public class Config {
         File file = new File(getConfigFileName());
 
         try (FileInputStream inputStream = new FileInputStream(file)) {
-            Scanner scanner = new Scanner(inputStream);
+            Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8);
             while (scanner.hasNext()) {
                 String s = scanner.nextLine();
                 int pos = s.indexOf('=');
@@ -95,7 +96,7 @@ public class Config {
             }
             if (!file.createNewFile()) return;
             FileOutputStream outputStream = new FileOutputStream(file);
-            PrintWriter printWriter = new PrintWriter(outputStream);
+            PrintWriter printWriter = new PrintWriter(outputStream,false,StandardCharsets.UTF_8);
             printWriter.printf("username=%s\n", getUsername());
             printWriter.printf("serverIp=%s\n", getServerIP());
             printWriter.printf("port=%s\n", getServerPort());
