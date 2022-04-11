@@ -45,7 +45,6 @@ public class ServerRoom {
 
             this.fileManager = new ServerFileManager(this,serverId,isSqlEnabled);
             this.networkHandler = new ServerNetworkHandler(this);
-            gui.createGUI();
         }catch (Exception e){
             logger.log(
                     Level.SEVERE,

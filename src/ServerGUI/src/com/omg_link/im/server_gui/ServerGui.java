@@ -22,6 +22,7 @@ public class ServerGui implements IServerGui {
 
     public ServerGui(){
         serverRoom = new ServerRoom(this);
+        createGUI();
     }
 
     public void createGUI(){

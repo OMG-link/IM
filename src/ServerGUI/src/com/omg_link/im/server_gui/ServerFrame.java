@@ -10,8 +10,8 @@ import java.awt.event.WindowListener;
 public class ServerFrame extends JFrame {
     private final ServerRoom room;
 
-    public ServerFrame(ServerRoom room){
-        this.room = room;
+    public ServerFrame(ServerRoom room_){
+        this.room = room_;
 
         this.setTitle("IM Server");
         this.setLocationRelativeTo(null);
