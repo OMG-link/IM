@@ -4,7 +4,6 @@ import com.omg_link.utils.Random;
 
 import java.awt.*;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
 import java.util.Scanner;
 
@@ -41,7 +40,7 @@ public class Config {
         File file = new File(getConfigFileName());
 
         try (FileInputStream inputStream = new FileInputStream(file)) {
-            Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8);
+            Scanner scanner = new Scanner(inputStream, "UTF-8");
             while (scanner.hasNext()) {
                 String s = scanner.nextLine();
                 int pos = s.indexOf('=');
@@ -95,8 +94,7 @@ public class Config {
                 if (!file.delete()) return;
             }
             if (!file.createNewFile()) return;
-            FileOutputStream outputStream = new FileOutputStream(file);
-            PrintWriter printWriter = new PrintWriter(outputStream,false,StandardCharsets.UTF_8);
+            PrintWriter printWriter = new PrintWriter(file,"UTF-8");
             printWriter.printf("username=%s\n", getUsername());
             printWriter.printf("serverIp=%s\n", getServerIP());
             printWriter.printf("port=%s\n", getServerPort());
@@ -104,7 +102,6 @@ public class Config {
             printWriter.printf("roomName=%s\n", getRoomName());
             printWriter.printf("serverDatabasePath=%s\n", getServerDatabasePath());
             printWriter.close();
-            outputStream.close();
         } catch (IOException ignored) {
         }
 
