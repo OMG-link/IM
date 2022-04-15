@@ -5,7 +5,6 @@ import com.omg_link.im.core.file_manager.FileManager;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
 import com.omg_link.im.core.protocol.data.PackageTooLargeException;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
-import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.UploadRequestPack;
 
 import java.io.File;

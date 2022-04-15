@@ -124,4 +124,8 @@ public class ServerFileManager extends FileManager {
         }
     }
 
+    public boolean doesFileIdExist(UUID fileId){
+        return uuidToDigestMap.containsKey(fileId);
+    }
+
 }

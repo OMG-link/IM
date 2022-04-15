@@ -73,7 +73,7 @@ public class ServerFileReceiveTask extends FileReceiveTask {
         super.onEndSucceed();
         getFileManager().addDigestMapping(senderSideDigest,receiverFileId);
         serverRoom.getMessageManager().onFileUploaded(
-                ((Attachment)selectionKey.attachment()).user,
+                selectionKey, ((Attachment)selectionKey.attachment()).user,
                 getReceiverFileId(), getFileName(), getFileSize(), getFileTransferType()
         );
     }

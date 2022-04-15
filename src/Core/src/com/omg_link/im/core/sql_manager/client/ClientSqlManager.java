@@ -1,10 +1,9 @@
 package com.omg_link.im.core.sql_manager.client;
 
-import com.omg_link.sqlite_bridge.SqlComponentFactory;
-import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.sql_manager.InvalidRecordException;
 import com.omg_link.im.core.sql_manager.InvalidSerialIdException;
 import com.omg_link.im.core.sql_manager.SqlManager;
+import com.omg_link.sqlite_bridge.SqlComponentFactory;
 
 import java.io.File;
 import java.sql.SQLException;
@@ -24,11 +23,11 @@ public class ClientSqlManager extends SqlManager {
         this.fileRecordTable = new FileRecordTable(this);
     }
 
-    public void addChatRecord(long serialId, ByteData data) throws InvalidRecordException, SQLException {
-        chatRecordTable.addRecord(serialId,data);
+    public void addChatRecord(ChatRecord record) throws InvalidRecordException, SQLException {
+        chatRecordTable.addRecord(record);
     }
 
-    public ByteData getChatRecord(long serialId) throws InvalidSerialIdException, SQLException {
+    public ChatRecord getChatRecord(long serialId) throws InvalidSerialIdException, SQLException {
         return chatRecordTable.getRecord(serialId);
     }
 

@@ -8,13 +8,12 @@ import java.security.InvalidParameterException;
 import java.util.Scanner;
 
 public class Config {
-    public static final String version = "1.5.3 beta";
-    public static final String compatibleVersion = "1.5.0";
+    public static final String version = "1.6.0 beta";
+    public static final String compatibleVersion = "1.6.0";
 
     public static final int packageMaxLength = 10 * 1024 * 1024; //10MB
     public static final int chatTextMaxLength = 10 * 1024; //10KB
     public static final int nickMaxLength = 20;
-    public static final int bufferedRecordNum = 100;
     public static final long fileMaxSize = 1024 * 1024 * 1024; //1GB
     public static final int recordsPerPage = 15;
 

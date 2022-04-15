@@ -6,7 +6,7 @@ import com.omg_link.im.core.protocol.Attachment;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
 import com.omg_link.im.core.protocol.data_pack.chat.*;
-import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
+import com.omg_link.im.core.protocol.file_transfer.FileTransferType;
 import com.omg_link.im.core.sql_manager.InvalidRecordException;
 import com.omg_link.im.core.sql_manager.InvalidSerialIdException;
 import com.omg_link.im.core.sql_manager.server.ServerSqlManager;
@@ -104,27 +104,6 @@ public class ServerMessageManager {
     }
 
     /**
-     * Reject a send request.
-     */
-    private void rejectSendRequest(SelectionKey selectionKey, ChatSendReplyPack.Reason state) {
-        send(selectionKey, new ChatSendReplyPack(state));
-    }
-
-    /**
-     * Accept a send request.
-     *
-     * @return The serial ID for this request.
-     */
-    private long acceptSendRequest(SelectionKey selectionKey, UUID msgId) {
-        long serialId = serialIdGenerator.getNewId();
-        send(selectionKey, new ChatSendReplyPack(
-                msgId,
-                serialId
-        ));
-        return serialId;
-    }
-
-    /**
      * <p>Send history data to user.</p>
      * <p>It will not send ChatHistoryPack when no history data should be send.</p>
      *
@@ -155,18 +134,18 @@ public class ServerMessageManager {
      */
     public void processChatTextPack(SelectionKey selectionKey, ChatTextSendPack pack) {
         if (pack.getText().length() > Config.chatTextMaxLength) {
-            rejectSendRequest(selectionKey, ChatSendReplyPack.Reason.ChatTextTooLong);
             return;
         }
         Attachment attachment = (Attachment) selectionKey.attachment();
-        long serialId = acceptSendRequest(selectionKey, pack.getMsgId());
-        broadcastChatText(serialId, attachment.user, pack.getText());
+        broadcastChatText(selectionKey, attachment.user, pack.getText());
     }
 
     /**
      * Broadcast a ChatTextPack
      */
-    public void broadcastChatText(long serialId, User user, String text) {
+    public void broadcastChatText(SelectionKey senderSelectionKey, User user, String text) {
+        var serialId = serialIdGenerator.getNewId();
+        send(senderSelectionKey,new SelfSentNotice(serialId));
         var pack = new ChatTextBroadcastPack(
                 serialId,
                 user,
@@ -178,8 +157,9 @@ public class ServerMessageManager {
     /**
      * Broadcast a ChatImagePack
      */
-    protected void broadcastChatImage(User user, UUID imageId) {
+    protected void broadcastChatImage(SelectionKey senderSelectionKey, User user, UUID imageId) {
         var serialId = serialIdGenerator.getNewId();
+        send(senderSelectionKey,new SelfSentNotice(serialId));
         var pack = new ChatImageBroadcastPack(
                 serialId,
                 user,
@@ -191,8 +171,9 @@ public class ServerMessageManager {
     /**
      * Broadcast a ChatFilePack
      */
-    protected void broadcastChatFile(User user, UUID fileId, String fileName, long fileSize) {
+    protected void broadcastChatFile(SelectionKey senderSelectionKey, User user, UUID fileId, String fileName, long fileSize) {
         var serialId = serialIdGenerator.getNewId();
+        send(senderSelectionKey,new SelfSentNotice(serialId));
         var pack = new ChatFileBroadcastPack(
                 serialId,
                 user,
@@ -203,10 +184,11 @@ public class ServerMessageManager {
         broadcast(serialId, pack);
     }
 
-    public void onFileUploaded(User user, UUID fileId, String fileName, long fileSize, FileTransferType fileTransferType){
+    public void onFileUploaded(SelectionKey senderSelectionKey, User user, UUID fileId, String fileName, long fileSize, FileTransferType fileTransferType){
         switch (fileTransferType){
             case ChatFile:{
                 serverRoom.getMessageManager().broadcastChatFile(
+                        senderSelectionKey,
                         user,
                         fileId,
                         fileName,
@@ -216,9 +198,14 @@ public class ServerMessageManager {
             }
             case ChatImage:{
                 serverRoom.getMessageManager().broadcastChatImage(
+                        senderSelectionKey,
                         user,
                         fileId
                 );
+                break;
+            }
+            case UploadAvatar:{
+                user.setAvatarFileId(fileId);
                 break;
             }
         }

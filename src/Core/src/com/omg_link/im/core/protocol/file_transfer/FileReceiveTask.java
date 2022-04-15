@@ -3,7 +3,6 @@ package com.omg_link.im.core.protocol.file_transfer;
 import com.omg_link.im.core.file_manager.*;
 import com.omg_link.im.core.protocol.data.PackageTooLargeException;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
-import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.UploadResultPack;
 import com.omg_link.utils.FileUtils;
 import com.omg_link.utils.Sha512Digest;

@@ -233,8 +233,8 @@ public class ClientNetworkHandler implements Runnable {
 
                 break;
             }
+            case SelfSentNotice:
             case ChatHistory:
-            case ChatSendReply:
             case ChatText:
             case ChatImage:
             case ChatFile: {

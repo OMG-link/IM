@@ -14,6 +14,8 @@ public class ChatRecordTable extends Table {
     private static final Column serialIdColumn = new Column("SerialId", "INT8", false, true);
     private static final Column dataColumn = new Column("Data", "BLOB", false, false);
 
+    private static final Column isSelfSentColumn = new Column("IsSelfSent","TINYINT",false,false);
+
     private final PreparedStatement insertStatement;
 
     private long lastMessageId;
@@ -21,7 +23,7 @@ public class ChatRecordTable extends Table {
     public ChatRecordTable(SqlManager sqlManager) throws SQLException {
         super(sqlManager);
         insertStatement = sqlManager.prepareStatement(
-                "INSERT INTO {tableName} VALUES (?,?)"
+                "INSERT INTO {tableName} VALUES (?,?,?)"
                         .replace("{tableName}", getTableName())
         );
     }
@@ -30,26 +32,30 @@ public class ChatRecordTable extends Table {
         return lastMessageId;
     }
 
-    public synchronized void addRecord(long serialId, ByteData data) throws InvalidRecordException, SQLException {
-        if (data.getLength() > Config.packageMaxLength) {
+    public synchronized void addRecord(ChatRecord record) throws InvalidRecordException, SQLException {
+        if (record.data.getLength() > Config.packageMaxLength) {
             throw new InvalidRecordException("Data too long!");
         }
-        insertStatement.setLong(1, serialId);
-        insertStatement.setBytes(2, data.getBytes());
+        insertStatement.setLong(1, record.serialId);
+        insertStatement.setLong(2, record.isSelfSent?1L:0L);
+        insertStatement.setBytes(3, record.data.getBytes());
         insertStatement.executeInsert();
-        lastMessageId = Math.max(lastMessageId,serialId);
+        lastMessageId = Math.max(lastMessageId, record.serialId);
     }
 
-    public ByteData getRecord(long serialId) throws InvalidSerialIdException, SQLException {
+    public ChatRecord getRecord(long targetSerialId) throws InvalidSerialIdException, SQLException {
         try(Statement statement = sqlManager.createStatement()){
             try(Cursor cursor = statement.executeQuery(
                     "SELECT * FROM {tableName} WHERE {serialIdColumnName}={serialId}"
                             .replace("{tableName}", getTableName())
                             .replace("{serialIdColumnName}", serialIdColumn.name)
-                            .replace("{serialId}",String.valueOf(serialId))
+                            .replace("{serialId}",String.valueOf(targetSerialId))
             )){
                 if (cursor.next()) {
-                    return new ByteData(cursor.getBytes(dataColumn.name));
+                    long serialId = cursor.getLong(serialIdColumn.name);
+                    boolean isSelfSent = cursor.getLong(isSelfSentColumn.name)==1;
+                    ByteData data = new ByteData(cursor.getBytes(dataColumn.name));
+                    return new ChatRecord(serialId,isSelfSent,data);
                 } else {
                     throw new InvalidSerialIdException();
                 }
@@ -64,7 +70,7 @@ public class ChatRecordTable extends Table {
 
     @Override
     public Column[] getColumns() {
-        return new Column[]{serialIdColumn, dataColumn};
+        return new Column[]{serialIdColumn, isSelfSentColumn, dataColumn};
     }
 
     @Override

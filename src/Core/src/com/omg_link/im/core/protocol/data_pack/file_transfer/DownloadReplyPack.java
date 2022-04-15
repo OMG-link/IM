@@ -3,6 +3,7 @@ package com.omg_link.im.core.protocol.data_pack.file_transfer;
 import com.omg_link.im.core.protocol.data.ByteData;
 import com.omg_link.im.core.protocol.data.InvalidPackageException;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
+import com.omg_link.im.core.protocol.file_transfer.FileTransferType;
 
 import java.util.UUID;
 

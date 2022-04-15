@@ -10,12 +10,14 @@ public class ChatImageBroadcastPack extends ChatImagePack{
 
     private final long serialId;
     private final String username;
+    private final UUID userAvatarFileId;
     private final long stamp;
 
     public ChatImageBroadcastPack(long serialId, User user, UUID imageId){
         super(imageId);
         this.serialId = serialId;
         this.username = user.getName();
+        this.userAvatarFileId = user.getAvatarFileId();
         this.stamp = System.currentTimeMillis();
     }
 
@@ -23,6 +25,7 @@ public class ChatImageBroadcastPack extends ChatImagePack{
         super(data);
         this.serialId = data.decodeLong();
         this.username = data.decodeString();
+        this.userAvatarFileId = data.decodeUuid();
         this.stamp = data.decodeLong();
     }
 
@@ -40,6 +43,10 @@ public class ChatImageBroadcastPack extends ChatImagePack{
 
     public String getUsername() {
         return username;
+    }
+
+    public UUID getUserAvatarFileId() {
+        return userAvatarFileId;
     }
 
     public long getStamp() {

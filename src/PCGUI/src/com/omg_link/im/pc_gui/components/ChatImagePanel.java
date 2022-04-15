@@ -3,7 +3,7 @@ package com.omg_link.im.pc_gui.components;
 import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.file_manager.FileObject;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
-import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
+import com.omg_link.im.core.protocol.file_transfer.FileTransferType;
 import com.omg_link.im.pc_gui.helper.PanelUtil;
 
 import javax.swing.*;

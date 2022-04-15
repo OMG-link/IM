@@ -2,7 +2,6 @@ package com.omg_link.im.core.protocol.file_transfer;
 
 import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
-import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
 
 import java.io.IOException;
 import java.util.HashMap;

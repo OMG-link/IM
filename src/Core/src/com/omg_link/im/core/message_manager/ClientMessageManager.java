@@ -7,39 +7,31 @@ import com.omg_link.im.core.protocol.data.InvalidPackageException;
 import com.omg_link.im.core.protocol.data.PackageTooLargeException;
 import com.omg_link.im.core.protocol.data_pack.DataPack;
 import com.omg_link.im.core.protocol.data_pack.chat.*;
-import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
+import com.omg_link.im.core.protocol.file_transfer.FileTransferType;
 import com.omg_link.im.core.sql_manager.InvalidRecordException;
 import com.omg_link.im.core.sql_manager.InvalidSerialIdException;
+import com.omg_link.im.core.sql_manager.client.ChatRecord;
 
 import java.io.FileNotFoundException;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public class ClientMessageManager {
 
     private final ClientRoom room;
-    private final Map<UUID, IMessageSendCallback> uuidToCallbackMap = new HashMap<>();
-    private final Map<Long, UUID> serialIdToUuidMap = new HashMap<>();
 
     private boolean enableSql;
     private long expectShowMin, expectShowMax, currentShowMin, currentShowMax;
 
-    private final Map<Long, DataPack> chatRecord = new HashMap<>() {
+    private final Set<Long> selfSentMessageSet = new HashSet<>();
 
-        private DataPack getDataPackFromDB(Long serialId) {
+    private final Map<Long, ChatRecord> chatRecordMap = new HashMap<>() {
+
+        private ChatRecord getDataPackFromDB(Long serialId) {
             try {
-                ByteData data = room.getSqlManager().getChatRecord(serialId);
-                DataPack dataPack;
-                try {
-                    dataPack = byteDataToDataPack(data);
-                } catch (InvalidPackageException e) {
-                    throw new RuntimeException(e);
-                }
-                super.put(serialId, dataPack);
-                return dataPack;
+                ChatRecord record = room.getSqlManager().getChatRecord(serialId);
+                super.put(serialId, record);
+                return record;
             } catch (SQLException e) {
                 e.printStackTrace();
                 disableSql();
@@ -49,9 +41,9 @@ public class ClientMessageManager {
             }
         }
 
-        private void putDataPackToDB(Long serialId, DataPack pack) {
+        private void putDataPackToDB(ChatRecord record) {
             try {
-                room.getSqlManager().addChatRecord(serialId, pack.encode());
+                room.getSqlManager().addChatRecord(record);
             } catch (InvalidRecordException e) {
                 throw new RuntimeException(e);
             } catch (SQLException e) {
@@ -77,7 +69,7 @@ public class ClientMessageManager {
         }
 
         @Override
-        public DataPack get(Object key) {
+        public ChatRecord get(Object key) {
             if (!(key instanceof Long)) return null;
             Long serialId = (Long) key;
             if (Objects.equals(isSerialIdInDatabase.get(serialId), true)) {
@@ -92,10 +84,10 @@ public class ClientMessageManager {
         }
 
         @Override
-        public DataPack put(Long key, DataPack value) {
+        public ChatRecord put(Long key, ChatRecord value) {
             var ret = super.put(key, value);
             if (!containsKey(key)) {
-                putDataPackToDB(key, value);
+                putDataPackToDB(value);
                 isSerialIdInDatabase.put(key, true);
             }
             return ret;
@@ -118,12 +110,12 @@ public class ClientMessageManager {
         enableSql = false;
     }
 
-    private void addChatRecord(long serialId, DataPack pack) {
+    private void addChatRecord(long serialId, boolean isSelfSent, DataPack pack) {
         if ((serialId > currentShowMax && serialId <= expectShowMax) || (serialId < currentShowMin && serialId >= expectShowMin)) {
             currentShowMax = serialId;
-            showMessageOnUi(pack);
+            showMessageOnUi(pack, isSelfSent);
         }
-        chatRecord.put(serialId, pack);
+        chatRecordMap.put(serialId, new ChatRecord(serialId,isSelfSent,pack.encode()));
     }
 
     /**
@@ -132,34 +124,8 @@ public class ClientMessageManager {
      * @param serialId ID of record.
      * @return If the record exists either in memory or in database, return the record. Otherwise, return null.
      */
-    private DataPack getChatRecord(long serialId) {
-        return chatRecord.get(serialId);
-    }
-
-    /**
-     * Ask the manager to give an ID to this callback.
-     */
-    private UUID getMsgIdForCallback(IMessageSendCallback callback) {
-        while (true) {
-            var uuid = UUID.randomUUID();
-            if (!uuidToCallbackMap.containsKey(uuid)) {
-                uuidToCallbackMap.put(uuid, callback);
-                return uuid;
-            }
-        }
-    }
-
-    private void doCallback(long serialId, long stamp) {
-        if (serialIdToUuidMap.containsKey(serialId)) {
-            var uuid = serialIdToUuidMap.get(serialId);
-            var callback = uuidToCallbackMap.get(uuid);
-            if (callback != null) {
-                callback.onSendSuccess(
-                        serialId,
-                        stamp
-                );
-            }
-        }
+    private ChatRecord getChatRecord(long serialId) {
+        return chatRecordMap.get(serialId);
     }
 
     private void send(DataPack pack) {
@@ -169,6 +135,11 @@ public class ClientMessageManager {
     public void receive(ByteData data) throws InvalidPackageException {
         DataPack dataPack = byteDataToDataPack(data);
         switch (dataPack.getType()) {
+            case SelfSentNotice:{
+                var pack = (SelfSentNotice) dataPack;
+                selfSentMessageSet.add(pack.getSerialId());
+                break;
+            }
             case ChatHistory: {
                 var pack = (ChatHistoryPack) dataPack;
                 var packs = pack.getPacks();
@@ -177,30 +148,31 @@ public class ClientMessageManager {
                 }
                 break;
             }
-            case ChatSendReply: {
-                var pack = (ChatSendReplyPack) dataPack;
-                if (pack.isOk()) {
-                    assert (uuidToCallbackMap.containsKey(pack.getMsgId()));
-                    serialIdToUuidMap.put(pack.getSerialId(), pack.getMsgId());
-                }
-                break;
-            }
             case ChatText: {
                 var pack = (ChatTextBroadcastPack) dataPack;
-                doCallback(pack.getSerialId(), pack.getStamp());
-                addChatRecord(pack.getSerialId(), pack);
+                addChatRecord(
+                        pack.getSerialId(),
+                        selfSentMessageSet.contains(pack.getSerialId()),
+                        pack
+                );
                 break;
             }
             case ChatImage: {
                 var pack = (ChatImageBroadcastPack) dataPack;
-                doCallback(pack.getSerialId(), pack.getStamp());
-                addChatRecord(pack.getSerialId(), pack);
+                addChatRecord(
+                        pack.getSerialId(),
+                        selfSentMessageSet.contains(pack.getSerialId()),
+                        pack
+                );
                 break;
             }
             case ChatFile: {
                 var pack = (ChatFileBroadcastPack) dataPack;
-                doCallback(pack.getSerialId(), pack.getStamp());
-                addChatRecord(pack.getSerialId(), pack);
+                addChatRecord(
+                        pack.getSerialId(),
+                        selfSentMessageSet.contains(pack.getSerialId()),
+                        pack
+                );
                 break;
             }
         }
@@ -209,11 +181,11 @@ public class ClientMessageManager {
     private DataPack byteDataToDataPack(ByteData data) throws InvalidPackageException {
         var type = data.peekEnum(DataPack.Type.values());
         switch (type) {
+            case SelfSentNotice:{
+                return new SelfSentNotice(data);
+            }
             case ChatHistory: {
                 return new ChatHistoryPack(data);
-            }
-            case ChatSendReply: {
-                return new ChatSendReplyPack(data);
             }
             case ChatText: {
                 return new ChatTextBroadcastPack(data);
@@ -230,17 +202,15 @@ public class ClientMessageManager {
         }
     }
 
-    private void showMessageOnUi(DataPack dataPack) {
+    private void showMessageOnUi(DataPack dataPack, boolean isSelfSent) {
         Long serialId = null;
         switch (dataPack.getType()) {
             case ChatText: {
                 var pack = (ChatTextBroadcastPack) dataPack;
                 serialId = pack.getSerialId();
                 this.room.getRoomFrame().showTextMessage(
-                        pack.getSerialId(),
-                        pack.getUsername(),
-                        pack.getStamp(),
-                        pack.getText()
+                        pack,
+                        isSelfSent
                 );
                 break;
             }
@@ -249,10 +219,8 @@ public class ClientMessageManager {
                 serialId = pack.getSerialId();
                 UUID serverImageId = pack.getServerImageId();
                 var panel = room.getRoomFrame().showChatImageMessage(
-                        pack.getSerialId(),
-                        pack.getUsername(),
-                        pack.getStamp(),
-                        serverImageId
+                        pack,
+                        isSelfSent
                 );
                 if (room.getFileManager().isFileDownloaded(serverImageId)) {
                     try {
@@ -269,12 +237,8 @@ public class ClientMessageManager {
                 var pack = (ChatFileBroadcastPack) dataPack;
                 serialId = pack.getSerialId();
                 var panel = this.room.getRoomFrame().showFileUploadedMessage(
-                        pack.getSerialId(),
-                        pack.getUsername(),
-                        pack.getStamp(),
-                        pack.getFileId(),
-                        pack.getFileName(),
-                        pack.getFileSize()
+                        pack,
+                        isSelfSent
                 );
                 break;
             }
@@ -285,9 +249,8 @@ public class ClientMessageManager {
         }
     }
 
-    public void sendChatText(String text, IMessageSendCallback callback) throws PackageTooLargeException {
-        var msgId = getMsgIdForCallback(callback);
-        var pack = new ChatTextSendPack(msgId, text);
+    public void sendChatText(String text) throws PackageTooLargeException {
+        var pack = new ChatTextSendPack(text);
         send(pack);
     }
 
@@ -307,9 +270,17 @@ public class ClientMessageManager {
         expectShowMin = Math.max(expectShowMin-Config.recordsPerPage,1);
         for (int i = Config.recordsPerPage; i >= 1 ; i--) {
             if(tempExpectShowMin-i<1) continue;
-            DataPack dataPack = getChatRecord(tempExpectShowMin-i);
-            if (dataPack != null) {
-                showMessageOnUi(dataPack);
+            ChatRecord record = getChatRecord(tempExpectShowMin-i);
+            DataPack pack = null;
+            if(record!=null){
+                try{
+                    pack = byteDataToDataPack(record.data);
+                }catch (InvalidPackageException e){
+                    record = null;
+                }
+            }
+            if (record != null) {
+                showMessageOnUi(pack,record.isSelfSent);
             } else {
                 shouldSendGetHistoryPack = true;
             }

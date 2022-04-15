@@ -1,10 +1,12 @@
 package com.omg_link.im.core.gui;
 
+import com.omg_link.im.core.protocol.data_pack.chat.ChatFileBroadcastPack;
+import com.omg_link.im.core.protocol.data_pack.chat.ChatImageBroadcastPack;
+import com.omg_link.im.core.protocol.data_pack.chat.ChatTextBroadcastPack;
 import com.omg_link.im.core.user_manager.User;
 import com.omg_link.utils.IStringGetter;
 
 import java.util.Collection;
-import java.util.UUID;
 
 public interface IRoomFrame {
 
@@ -22,19 +24,9 @@ public interface IRoomFrame {
     void onConnectionBroke();
 
     void showSystemMessage(String message);
-    void showTextMessage(long serialId, String sender, long stamp, String text);
-    IFileTransferringPanel showFileUploadedMessage(long serialId, String sender, long stamp, UUID uuid, String fileName, long fileSize);
-
-    //This function is not written in the traditional way, but I don't want to fix it now.
-    /**
-     * Called when chat image pack was received.
-     * This function should create a chat image panel, and return the callback function which is called when image is downloaded.
-     * @param sender Message sender.
-     * @param stamp The time when the message was sent.
-     * @param serverFileId The id of image in the server.
-     * @return Return the callback function which is called when image is downloaded.
-     */
-    IFileTransferringPanel showChatImageMessage(long serialId, String sender, long stamp, UUID serverFileId);
+    void showTextMessage(ChatTextBroadcastPack pack, boolean isSelfSent);
+    IFileTransferringPanel showFileUploadedMessage(ChatFileBroadcastPack pack, boolean isSelfSent);
+    IFileTransferringPanel showChatImageMessage(ChatImageBroadcastPack pack, boolean isSelfSent);
 
     void onRoomNameUpdate(String roomName);
     IFileTransferringPanel addFileTransferringPanel(IStringGetter fileNameGetter,long fileSize);

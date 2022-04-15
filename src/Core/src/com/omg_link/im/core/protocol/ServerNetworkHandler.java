@@ -200,6 +200,7 @@ public class ServerNetworkHandler implements Runnable {
         }
 
         switch (type) {
+            // System
             case CheckVersion: {
                 attachment.expectedSendType = DataPack.Type.CheckVersion;
                 attachment.expectedReceiveType = DataPack.Type.Undefined;
@@ -225,19 +226,8 @@ public class ServerNetworkHandler implements Runnable {
                 send(selectionKey, new CheckVersionPackV2());
                 break;
             }
-            case QueryHistory: {
-                var pack = new QueryHistoryPack(data);
-                try {
-                    serverRoom.getMessageManager().sendHistory(selectionKey, pack.getLastSerialId());
-                } catch (InvalidSerialIdException ignored) {
-                }
-                break;
-            }
-            case ChatText: {
-                serverRoom.getMessageManager().processChatTextPack(
-                        selectionKey,
-                        new ChatTextSendPack(data)
-                );
+            case Ping: {
+                new PingPack(data);
                 break;
             }
             case ConnectRequest: {
@@ -259,6 +249,23 @@ public class ServerNetworkHandler implements Runnable {
                 send(selectionKey, connectResultPack);
                 break;
             }
+            // Chat
+            case QueryHistory: {
+                var pack = new QueryHistoryPack(data);
+                try {
+                    serverRoom.getMessageManager().sendHistory(selectionKey, pack.getLastSerialId());
+                } catch (InvalidSerialIdException ignored) {
+                }
+                break;
+            }
+            case ChatText: {
+                serverRoom.getMessageManager().processChatTextPack(
+                        selectionKey,
+                        new ChatTextSendPack(data)
+                );
+                break;
+            }
+            // File Transfer
             case FileUploadRequest: {
                 UploadRequestPack pack = new UploadRequestPack(data);
                 UploadReplyPack.State state;
@@ -277,7 +284,7 @@ public class ServerNetworkHandler implements Runnable {
                         state = UploadReplyPack.State.fileAlreadyExists;
                         receiverFileId = serverRoom.getFileManager().getFileIdByDigest(pack.getSha512Digest());
                         serverRoom.getMessageManager().onFileUploaded(
-                                attachment.user, receiverFileId, pack.getFileName(), pack.getFileSize(), pack.getFileTransferType()
+                                selectionKey, attachment.user, receiverFileId, pack.getFileName(), pack.getFileSize(), pack.getFileTransferType()
                         );
                         break;
                     }
@@ -309,6 +316,19 @@ public class ServerNetworkHandler implements Runnable {
                 ));
                 break;
             }
+            case FileUploadReply: {
+                UploadReplyPack pack = new UploadReplyPack(data);
+                try {
+                    ServerFileSendTask task = serverRoom.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
+                    task.onReceiveUploadReply(pack);
+                } catch (NoSuchTaskIdException e) {
+                    serverRoom.getLogger().log(
+                            Level.INFO,
+                            String.format("There is no ServerFileSendTask with UUID %s.", pack.getSenderTaskId())
+                    );
+                }
+                break;
+            }
             case FileUploadFinish: {
                 UploadFinishPack pack = new UploadFinishPack(data);
                 try {
@@ -327,19 +347,14 @@ public class ServerNetworkHandler implements Runnable {
                 }
                 break;
             }
-            case FileContent: {
-                FileContentPack pack = new FileContentPack(data);
+            case FileUploadResult: {
+                UploadResultPack pack = new UploadResultPack(data);
                 try {
-                    ServerFileReceiveTask task = serverRoom.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
-                    try {
-                        task.onDataReceived(pack.getData());
-                    } catch (IOException e) {
-                        task.onEndFailed(e.toString());
-                    }
+                    serverRoom.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId()).end(pack);
                 } catch (NoSuchTaskIdException e) {
                     serverRoom.getLogger().log(
                             Level.INFO,
-                            String.format("There is no ServerFileReceiveTask with UUID %s.", pack.getReceiverTaskId())
+                            String.format("There is no ServerFileSendTask with UUID %s.", pack.getSenderTaskId())
                     );
                 }
                 break;
@@ -369,33 +384,21 @@ public class ServerNetworkHandler implements Runnable {
                 }
                 break;
             }
-            case FileUploadReply: {
-                UploadReplyPack pack = new UploadReplyPack(data);
+            case FileContent: {
+                FileContentPack pack = new FileContentPack(data);
                 try {
-                    ServerFileSendTask task = serverRoom.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId());
-                    task.onReceiveUploadReply(pack);
+                    ServerFileReceiveTask task = serverRoom.getFactoryManager().getFileReceiveTaskFactory().find(pack.getReceiverTaskId());
+                    try {
+                        task.onDataReceived(pack.getData());
+                    } catch (IOException e) {
+                        task.onEndFailed(e.toString());
+                    }
                 } catch (NoSuchTaskIdException e) {
                     serverRoom.getLogger().log(
                             Level.INFO,
-                            String.format("There is no ServerFileSendTask with UUID %s.", pack.getSenderTaskId())
+                            String.format("There is no ServerFileReceiveTask with UUID %s.", pack.getReceiverTaskId())
                     );
                 }
-                break;
-            }
-            case FileUploadResult: {
-                UploadResultPack pack = new UploadResultPack(data);
-                try {
-                    serverRoom.getFactoryManager().getFileSendTaskFactory().find(pack.getSenderTaskId()).end(pack);
-                } catch (NoSuchTaskIdException e) {
-                    serverRoom.getLogger().log(
-                            Level.INFO,
-                            String.format("There is no ServerFileSendTask with UUID %s.", pack.getSenderTaskId())
-                    );
-                }
-                break;
-            }
-            case Ping: {
-                new PingPack(data);
                 break;
             }
             default: {

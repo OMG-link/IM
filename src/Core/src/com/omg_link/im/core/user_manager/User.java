@@ -9,6 +9,7 @@ import java.util.UUID;
 public class User implements IEncodeable {
     protected String name;
     protected UUID uid;
+    protected UUID avatarFileId = new UUID(0,0);
     private UserManager userManager = null;
 
     /**
@@ -37,6 +38,14 @@ public class User implements IEncodeable {
         if(userManager!=null){
             userManager.onUsernameChanged(this);
         }
+    }
+
+    public UUID getAvatarFileId() {
+        return avatarFileId;
+    }
+
+    public void setAvatarFileId(UUID avatarFileId) {
+        this.avatarFileId = avatarFileId;
     }
 
     public UUID getUid() {

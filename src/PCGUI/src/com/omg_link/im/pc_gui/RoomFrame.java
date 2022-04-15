@@ -4,6 +4,9 @@ import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.config.Config;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
 import com.omg_link.im.core.gui.IRoomFrame;
+import com.omg_link.im.core.protocol.data_pack.chat.ChatFileBroadcastPack;
+import com.omg_link.im.core.protocol.data_pack.chat.ChatImageBroadcastPack;
+import com.omg_link.im.core.protocol.data_pack.chat.ChatTextBroadcastPack;
 import com.omg_link.im.core.user_manager.User;
 import com.omg_link.im.pc_gui.components.*;
 import com.omg_link.utils.IStringGetter;
@@ -12,7 +15,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.Collection;
-import java.util.UUID;
 
 public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     private final ClientRoom room;
@@ -200,7 +202,7 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
 
     @Override
     public void showSystemMessage(String message) {
-        showTextMessage(0,"System",System.currentTimeMillis(),message);
+        this.messageArea.add(new TextPanel(System.currentTimeMillis(), "System", message));
     }
 
     private void clearMessageArea() {
@@ -208,20 +210,32 @@ public class RoomFrame extends JFrame implements IRoomFrame, IInputCallback {
     }
 
     @Override
-    public void showTextMessage(long serialId, String sender, long stamp, String text) {
-        this.messageArea.add(new TextPanel(stamp, sender, text));
+    public void showTextMessage(ChatTextBroadcastPack pack, boolean isSelfSent) {
+        String sender = pack.getUsername();
+        if(isSelfSent){
+            sender += "(You)";
+        }
+        this.messageArea.add(new TextPanel(pack.getStamp(), sender, pack.getText()));
     }
 
     @Override
-    public IFileTransferringPanel showChatImageMessage(long serialId, String sender, long stamp, UUID serverFileId) {
-        var panel = new ChatImagePanel(room, sender, stamp, serverFileId);
+    public IFileTransferringPanel showChatImageMessage(ChatImageBroadcastPack pack, boolean isSelfSent) {
+        String sender = pack.getUsername();
+        if(isSelfSent){
+            sender += "(You)";
+        }
+        var panel = new ChatImagePanel(room, sender, pack.getStamp(), pack.getServerImageId());
         this.messageArea.add(panel);
         return panel;
     }
 
     @Override
-    public IFileTransferringPanel showFileUploadedMessage(long serialId, String sender, long stamp, UUID uuid, String fileName, long fileSize) {
-        var panel = new FilePanel(room, sender, stamp, uuid, fileName, fileSize);
+    public IFileTransferringPanel showFileUploadedMessage(ChatFileBroadcastPack pack, boolean isSelfSent) {
+        String sender = pack.getUsername();
+        if(isSelfSent){
+            sender += "(You)";
+        }
+        var panel = new FilePanel(room, sender, pack.getStamp(), pack.getFileId(), pack.getFileName(), pack.getFileSize());
         this.messageArea.add(panel);
         return panel;
     }

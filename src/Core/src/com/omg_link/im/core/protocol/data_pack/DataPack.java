@@ -7,13 +7,13 @@ public abstract class DataPack {
 
     public enum Type {
         Undefined,
-        //System
-        CheckVersion, Ping,
+        //System: CheckVersion must have value=1
+        CheckVersion, Ping, ConnectRequest, ConnectResult,
         //Chat
         QueryHistory, ChatHistory,
-        ChatSendReply, ChatText, ChatImage, ChatFile,
+        SelfSentNotice, ChatText, ChatImage, ChatFile,
         //User list
-        ConnectRequest, ConnectResult, SetRoomName,
+        SetRoomName, SetAvatar,
         BroadcastUserList, BroadcastUserJoin, BroadcastUserLeft, BroadcastUserNameChanged,
         //File transfer
         FileUploadRequest, FileUploadReply, FileUploadFinish, FileUploadResult, FileDownloadRequest, FileDownloadReply, FileContent

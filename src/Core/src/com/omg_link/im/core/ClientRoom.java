@@ -11,9 +11,8 @@ import com.omg_link.im.core.gui.IRoomFrame;
 import com.omg_link.im.core.message_manager.ClientMessageManager;
 import com.omg_link.im.core.protocol.ClientNetworkHandler;
 import com.omg_link.im.core.protocol.data.PackageTooLargeException;
-import com.omg_link.im.core.protocol.data_pack.chat.IMessageSendCallback;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.DownloadRequestPack;
-import com.omg_link.im.core.protocol.data_pack.file_transfer.FileTransferType;
+import com.omg_link.im.core.protocol.file_transfer.FileTransferType;
 import com.omg_link.im.core.protocol.data_pack.system.CheckVersionPackV2;
 import com.omg_link.im.core.protocol.file_transfer.FileReceiveTask;
 import com.omg_link.im.core.protocol.file_transfer.FileSendTask;
@@ -97,14 +96,10 @@ public class ClientRoom {
     //send messages
 
     public boolean sendChat(String message) {
-        return sendChat(message, null);
-    }
-
-    public boolean sendChat(String message, IMessageSendCallback callback) {
         if (message.length() == 0) return false;
 
         try {
-            getMessageManager().sendChatText(message, callback);
+            getMessageManager().sendChatText(message);
         } catch (PackageTooLargeException e) {
             client.showMessage("Your message is too long!");
             return false;
