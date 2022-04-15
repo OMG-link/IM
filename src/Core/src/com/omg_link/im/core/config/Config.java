@@ -8,7 +8,7 @@ import java.security.InvalidParameterException;
 import java.util.Scanner;
 
 public class Config {
-    public static final String version = "1.5.2 beta";
+    public static final String version = "1.5.3 beta";
     public static final String compatibleVersion = "1.5.0";
 
     public static final int packageMaxLength = 10 * 1024 * 1024; //10MB
