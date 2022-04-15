@@ -112,8 +112,8 @@ public class ByteData implements Cloneable{
      * @return The ByteData of the first part.
      * @throws InvalidParameterException When the length of old ByteData is less than {@code length} or {@code length} is negative.
      */
-    public ByteData cut(int length) throws InvalidParameterException {
-        if(length<0||this.length<length) throw new InvalidParameterException();
+    public ByteData cut(int length) throws IllegalArgumentException {
+        if(length<0||this.length<length) throw new IllegalArgumentException();
         ByteData data = new ByteData(this.data,this.begin,length);
         try{
             remove(length);

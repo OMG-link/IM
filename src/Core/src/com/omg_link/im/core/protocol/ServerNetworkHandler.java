@@ -169,10 +169,16 @@ public class ServerNetworkHandler implements Runnable {
         //Process data
         while (DataPack.canDecode(data)) {
             int packageLength = data.decodeInt();
-            if (packageLength > Config.packageMaxLength) {
+            if (packageLength > Config.packageMaxLength || packageLength < 0) {
                 throw new InvalidPackageException();
             }
-            handlePacket(selectionKey, data.cut(packageLength));
+            ByteData data1;
+            try{
+                data1 = data.cut(packageLength);
+            }catch (IllegalArgumentException e){
+                throw new InvalidPackageException();
+            }
+            handlePacket(selectionKey, data1);
         }
 
     }
