@@ -25,16 +25,6 @@ public class ChatImagePanel extends JPanel implements IFileTransferringPanel {
     }
 
     @Override
-    public void setProgress(long downloadedSize) {
-
-    }
-
-    @Override
-    public void onTransferStart() {
-
-    }
-
-    @Override
     public void onTransferSucceed(FileObject imageFileObject) {
         var imagePath = imageFileObject.getFile().getAbsolutePath();
         var icon = new ImageIcon(imagePath);
