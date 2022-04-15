@@ -1,13 +1,13 @@
 package com.omg_link.im.pc_gui.components;
 
-import com.omg_link.im.pc_gui.helper.PanelUtil;
-import com.omg_link.im.core.file_manager.FileObject;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
+import com.omg_link.im.pc_gui.helper.PanelUtil;
 import com.omg_link.utils.FileUtils;
 import com.omg_link.utils.IStringGetter;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.UUID;
 
 public class UploadPanel extends JPanel implements IFileTransferringPanel {
     private final JTextArea infoArea;
@@ -39,7 +39,7 @@ public class UploadPanel extends JPanel implements IFileTransferringPanel {
     }
 
     @Override
-    public void onTransferSucceed(FileObject fileObject) {
+    public void onTransferSucceed(UUID senderFileId, UUID receiverFileId) {
         this.setVisible(false);
     }
 

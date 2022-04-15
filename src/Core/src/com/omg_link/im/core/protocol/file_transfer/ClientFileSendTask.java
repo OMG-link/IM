@@ -76,7 +76,7 @@ public class ClientFileSendTask extends FileSendTask {
     @Override
     protected void onEndSucceed() {
         if (panel != null) {
-            panel.onTransferSucceed(getFileObject());
+            panel.onTransferSucceed(getSenderFileId(),getReceiverFileId());
         }
         super.onEndSucceed();
     }

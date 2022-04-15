@@ -12,7 +12,6 @@ import com.omg_link.im.core.sql_manager.InvalidRecordException;
 import com.omg_link.im.core.sql_manager.InvalidSerialIdException;
 import com.omg_link.im.core.sql_manager.client.ChatRecord;
 
-import java.io.FileNotFoundException;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -222,15 +221,7 @@ public class ClientMessageManager {
                         pack,
                         isSelfSent
                 );
-                if (room.getFileManager().isFileDownloaded(serverImageId)) {
-                    try {
-                        panel.onTransferSucceed(room.getFileManager().openFileByServerFileId(serverImageId));
-                    } catch (FileNotFoundException e) {
-                        throw new RuntimeException(e); //吊人搞我
-                    }
-                } else {
-                    room.downloadFile(serverImageId.toString(), serverImageId, FileTransferType.ChatImage, panel);
-                }
+                room.downloadFile(serverImageId.toString(), serverImageId, FileTransferType.ChatImage, panel);
                 break;
             }
             case ChatFile: {

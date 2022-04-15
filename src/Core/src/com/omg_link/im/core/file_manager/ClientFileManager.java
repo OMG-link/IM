@@ -119,11 +119,11 @@ public class ClientFileManager extends FileManager{
         }
     }
 
-    public FileObject openFileByServerFileId(UUID serverFileId) throws FileNotFoundException {
+    public UUID getLocalFileIdByServerFileId(UUID serverFileId) throws FileNotFoundException {
         if(!fileIdToPathMap.containsKey(serverFileId)){
             throw new FileNotFoundException();
         }
-        return openFile(fileIdToPathMap.get(serverFileId));
+        return openFile(fileIdToPathMap.get(serverFileId)).getFileId();
     }
 
     public void addMapping(UUID serverFileId, File file){

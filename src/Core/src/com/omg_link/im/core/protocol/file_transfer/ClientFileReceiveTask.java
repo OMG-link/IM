@@ -99,7 +99,7 @@ public class ClientFileReceiveTask extends FileReceiveTask {
             getFileManager().addMapping(senderFileId,super.getFileObject().getFile());
         }
         for(var panel:panels) {
-            panel.onTransferSucceed(super.getFileObject());
+            panel.onTransferSucceed(getSenderFileId(),getReceiverFileId());
         }
     }
 

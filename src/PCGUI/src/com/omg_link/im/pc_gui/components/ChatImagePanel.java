@@ -2,6 +2,7 @@ package com.omg_link.im.pc_gui.components;
 
 import com.omg_link.im.core.ClientRoom;
 import com.omg_link.im.core.file_manager.FileObject;
+import com.omg_link.im.core.file_manager.NoSuchFileIdException;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
 import com.omg_link.im.core.protocol.file_transfer.FileTransferType;
 import com.omg_link.im.pc_gui.helper.PanelUtil;
@@ -25,7 +26,13 @@ public class ChatImagePanel extends JPanel implements IFileTransferringPanel {
     }
 
     @Override
-    public void onTransferSucceed(FileObject imageFileObject) {
+    public void onTransferSucceed(UUID senderFileId, UUID receiverFileId) {
+        FileObject imageFileObject;
+        try{
+            imageFileObject = room.getFileManager().openFile(receiverFileId);
+        }catch (NoSuchFileIdException e){
+            throw new RuntimeException(e);
+        }
         var imagePath = imageFileObject.getFile().getAbsolutePath();
         var icon = new ImageIcon(imagePath);
         if(icon.getIconHeight()<=0){

@@ -1,6 +1,7 @@
 package com.omg_link.im.pc_gui.components;
 
 import com.omg_link.im.core.ClientRoom;
+import com.omg_link.im.core.file_manager.NoSuchFileIdException;
 import com.omg_link.im.pc_gui.helper.PanelUtil;
 import com.omg_link.im.core.file_manager.FileObject;
 import com.omg_link.im.core.gui.IFileTransferringPanel;
@@ -77,8 +78,14 @@ public class FilePanel extends JPanel implements IFileTransferringPanel {
     }
 
     @Override
-    public void onTransferSucceed(FileObject file) {
-        downloadPanel.setAfterDownload(file);
+    public void onTransferSucceed(UUID senderFileId, UUID receiverFileId) {
+        FileObject fileObject;
+        try{
+            fileObject = room.getFileManager().openFile(receiverFileId);
+        }catch (NoSuchFileIdException e){
+            throw new RuntimeException(e);
+        }
+        downloadPanel.setAfterDownload(fileObject);
     }
 
     @Override

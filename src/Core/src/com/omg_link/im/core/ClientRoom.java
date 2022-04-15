@@ -131,7 +131,7 @@ public class ClientRoom {
         if (fileTransferType.canBeCached()) {
             if (getFileManager().isFileDownloaded(fileId)) {
                 try {
-                    panel.onTransferSucceed(getFileManager().openFileByServerFileId(fileId));
+                    panel.onTransferSucceed(fileId,getFileManager().getLocalFileIdByServerFileId(fileId));
                     return;
                 } catch (FileNotFoundException ignored) { //吊人搞我
                 }
