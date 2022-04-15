@@ -12,11 +12,8 @@ import com.omg_link.im.core.message_manager.ClientMessageManager;
 import com.omg_link.im.core.protocol.ClientNetworkHandler;
 import com.omg_link.im.core.protocol.data.PackageTooLargeException;
 import com.omg_link.im.core.protocol.data_pack.file_transfer.DownloadRequestPack;
-import com.omg_link.im.core.protocol.file_transfer.FileTransferType;
 import com.omg_link.im.core.protocol.data_pack.system.CheckVersionPackV2;
-import com.omg_link.im.core.protocol.file_transfer.FileReceiveTask;
-import com.omg_link.im.core.protocol.file_transfer.FileSendTask;
-import com.omg_link.im.core.protocol.file_transfer.NoSuchTaskIdException;
+import com.omg_link.im.core.protocol.file_transfer.*;
 import com.omg_link.im.core.sql_manager.client.ClientSqlManager;
 import com.omg_link.im.core.user_manager.ClientUserManager;
 
@@ -115,12 +112,16 @@ public class ClientRoom {
         uploadFile(image, FileTransferType.ChatImage, panel);
     }
 
-    public FileSendTask uploadFile(File file, IFileTransferringPanel panel) throws FileNotFoundException {
+    public ClientFileSendTask uploadAvatar(File file, IFileTransferringPanel panel) throws FileNotFoundException {
+        return uploadFile(file, FileTransferType.Avatar, panel);
+    }
+
+    public ClientFileSendTask uploadFile(File file, IFileTransferringPanel panel) throws FileNotFoundException {
         return uploadFile(file, FileTransferType.ChatFile, panel);
     }
 
-    private FileSendTask uploadFile(File file, FileTransferType fileTransferType, IFileTransferringPanel panel) throws FileNotFoundException {
-        FileSendTask task = getFactoryManager().getFileSendTaskFactory().create(this, file, fileTransferType, panel);
+    private ClientFileSendTask uploadFile(File file, FileTransferType fileTransferType, IFileTransferringPanel panel) throws FileNotFoundException {
+        ClientFileSendTask task = getFactoryManager().getFileSendTaskFactory().create(this, file, fileTransferType, panel);
         task.start();
         return task;
     }
