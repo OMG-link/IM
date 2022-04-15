@@ -127,7 +127,7 @@ public class ClientRoom {
 
     // Maybe this function should be moved into ClientFileManager?
     public void downloadFile(String fileName, UUID fileId, FileTransferType fileTransferType, IFileTransferringPanel panel) {
-        if (fileTransferType == FileTransferType.ChatImage) {
+        if (fileTransferType.canBeCached()) {
             if (getFileManager().isFileDownloaded(fileId)) {
                 try {
                     panel.onTransferSucceed(getFileManager().openFileByServerFileId(fileId));

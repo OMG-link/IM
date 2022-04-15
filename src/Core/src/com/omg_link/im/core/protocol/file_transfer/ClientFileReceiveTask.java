@@ -41,7 +41,7 @@ public class ClientFileReceiveTask extends FileReceiveTask {
 
         addPanel(panel);
 
-        if(fileTransferType==FileTransferType.ChatImage){
+        if(fileTransferType.canBeCached()){
             room.getFileManager().addDownloadingFile(senderFileId,receiverTaskId);
         }
 
@@ -87,7 +87,7 @@ public class ClientFileReceiveTask extends FileReceiveTask {
     @Override
     public void end() {
         super.end();
-        if(getFileTransferType()==FileTransferType.ChatImage){
+        if(getFileTransferType().canBeCached()){
             getFileManager().removeDownloadingFile(senderFileId);
         }
     }
@@ -95,7 +95,7 @@ public class ClientFileReceiveTask extends FileReceiveTask {
     @Override
     public void onEndSucceed() {
         super.onEndSucceed();
-        if (getFileTransferType()==FileTransferType.ChatImage){
+        if (getFileTransferType().canBeCached()){
             getFileManager().addMapping(senderFileId,super.getFileObject().getFile());
         }
         for(var panel:panels) {

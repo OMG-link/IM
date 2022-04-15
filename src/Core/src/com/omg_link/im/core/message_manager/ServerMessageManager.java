@@ -204,7 +204,7 @@ public class ServerMessageManager {
                 );
                 break;
             }
-            case UploadAvatar:{
+            case Avatar:{
                 user.setAvatarFileId(fileId);
                 break;
             }
