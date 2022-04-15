@@ -34,6 +34,7 @@ public class ChatImageBroadcastPack extends ChatImagePack{
         return super.encode()
                 .append(serialId)
                 .append(username)
+                .append(userAvatarFileId)
                 .append(stamp);
     }
 
