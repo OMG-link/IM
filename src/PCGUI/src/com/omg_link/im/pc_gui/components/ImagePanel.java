@@ -11,8 +11,10 @@ public class ImagePanel extends JPanel {
         this.imageIcon = imageIcon;
         int imageHeight = imageIcon.getIconHeight();
         int imageWidth = imageIcon.getIconWidth();
-        int panelHeight = Math.min(imageIcon.getIconHeight(),200);
-        int panelWidth = panelHeight*imageWidth/imageHeight;
+        float scale = Math.min(200f/imageHeight,600f/imageWidth);
+        if(scale>1) scale = 1;
+        int panelHeight = (int)(imageHeight*scale);
+        int panelWidth = (int)(imageWidth*scale);
         this.panelSize = new Dimension(panelWidth,panelHeight);
     }
 
