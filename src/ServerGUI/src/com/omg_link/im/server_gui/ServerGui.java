@@ -11,18 +11,29 @@ public class ServerGui implements IServerGui {
 
     public static void main(String[] args) {
         try{
+            // Process cmd args
+            boolean headless = false;
+            for (String arg : args) {
+                if ("--headless".equals(arg)) {
+                    headless = true;
+                    break;
+                }
+            }
+            // Start server
             Class.forName("org.sqlite.JDBC");
             Config.updateFromFile();
-            new ServerGui();
+            new ServerGui(!headless);
         }catch(Exception e){
             e.printStackTrace();
             System.exit(0);
         }
     }
 
-    public ServerGui(){
+    public ServerGui(boolean enableGui){
         serverRoom = new ServerRoom(this);
-        createGUI();
+        if(enableGui){
+            createGUI();
+        }
     }
 
     public void createGUI(){
